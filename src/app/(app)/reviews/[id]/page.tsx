@@ -330,12 +330,6 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
           <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
             Review: {reviewData.taskTitle}
           </h1>
-          <div className="hidden items-center gap-2 md:ml-auto md:flex">
-             <Button variant="outline" onClick={() => handleAddComment('rework_request')}>
-                <RefreshCw className="mr-2 h-4 w-4" /> Yêu cầu làm lại
-            </Button>
-            <ApproveButton />
-          </div>
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
