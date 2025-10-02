@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from "next/link";
@@ -10,6 +11,8 @@ import {
     Send,
     ThumbsUp,
     RefreshCw,
+    Check,
+    Circle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -41,6 +44,9 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const initialReviewData = {
   id: 'REV-002',
@@ -63,7 +69,33 @@ const initialReviewData = {
       aiReason: 'Sản phẩm "Festive Soda" đặt sai vị trí so với planogram. Planogram yêu cầu đặt ở kệ thứ 2, ảnh chụp cho thấy sản phẩm ở kệ thứ 3.',
       score: 0,
       maxScore: 100,
-    }
+    },
+    {
+      id: 'crit-2',
+      requirement: 'Hoàn thành checklist vệ sinh khu vực trưng bày',
+      type: 'checklist',
+      score: 50,
+      maxScore: 50,
+      checklistItems: [
+        { label: 'Lau sạch bụi trên kệ', checked: true },
+        { label: 'Sắp xếp sản phẩm gọn gàng, đúng hàng lối', checked: true },
+        { label: 'Kiểm tra và thay thế bảng giá bị hỏng', checked: false },
+        { label: 'Dọn dẹp rác xung quanh khu vực', checked: true },
+      ]
+    },
+    {
+        id: 'crit-3',
+        requirement: 'Bảng hiệu khuyến mãi đã được đặt ở đúng vị trí chưa?',
+        type: 'multiple-choice',
+        score: 25,
+        maxScore: 25,
+        options: [
+            { label: 'Đúng vị trí' },
+            { label: 'Sai vị trí' },
+            { label: 'Chưa có bảng hiệu' },
+        ],
+        selectedOption: 'Đúng vị trí'
+    },
   ],
   comments: [
       {
@@ -127,11 +159,6 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     setNewComment("");
   };
 
-
-  const reviewImage = PlaceHolderImages.find(p => p.id === reviewData.criteria[0].submittedImageId);
-  const userAvatar = PlaceHolderImages.find(p => p.id === reviewData.userAvatar);
-  const managerAvatar = PlaceHolderImages.find(p => p.id === reviewData.managerAvatar);
-  
   const getAiStatusBadge = (status: string) => {
     switch (status) {
       case 'Đạt':
@@ -174,6 +201,120 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
 
     return button;
   };
+  
+  const managerAvatar = PlaceHolderImages.find(p => p.id === reviewData.managerAvatar);
+  
+  const renderCriterion = (criterion: any) => {
+    switch (criterion.type) {
+      case 'visual-compliance-ai':
+        const reviewImage = PlaceHolderImages.find(p => p.id === criterion.submittedImageId);
+        if (!reviewImage) return null;
+
+        return (
+          <Dialog>
+            <DialogTrigger asChild>
+              <div className="relative cursor-pointer group">
+                <Image
+                  src={reviewImage.imageUrl}
+                  alt="Submitted task evidence"
+                  width={600}
+                  height={400}
+                  className="rounded-lg object-cover"
+                  data-ai-hint={reviewImage.imageHint}
+                />
+                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                  <span className="text-white font-semibold">Xem chi tiết & Phân tích AI</span>
+                </div>
+                <div className="absolute top-2 right-2">
+                  {getAiStatusBadge(criterion.aiResult)}
+                </div>
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-6xl">
+              <DialogHeader>
+                <DialogTitle>Chi tiết hình ảnh và phân tích của AI</DialogTitle>
+                <DialogDescription>
+                  Tiêu chuẩn: "{criterion.requirement}"
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid md:grid-cols-2 gap-6 items-start">
+                <Image
+                  src={reviewImage.imageUrl}
+                  alt="Submitted task evidence"
+                  width={1200}
+                  height={800}
+                  className="rounded-lg object-contain"
+                />
+                <div>
+                  <Alert variant={criterion.aiResult === 'Đạt' ? 'default' : 'destructive'} className={cn(criterion.aiResult === 'Đạt' ? 'bg-success/10 border-success/50' : '')}>
+                    <div className="flex items-center">
+                      {criterion.aiResult === 'Đạt' ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                      <AlertTitle className="ml-2 font-semibold">Kết quả phân tích của AI: {criterion.aiResult}</AlertTitle>
+                    </div>
+                    <AlertDescription className="mt-2">
+                      {criterion.aiReason}
+                    </AlertDescription>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">Xem chi tiết phân tích của AI</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Tính năng đang phát triển</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tính năng xem chi tiết phân tích của AI đang được phát triển và sẽ sớm ra mắt.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogAction>Đã hiểu</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </Alert>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      
+      case 'checklist':
+        return (
+            <Card className="bg-secondary/50">
+                <CardContent className="pt-6 space-y-3">
+                    {criterion.checklistItems.map((item: any, index: number) => (
+                        <div key={index} className="flex items-center gap-3">
+                            <Checkbox id={`checklist-${criterion.id}-${index}`} checked={item.checked} disabled />
+                            <Label htmlFor={`checklist-${criterion.id}-${index}`} className={cn("text-sm", item.checked ? "" : "text-muted-foreground")}>
+                                {item.label}
+                            </Label>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+        );
+
+      case 'multiple-choice':
+        return (
+            <Card className="bg-secondary/50">
+                <CardContent className="pt-6">
+                    <RadioGroup value={criterion.selectedOption} disabled>
+                        <div className="space-y-2">
+                        {criterion.options.map((option: any, index: number) => (
+                            <div key={index} className="flex items-center space-x-2">
+                                <RadioGroupItem value={option.label} id={`option-${criterion.id}-${index}`} />
+                                <Label htmlFor={`option-${criterion.id}-${index}`}>{option.label}</Label>
+                            </div>
+                        ))}
+                        </div>
+                    </RadioGroup>
+                </CardContent>
+            </Card>
+        );
+        
+      default:
+        return null;
+    }
+  };
 
 
   return (
@@ -189,6 +330,12 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
           <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
             Review: {reviewData.taskTitle}
           </h1>
+          <div className="hidden items-center gap-2 md:ml-auto md:flex">
+             <Button variant="outline" onClick={() => handleAddComment('rework_request')}>
+                <RefreshCw className="mr-2 h-4 w-4" /> Yêu cầu làm lại
+            </Button>
+            <ApproveButton />
+          </div>
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
@@ -196,77 +343,12 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                 <h2 className="text-xl font-semibold">Kết quả thực hiện</h2>
                 <p className="text-sm text-muted-foreground mt-1">Báo cáo do <strong>{reviewData.submittedBy}</strong> gửi lúc {reviewData.submittedAt}.</p>
               </div>
-              <div className="mt-4 space-y-4">
+              <div className="mt-4 space-y-6">
                 {reviewData.criteria.map(criterion => (
                   <div key={criterion.id}>
                       <h3 className="font-semibold mb-2 text-base">{criterion.requirement}</h3>
                       <div className="grid gap-4 items-start">
-                          {reviewImage && (
-                              <Dialog>
-                                  <DialogTrigger asChild>
-                                      <div className="relative cursor-pointer group">
-                                          <Image
-                                          src={reviewImage.imageUrl}
-                                          alt="Submitted task evidence"
-                                          width={600}
-                                          height={400}
-                                          className="rounded-lg object-cover"
-                                          data-ai-hint={reviewImage.imageHint}
-                                          />
-                                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                                              <span className="text-white font-semibold">Xem chi tiết & Phân tích AI</span>
-                                          </div>
-                                          <div className="absolute top-2 right-2">
-                                              {getAiStatusBadge(criterion.aiResult)}
-                                          </div>
-                                      </div>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-6xl">
-                                      <DialogHeader>
-                                          <DialogTitle>Chi tiết hình ảnh và phân tích của AI</DialogTitle>
-                                          <DialogDescription>
-                                              Tiêu chuẩn: "{criterion.requirement}"
-                                          </DialogDescription>
-                                      </DialogHeader>
-                                      <div className="grid md:grid-cols-2 gap-6 items-start">
-                                          <Image
-                                              src={reviewImage.imageUrl}
-                                              alt="Submitted task evidence"
-                                              width={1200}
-                                              height={800}
-                                              className="rounded-lg object-contain"
-                                          />
-                                          <div>
-                                              <Alert variant={criterion.aiResult === 'Đạt' ? 'default' : 'destructive'} className={cn(criterion.aiResult === 'Đạt' ? 'bg-success/10 border-success/50' : '')}>
-                                                  <div className="flex items-center">
-                                                      {criterion.aiResult === 'Đạt' ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                                                      <AlertTitle className="ml-2 font-semibold">Kết quả phân tích của AI: {criterion.aiResult}</AlertTitle>
-                                                  </div>
-                                                  <AlertDescription className="mt-2">
-                                                  {criterion.aiReason}
-                                                  </AlertDescription>
-                                                  <AlertDialog>
-                                                      <AlertDialogTrigger asChild>
-                                                          <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">Xem chi tiết phân tích của AI</Button>
-                                                      </AlertDialogTrigger>
-                                                      <AlertDialogContent>
-                                                          <AlertDialogHeader>
-                                                              <AlertDialogTitle>Tính năng đang phát triển</AlertDialogTitle>
-                                                              <AlertDialogDescription>
-                                                                  Tính năng xem chi tiết phân tích của AI đang được phát triển và sẽ sớm ra mắt.
-                                                              </AlertDialogDescription>
-                                                          </AlertDialogHeader>
-                                                          <AlertDialogFooter>
-                                                              <AlertDialogAction>Đã hiểu</AlertDialogAction>
-                                                          </AlertDialogFooter>
-                                                      </AlertDialogContent>
-                                                  </AlertDialog>
-                                              </Alert>
-                                          </div>
-                                      </div>
-                                  </DialogContent>
-                              </Dialog>
-                          )}
+                          {renderCriterion(criterion)}
                       </div>
                   </div>
                 ))}
@@ -342,7 +424,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 backdrop-blur-sm">
-        <div className={cn("flex items-start gap-4 p-4 md:ml-56")}>
+        <div className={cn("flex items-start gap-4 p-4", "md:ml-56")}>
              {managerAvatar && <Avatar>
                   <AvatarImage src={managerAvatar.imageUrl} alt="Manager" data-ai-hint={managerAvatar.imageHint}/>
                   <AvatarFallback>AM</AvatarFallback>
@@ -366,7 +448,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                       <Button variant="outline" size="sm" onClick={() => handleAddComment('rework_request')} disabled={!newComment.trim()}>
                           <RefreshCw className="mr-2 h-4 w-4" /> Yêu cầu làm lại
                       </Button>
-                      <div className="ml-auto">
+                      <div className="ml-auto md:hidden">
                         <ApproveButton />
                       </div>
                   </div>
