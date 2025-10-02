@@ -144,7 +144,7 @@ function CreateTaskPageContent() {
 
   const removeFile = (index: number) => {
     setUploadedFiles(prev => ({...prev, [index]: null}));
-  }
+  };
 
 
   const isClone = searchParams.get('clone') === 'true';
