@@ -13,6 +13,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  PaginationState,
 } from '@tanstack/react-table';
 
 import {
@@ -83,11 +84,12 @@ const columns: ColumnDef<Task>[] = [
   {
     accessorKey: 'id',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Task ID" />,
-    cell: ({ row }) => <div className="font-medium">{row.getValue('id')}</div>,
+    cell: ({ row }) => <Link href={`/tasks/${row.original.id}`} className="font-medium hover:underline">{row.getValue('id')}</Link>,
   },
   {
     accessorKey: 'title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
+     cell: ({ row }) => <Link href={`/tasks/${row.original.id}`} className="hover:underline">{row.getValue('title')}</Link>,
   },
   {
     accessorKey: 'store',
@@ -128,7 +130,9 @@ const columns: ColumnDef<Task>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/tasks/${task.id}`}>View Details</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/tasks/create?clone=true">
@@ -147,9 +151,14 @@ const columns: ColumnDef<Task>[] = [
 
 export default function TasksPage() {
   const [data] = React.useState(tasks);
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 5,
+  });
+
 
   const table = useReactTable({
     data,
@@ -157,6 +166,7 @@ export default function TasksPage() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -165,12 +175,8 @@ export default function TasksPage() {
       sorting,
       columnFilters,
       columnVisibility,
+      pagination,
     },
-    initialState: {
-        pagination: {
-            pageSize: 5,
-        }
-    }
   });
 
 
