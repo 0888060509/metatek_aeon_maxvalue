@@ -5,10 +5,10 @@ import Logo from "./logo";
 import { usePathname } from "next/navigation";
 
 const getTitleFromPathname = (pathname: string) => {
-    if (pathname.includes('/tasks/')) {
+    if (pathname.includes('/field-tasks/')) {
         return "Task Details";
     }
-    if (pathname.startsWith('/tasks')) {
+    if (pathname.startsWith('/field-tasks')) {
         return "My Tasks";
     }
     if (pathname.startsWith('/notifications')) {
