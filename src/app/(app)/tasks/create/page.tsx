@@ -231,7 +231,7 @@ function CreateTaskPageContent() {
       type: newType,
       checklistItems: newType === 'checklist' ? [{ label: '' }] : [],
       multipleChoiceOptions: newType === 'multiple-choice' ? [{ label: '' }] : [],
-      minPhotos: newType === 'photo-capture' ? currentCriterion.minPhotos || 1 : undefined,
+      minPhotos: newType === 'photo-capture' ? 1 : undefined,
     });
     setDialogState({ open: false, index: null, newType: null });
   };
@@ -1076,5 +1076,3 @@ export default function CreateTaskPage() {
         </React.Suspense>
     );
 }
-
-    

@@ -11,6 +11,7 @@ import {
   ChevronDown,
   LogOut,
   HelpCircle,
+  ClipboardCheck,
 } from "lucide-react";
 import Logo from "./logo";
 import {
@@ -28,6 +29,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tasks", label: "Tasks", icon: ClipboardList },
+  { href: "/reviews", label: "Reviews", icon: ClipboardCheck },
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 

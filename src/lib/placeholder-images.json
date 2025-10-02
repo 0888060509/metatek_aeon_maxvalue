@@ -41,6 +41,12 @@
       "description": "Image for a task report",
       "imageUrl": "https://images.unsplash.com/photo-1664262283610-a225a4106ef5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwcm9kdWN0JTIwZGlzcGxheXxlbnwwfHx8fDE3NTkzMjAxMzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "product display"
+    },
+    {
+      "id": "review-image-1",
+      "description": "Image for a review item",
+      "imageUrl": "https://images.unsplash.com/photo-1583922659303-34e869785a96?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdXBlcm1hcmtldCUyMHNoZWxmfGVufDB8fHx8MTc2MDM0Mjk4N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "supermarket shelf"
     }
   ]
 }
