@@ -162,11 +162,11 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
               {reviewData.criteria.map(criterion => (
                 <div key={criterion.id}>
                     <h3 className="font-semibold mb-2">{criterion.requirement}</h3>
-                    <div className="grid md:grid-cols-2 gap-4 items-start">
+                    <div className="grid gap-4 items-start">
                         {reviewImage && (
                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <div className="cursor-pointer">
+                                    <div className="relative cursor-pointer group">
                                         <Image
                                         src={reviewImage.imageUrl}
                                         alt="Submitted task evidence"
@@ -175,35 +175,43 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                                         className="rounded-lg object-cover"
                                         data-ai-hint={reviewImage.imageHint}
                                         />
+                                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                                            <span className="text-white font-semibold">Xem chi tiết & Phân tích AI</span>
+                                        </div>
+                                         <div className="absolute top-2 right-2">
+                                            {getAiStatusBadge(criterion.aiResult)}
+                                        </div>
                                     </div>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-4xl">
+                                <DialogContent className="max-w-6xl">
                                     <DialogHeader>
-                                        <DialogTitle>Hình ảnh thực hiện</DialogTitle>
+                                        <DialogTitle>Chi tiết hình ảnh và phân tích của AI</DialogTitle>
                                         <DialogDescription>
-                                            Hình ảnh do nhân viên nộp để đánh giá tiêu chuẩn: "{criterion.requirement}"
+                                            Tiêu chuẩn: "{criterion.requirement}"
                                         </DialogDescription>
                                     </DialogHeader>
-                                    <Image
-                                        src={reviewImage.imageUrl}
-                                        alt="Submitted task evidence"
-                                        width={1200}
-                                        height={800}
-                                        className="rounded-lg object-contain"
-                                     />
+                                    <div className="grid md:grid-cols-2 gap-6 items-start">
+                                        <Image
+                                            src={reviewImage.imageUrl}
+                                            alt="Submitted task evidence"
+                                            width={1200}
+                                            height={800}
+                                            className="rounded-lg object-contain"
+                                        />
+                                        <div>
+                                            <Alert variant={criterion.aiResult === 'Đạt' ? 'default' : 'destructive'} className={criterion.aiResult === 'Đạt' ? 'bg-success/10 border-success/50' : ''}>
+                                                {getAiStatusBadge(criterion.aiResult)}
+                                                <AlertTitle className="mt-2 font-semibold">Kết quả phân tích:</AlertTitle>
+                                                <AlertDescription>
+                                                {criterion.aiReason}
+                                                </AlertDescription>
+                                                <Button variant="link" size="sm" className="p-0 h-auto mt-2">Xem chi tiết phân tích của AI</Button>
+                                            </Alert>
+                                        </div>
+                                    </div>
                                 </DialogContent>
                             </Dialog>
                         )}
-                        <div>
-                             <Alert variant={criterion.aiResult === 'Đạt' ? 'default' : 'destructive'} className={criterion.aiResult === 'Đạt' ? 'bg-success/10 border-success/50' : ''}>
-                                {getAiStatusBadge(criterion.aiResult)}
-                                <AlertTitle className="mt-2 font-semibold">Kết quả phân tích:</AlertTitle>
-                                <AlertDescription>
-                                   {criterion.aiReason}
-                                </AlertDescription>
-                                <Button variant="link" size="sm" className="p-0 h-auto mt-2">Xem chi tiết phân tích của AI</Button>
-                            </Alert>
-                        </div>
                     </div>
                 </div>
               ))}
@@ -296,3 +304,4 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
+
