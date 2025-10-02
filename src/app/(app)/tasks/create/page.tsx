@@ -14,6 +14,11 @@ import {
   UploadCloud,
   Eye,
   Wand2,
+  FileText,
+  Camera,
+  ListChecks,
+  Type,
+  ListTodo,
 } from "lucide-react";
 import { format } from "date-fns";
 import React from 'react';
@@ -54,13 +59,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+const checklistItemSchema = z.object({
+  label: z.string().min(1, "Checklist item cannot be empty."),
+});
+
+const multipleChoiceOptionSchema = z.object({
+  label: z.string().min(1, "Option label cannot be empty."),
+});
 
 const executionCriterionSchema = z.object({
   type: z.string().min(1, "Criterion type is required."),
   requirement: z.string().min(1, "Requirement cannot be empty."),
   weight: z.number().min(0, "Weight must be positive."),
   autoEvaluate: z.boolean().optional(),
+  checklistItems: z.array(checklistItemSchema).optional(),
+  multipleChoiceOptions: z.array(multipleChoiceOptionSchema).optional(),
 });
+
 
 const formSchema = z.object({
   taskName: z.string().min(1, "Tên tác vụ là bắt buộc."),
@@ -99,8 +114,8 @@ const sampleTask = {
     assigneeRole: 'store-manager',
     store: 'region-west',
     criteria: [
-        { type: 'photo-upload', requirement: "Chụp ảnh toàn cảnh khu vực trưng bày", weight: 40, autoEvaluate: true },
-        { type: 'pdf-upload', requirement: "Đối chiếu và xác nhận danh sách sản phẩm trưng bày", weight: 60, autoEvaluate: false },
+        { type: 'photo-upload', requirement: "Chụp ảnh toàn cảnh khu vực trưng bày", weight: 40, autoEvaluate: true, checklistItems: [], multipleChoiceOptions: [] },
+        { type: 'pdf-upload', requirement: "Đối chiếu và xác nhận danh sách sản phẩm trưng bày", weight: 60, autoEvaluate: false, checklistItems: [], multipleChoiceOptions: [] },
     ],
     isRecurring: false,
 };
@@ -119,7 +134,7 @@ function CreateTaskPageContent() {
       taskName: "",
       taskDescription: "",
       priority: "medium",
-      criteria: [{ type: 'pdf-upload', requirement: "", weight: 100, autoEvaluate: false }],
+      criteria: [{ type: 'photo-upload', requirement: "", weight: 100, autoEvaluate: false, checklistItems: [], multipleChoiceOptions: [] }],
       isRecurring: false,
       assigneeRole: "store-manager",
       recurringEndType: "never",
@@ -143,10 +158,12 @@ function CreateTaskPageContent() {
   }, [isClone, form, toast]);
 
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: "criteria",
   });
+  
+  const watchCriteria = form.watch("criteria");
 
   const watchIsRecurring = form.watch("isRecurring");
   const watchRecurringFrequencyType = form.watch("recurringFrequencyType");
@@ -185,6 +202,19 @@ function CreateTaskPageContent() {
         description: "Vui lòng điền các thông tin còn lại và phân công.",
     });
   }
+  
+  const renderCriterionSpecificFields = (criterionIndex: number) => {
+    const criterionType = watchCriteria[criterionIndex]?.type;
+
+    switch (criterionType) {
+        case 'checklist':
+            return <ChecklistFields criterionIndex={criterionIndex} control={form.control} />;
+        case 'multiple-choice':
+            return <MultipleChoiceFields criterionIndex={criterionIndex} control={form.control} />;
+        default:
+            return null;
+    }
+  };
 
   const renderMobilePreview = () => (
     <div className="w-full max-w-[360px] mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
@@ -219,7 +249,16 @@ function CreateTaskPageContent() {
                             {form.getValues(`criteria.${index}.autoEvaluate`) && <span className="text-xs font-semibold text-primary">AI</span>}
                         </div>
                          <p className="text-xs text-muted-foreground mt-1 pl-6">
-                            {form.getValues(`criteria.${index}.type`) === 'pdf-upload' ? 'Tải lên tệp PDF' : 'Tải lên hình ảnh'}
+                            {
+                                {
+                                    'pdf-upload': 'Tải lên tệp PDF',
+                                    'photo-upload': 'Tải lên hình ảnh',
+                                    'checklist': 'Hoàn thành checklist',
+                                    'text-input': 'Nhập văn bản',
+                                    'number-input': 'Nhập số liệu',
+                                    'multiple-choice': 'Chọn một đáp án'
+                                }[form.getValues(`criteria.${index}.type`)]
+                            }
                         </p>
                     </div>
                 ))}
@@ -227,7 +266,7 @@ function CreateTaskPageContent() {
         </div>
         <Button className="w-full">Bắt đầu thực hiện</Button>
     </div>
-  </div>);
+  );
 
   return (
     <div className="mx-auto grid max-w-5xl flex-1 auto-rows-max gap-4">
@@ -441,23 +480,57 @@ function CreateTaskPageContent() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Loại tiêu chuẩn</FormLabel>
-                             <Select onValueChange={field.onChange} value={field.value}>
+                             <Select onValueChange={(value) => {
+                                 field.onChange(value);
+                                 // Reset specific fields when type changes
+                                 const currentCriterion = form.getValues(`criteria.${index}`);
+                                 update(index, {
+                                     ...currentCriterion,
+                                     type: value,
+                                     checklistItems: value === 'checklist' ? [{ label: '' }] : [],
+                                     multipleChoiceOptions: value === 'multiple-choice' ? [{ label: '' }] : []
+                                 });
+                             }} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Chọn loại tiêu chuẩn" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
+                                  <SelectItem value="photo-upload">
+                                    <div className="flex items-center gap-2">
+                                      <Camera className="h-4 w-4"/>
+                                      <span>Chụp ảnh</span>
+                                    </div>
+                                  </SelectItem>
                                   <SelectItem value="pdf-upload">
                                     <div className="flex items-center gap-2">
-                                      <UploadCloud className="h-4 w-4"/>
+                                      <FileText className="h-4 w-4"/>
                                       <span>Tải lên tệp PDF</span>
                                     </div>
                                   </SelectItem>
-                                  <SelectItem value="photo-upload">
+                                  <SelectItem value="checklist">
                                     <div className="flex items-center gap-2">
-                                      <UploadCloud className="h-4 w-4"/>
-                                      <span>Tải lên hình ảnh</span>
+                                      <ListChecks className="h-4 w-4"/>
+                                      <span>Checklist</span>
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="text-input">
+                                    <div className="flex items-center gap-2">
+                                      <Type className="h-4 w-4"/>
+                                      <span>Nhập liệu (văn bản)</span>
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="number-input">
+                                    <div className="flex items-center gap-2">
+                                      <Type className="h-4 w-4"/>
+                                      <span>Nhập liệu (số)</span>
+                                    </div>
+                                  </SelectItem>
+                                   <SelectItem value="multiple-choice">
+                                    <div className="flex items-center gap-2">
+                                      <ListTodo className="h-4 w-4"/>
+                                      <span>Câu hỏi Trắc nghiệm</span>
                                     </div>
                                   </SelectItem>
                                 </SelectContent>
@@ -473,12 +546,15 @@ function CreateTaskPageContent() {
                           <FormItem>
                             <FormLabel>Nội dung yêu cầu</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Nhập nội dung yêu cầu..." {...field} />
+                                <Textarea placeholder="Nhập nội dung yêu cầu/câu hỏi..." {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      
+                      {renderCriterionSpecificFields(index)}
+
                       <div className="grid grid-cols-2 gap-4">
                          <FormField
                           control={form.control}
@@ -501,13 +577,14 @@ function CreateTaskPageContent() {
                                <div className="space-y-0.5">
                                 <FormLabel>Tự động đánh giá bằng AI</FormLabel>
                                 <FormDescription>
-                                  Tự động đánh giá các tệp tải lên.
+                                  Chỉ áp dụng cho Chụp ảnh/PDF.
                                 </FormDescription>
                               </div>
                               <FormControl>
                                 <Checkbox
                                   checked={field.value}
                                   onCheckedChange={field.onChange}
+                                  disabled={!['photo-upload', 'pdf-upload'].includes(watchCriteria[index]?.type)}
                                 />
                               </FormControl>
                             </FormItem>
@@ -521,7 +598,7 @@ function CreateTaskPageContent() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => append({ type: 'pdf-upload', requirement: "", weight: 100, autoEvaluate: false })}
+                          onClick={() => append({ type: 'photo-upload', requirement: "", weight: 100, autoEvaluate: false, checklistItems: [], multipleChoiceOptions: [] })}
                           >
                           <PlusCircle className="h-4 w-4 mr-2" />
                           Thêm Tiêu chuẩn
@@ -799,6 +876,95 @@ function CreateTaskPageContent() {
     </div>
   );
 }
+
+
+// --- Sub-components for specific criterion types ---
+
+interface CriterionFieldProps {
+  criterionIndex: number;
+  control: any;
+}
+
+const ChecklistFields: React.FC<CriterionFieldProps> = ({ criterionIndex, control }) => {
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `criteria.${criterionIndex}.checklistItems`
+    });
+
+    return (
+        <div className="space-y-2 pt-2">
+            <FormLabel>Các mục trong checklist</FormLabel>
+            {fields.map((item, k) => (
+                <div key={item.id} className="flex items-center gap-2">
+                    <FormField
+                        control={control}
+                        name={`criteria.${criterionIndex}.checklistItems.${k}.label`}
+                        render={({ field }) => (
+                            <FormItem className="flex-1">
+                                <FormControl>
+                                    <Input {...field} placeholder={`Mục ${k + 1}`} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(k)} disabled={fields.length <=1}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            ))}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ label: '' })}
+            >
+                <PlusCircle className="mr-2 h-4 w-4" /> Thêm mục
+            </Button>
+        </div>
+    );
+};
+
+const MultipleChoiceFields: React.FC<CriterionFieldProps> = ({ criterionIndex, control }) => {
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `criteria.${criterionIndex}.multipleChoiceOptions`
+    });
+
+    return (
+        <div className="space-y-2 pt-2">
+            <FormLabel>Các lựa chọn</FormLabel>
+            {fields.map((item, k) => (
+                <div key={item.id} className="flex items-center gap-2">
+                    <FormField
+                        control={control}
+                        name={`criteria.${criterionIndex}.multipleChoiceOptions.${k}.label`}
+                        render={({ field }) => (
+                             <FormItem className="flex-1">
+                                <FormControl>
+                                    <Input {...field} placeholder={`Lựa chọn ${k + 1}`} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(k)} disabled={fields.length <=1}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            ))}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ label: '' })}
+            >
+                <PlusCircle className="mr-2 h-4 w-4" /> Thêm lựa chọn
+            </Button>
+        </div>
+    );
+};
+
 
 export default function CreateTaskPage() {
     return (
