@@ -89,12 +89,12 @@ const columns: ColumnDef<Review>[] = [
   {
     accessorKey: 'taskId',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Task ID" />,
-    cell: ({ row }) => <div className="font-medium"><Link href={`/reviews/${row.original.id}`} className="hover:underline">{row.getValue('taskId')}</Link></div>,
+    cell: ({ row }) => <div className="font-medium"><Link href={`/app/reviews/${row.original.id}`} className="hover:underline">{row.getValue('taskId')}</Link></div>,
   },
   {
     accessorKey: 'taskTitle',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Task Title" />,
-    cell: ({ row }) => <Link href={`/reviews/${row.original.id}`} className="hover:underline">{row.getValue('taskTitle')}</Link>,
+    cell: ({ row }) => <Link href={`/app/reviews/${row.original.id}`} className="hover:underline">{row.getValue('taskTitle')}</Link>,
   },
   {
     accessorKey: 'store',
@@ -120,7 +120,7 @@ const columns: ColumnDef<Review>[] = [
     id: 'actions',
     cell: ({ row }) => {
       return (
-        <Link href={`/reviews/${row.original.id}`} className="text-sm font-medium text-primary hover:underline">
+        <Link href={`/app/reviews/${row.original.id}`} className="text-sm font-medium text-primary hover:underline">
           View Details
         </Link>
       );

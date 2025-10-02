@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,14 +42,20 @@ export function LoginForm() {
     // Here you would typically handle authentication
     console.log(values);
 
-    // Simulate a successful login
     toast({
       title: "Login Successful",
-      description: "Redirecting to your dashboard...",
+      description: "Redirecting...",
     });
 
-    // Redirect to dashboard
-    router.push("/dashboard");
+    // Mock role-based redirection
+    // In a real app, you'd get the user's role from your auth provider
+    const isFieldUser = values.email.includes("field");
+
+    if (isFieldUser) {
+        router.push("/tasks"); // Redirect Field User to their task list
+    } else {
+        router.push("/app/dashboard"); // Redirect Back Office user to dashboard
+    }
   }
 
   return (
@@ -110,6 +117,9 @@ export function LoginForm() {
           <Button type="submit" className="w-full">
             Sign in
           </Button>
+           <p className="mt-4 text-xs text-center text-muted-foreground">
+              Hint: Use `user@field.com` for Field User view, or any other email for Back Office view.
+            </p>
         </div>
       </form>
     </Form>

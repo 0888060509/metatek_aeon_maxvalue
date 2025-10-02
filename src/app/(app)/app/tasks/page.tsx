@@ -84,12 +84,12 @@ const columns: ColumnDef<Task>[] = [
   {
     accessorKey: 'id',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Task ID" />,
-    cell: ({ row }) => <Link href={`/tasks/${row.original.id}`} className="font-medium hover:underline">{row.getValue('id')}</Link>,
+    cell: ({ row }) => <Link href={`/app/tasks/${row.original.id}`} className="font-medium hover:underline">{row.getValue('id')}</Link>,
   },
   {
     accessorKey: 'title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
-     cell: ({ row }) => <Link href={`/tasks/${row.original.id}`} className="hover:underline">{row.getValue('title')}</Link>,
+     cell: ({ row }) => <Link href={`/app/tasks/${row.original.id}`} className="hover:underline">{row.getValue('title')}</Link>,
   },
   {
     accessorKey: 'store',
@@ -131,11 +131,11 @@ const columns: ColumnDef<Task>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href={`/tasks/${task.id}`}>View Details</Link>
+              <Link href={`/app/tasks/${task.id}`}>View Details</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/tasks/create?clone=true">
+              <Link href="/app/tasks/create?clone=true">
                 <Copy className="mr-2 h-4 w-4" />
                 Sao chép
               </Link>
@@ -192,7 +192,7 @@ export default function TasksPage() {
         </div>
         <div className="ml-auto flex items-center gap-2">
           <Button asChild size="sm" className="gap-1">
-            <Link href="/tasks/create">
+            <Link href="/app/tasks/create">
               <PlusCircle className="h-4 w-4" />
               Create Task
             </Link>

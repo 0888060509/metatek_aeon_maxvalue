@@ -340,7 +340,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
       <div className="flex-1 space-y-4 mb-32">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-            <Link href="/reviews">
+            <Link href="/app/reviews">
               <ChevronLeft className="h-4 w-4" />
               <span className="sr-only">Back to reviews</span>
             </Link>
@@ -502,5 +502,3 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
-
-    

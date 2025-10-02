@@ -146,7 +146,7 @@ const columns: ColumnDef<Submission>[] = [
     id: 'actions',
     cell: ({ row }) => {
       return (
-        <Link href={`/reviews/${row.original.reviewId}`} className="text-sm font-medium text-primary hover:underline">
+        <Link href={`/app/reviews/${row.original.reviewId}`} className="text-sm font-medium text-primary hover:underline">
           View Details
         </Link>
       );
@@ -195,7 +195,7 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
     <div className="space-y-6">
         <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-                <Link href="/tasks">
+                <Link href="/app/tasks">
                 <ChevronLeft className="h-4 w-4" />
                 <span className="sr-only">Back to tasks</span>
                 </Link>
@@ -233,7 +233,7 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div className="space-y-1">
                         <p className="text-muted-foreground">Status</p>
-                        <div className="font-medium">{getTaskStatusBadge(task.status)}</div>
+                        <div>{getTaskStatusBadge(task.status)}</div>
                     </div>
                     <div className="space-y-1">
                         <p className="text-muted-foreground">Due Date</p>
