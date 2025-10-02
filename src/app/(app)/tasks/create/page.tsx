@@ -286,18 +286,6 @@ function CreateTaskPageContent() {
     }
   };
   
-  const handleCriterionTypeChange = (newType: string, index: number) => {
-    const currentCriterion = form.getValues(`criteria.${index}`);
-    const hasChecklistData = (currentCriterion.checklistItems?.length ?? 0) > 0 && currentCriterion.checklistItems?.[0].label !== '';
-    const hasMultipleChoiceData = (currentCriterion.multipleChoiceOptions?.length ?? 0) > 0 && currentCriterion.multipleChoiceOptions?.[0].label !== '';
-
-    if ((currentCriterion.type === 'checklist' && hasChecklistData) || (currentCriterion.type === 'multiple-choice' && hasMultipleChoiceData)) {
-      setDialogState({ open: true, index: index, newType: newType });
-    } else {
-      proceedWithChange(newType, index);
-    }
-  };
-
   const proceedWithChange = (newType: string | null, index: number | null) => {
     if (newType === null || index === null) return;
     const currentCriterion = form.getValues(`criteria.${index}`);
@@ -309,7 +297,18 @@ function CreateTaskPageContent() {
     });
     setDialogState({ open: false, index: null, newType: null });
   };
+  
+  const handleCriterionTypeChange = (newType: string, index: number) => {
+    const currentCriterion = form.getValues(`criteria.${index}`);
+    const hasChecklistData = (currentCriterion.checklistItems?.length ?? 0) > 0 && currentCriterion.checklistItems?.[0].label !== '';
+    const hasMultipleChoiceData = (currentCriterion.multipleChoiceOptions?.length ?? 0) > 0 && currentCriterion.multipleChoiceOptions?.[0].label !== '';
 
+    if ((currentCriterion.type === 'checklist' && hasChecklistData) || (currentCriterion.type === 'multiple-choice' && hasMultipleChoiceData)) {
+      setDialogState({ open: true, index: index, newType: newType });
+    } else {
+      proceedWithChange(newType, index);
+    }
+  };
 
   const renderMobilePreview = () => {
     return (
