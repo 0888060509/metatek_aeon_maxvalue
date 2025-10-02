@@ -231,6 +231,7 @@ function CreateTaskPageContent() {
       type: newType,
       checklistItems: newType === 'checklist' ? [{ label: '' }] : [],
       multipleChoiceOptions: newType === 'multiple-choice' ? [{ label: '' }] : [],
+      minPhotos: newType === 'photo-capture' ? currentCriterion.minPhotos || 1 : undefined,
     });
     setDialogState({ open: false, index: null, newType: null });
   };
@@ -293,11 +294,12 @@ function CreateTaskPageContent() {
                 <FormField
                     control={form.control}
                     name={`criteria.${criterionIndex}.minPhotos`}
+                    defaultValue={1}
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Số lượng ảnh tối thiểu</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="ví dụ: 3" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} min={1}/>
+                            <Input type="number" placeholder="ví dụ: 3" {...field} value={field.value ?? 1} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} min={1}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -1074,3 +1076,5 @@ export default function CreateTaskPage() {
         </React.Suspense>
     );
 }
+
+    
