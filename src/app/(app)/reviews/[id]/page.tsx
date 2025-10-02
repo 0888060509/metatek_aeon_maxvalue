@@ -162,6 +162,8 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
               ))}
             </CardContent>
           </Card>
+        </div>
+        <div className="space-y-6">
           <Card>
             <CardHeader>
                 <CardTitle>Trao đổi & Lịch sử</CardTitle>
@@ -212,8 +214,6 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                 </div>
             </CardFooter>
           </Card>
-        </div>
-        <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Thông tin chung</CardTitle>
