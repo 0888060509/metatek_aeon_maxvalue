@@ -266,6 +266,7 @@ function CreateTaskPageContent() {
         </div>
         <Button className="w-full">Bắt đầu thực hiện</Button>
     </div>
+    </div>
   );
 
   return (
@@ -973,5 +974,3 @@ export default function CreateTaskPage() {
         </React.Suspense>
     );
 }
-
-    
