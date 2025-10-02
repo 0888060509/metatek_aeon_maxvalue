@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from "next/link";
@@ -39,10 +38,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const reviewData = {
+const initialReviewData = {
   id: 'REV-002',
   taskId: 'TSK-003',
   taskTitle: 'Holiday Promo Setup',
@@ -84,6 +83,28 @@ const reviewData = {
 };
 
 export default function ReviewDetailPage({ params }: { params: { id: string } }) {
+  const [reviewData, setReviewData] = useState(initialReviewData);
+  const [newComment, setNewComment] = useState("");
+
+  const handleAddComment = () => {
+    if (newComment.trim() === "") return;
+
+    const commentToAdd = {
+      author: 'Ana Miller', // Assuming the manager is commenting
+      avatarId: 'user-avatar-1',
+      text: newComment,
+      timestamp: 'Vừa xong',
+      type: 'comment' as const,
+    };
+
+    setReviewData(prevData => ({
+      ...prevData,
+      comments: [...prevData.comments, commentToAdd]
+    }));
+    setNewComment("");
+  };
+
+
   const reviewImage = PlaceHolderImages.find(p => p.id === reviewData.criteria[0].submittedImageId);
   const userAvatar = PlaceHolderImages.find(p => p.id === reviewData.userAvatar);
   const managerAvatar = PlaceHolderImages.find(p => p.id === reviewData.managerAvatar);
@@ -277,8 +298,19 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                     <AvatarFallback>AM</AvatarFallback>
                 </Avatar>}
                 <div className="relative w-full">
-                    <Textarea placeholder="Nhập bình luận hoặc lý do yêu cầu làm lại..." className="pr-12"/>
-                    <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <Textarea 
+                      placeholder="Nhập bình luận hoặc lý do yêu cầu làm lại..." 
+                      className="pr-12"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleAddComment();
+                        }
+                      }}
+                    />
+                    <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={handleAddComment}>
                         <Send className="h-5 w-5"/>
                     </Button>
                 </div>
@@ -320,4 +352,3 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
   );
 
     
-}
