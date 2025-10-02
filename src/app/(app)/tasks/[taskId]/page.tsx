@@ -176,6 +176,7 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    autoResetPageIndex: false,
     state: {
       sorting,
       columnFilters,

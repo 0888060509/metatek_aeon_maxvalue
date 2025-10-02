@@ -148,6 +148,7 @@ export default function ReviewsPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    autoResetPageIndex: false,
     state: {
       sorting,
       columnFilters,
