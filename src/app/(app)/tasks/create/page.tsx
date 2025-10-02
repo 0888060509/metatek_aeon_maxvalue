@@ -19,6 +19,7 @@ import {
   ListChecks,
   Type,
   ListTodo,
+  FileUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import React from 'react';
@@ -116,8 +117,7 @@ const sampleTask = {
     assigneeRole: 'store-manager',
     store: 'region-west',
     criteria: [
-        { type: 'photo-upload', requirement: "Chụp ảnh toàn cảnh khu vực trưng bày", weight: 40, autoEvaluate: true, checklistItems: [], multipleChoiceOptions: [] },
-        { type: 'pdf-upload', requirement: "Đối chiếu và xác nhận danh sách sản phẩm trưng bày", weight: 60, autoEvaluate: false, checklistItems: [], multipleChoiceOptions: [] },
+        { type: 'visual-compliance-ai', requirement: "Chụp ảnh toàn cảnh khu vực trưng bày và đối chiếu với guideline", weight: 100, checklistItems: [], multipleChoiceOptions: [] },
     ],
     isRecurring: false,
 };
@@ -139,7 +139,7 @@ function CreateTaskPageContent() {
       taskName: "",
       taskDescription: "",
       priority: "medium",
-      criteria: [{ type: 'photo-upload', requirement: "", weight: 100, autoEvaluate: false, checklistItems: [], multipleChoiceOptions: [] }],
+      criteria: [{ type: 'visual-compliance-ai', requirement: "", weight: 100, checklistItems: [], multipleChoiceOptions: [] }],
       isRecurring: false,
       assigneeRole: "store-manager",
       recurringEndType: "never",
@@ -216,6 +216,22 @@ function CreateTaskPageContent() {
             return <ChecklistFields criterionIndex={criterionIndex} control={form.control} />;
         case 'multiple-choice':
             return <MultipleChoiceFields criterionIndex={criterionIndex} control={form.control} />;
+        case 'visual-compliance-ai':
+             return (
+                <div className="space-y-2">
+                    <FormLabel>Tài liệu tham khảo (Planogram)</FormLabel>
+                    <div className="flex items-center justify-center w-full">
+                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary/80">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <FileUp className="w-8 h-8 mb-4 text-muted-foreground" />
+                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả</p>
+                                <p className="text-xs text-muted-foreground">Vui lòng tải lên tệp PDF chứa hình ảnh mẫu và các chú thích yêu cầu</p>
+                            </div>
+                            <Input id="dropzone-file" type="file" className="hidden" accept=".pdf" />
+                        </label>
+                    </div>
+                </div>
+            );
         default:
             return null;
     }
@@ -276,13 +292,12 @@ function CreateTaskPageContent() {
                                 <Checkbox disabled />
                                 <span className="text-sm">{form.getValues(`criteria.${index}.requirement`) || `Yêu cầu cho tiêu chuẩn ${index + 1}`}</span>
                             </label>
-                            {form.getValues(`criteria.${index}.autoEvaluate`) && <span className="text-xs font-semibold text-primary">AI</span>}
+                            {form.getValues(`criteria.${index}.type`) === 'visual-compliance-ai' && <span className="text-xs font-semibold text-primary">AI</span>}
                         </div>
                          <p className="text-xs text-muted-foreground mt-1 pl-6">
                             {
                                 {
-                                    'pdf-upload': 'Tải lên tệp PDF',
-                                    'photo-upload': 'Tải lên hình ảnh',
+                                    'visual-compliance-ai': 'Kiểm tra Tuân thủ Trực quan (AI)',
                                     'checklist': 'Hoàn thành checklist',
                                     'text-input': 'Nhập văn bản',
                                     'number-input': 'Nhập số liệu',
@@ -545,16 +560,10 @@ function CreateTaskPageContent() {
                                             </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="photo-upload">
+                                                <SelectItem value="visual-compliance-ai">
                                                     <div className="flex items-center gap-2">
-                                                    <Camera className="h-4 w-4"/>
-                                                    <span>Chụp ảnh</span>
-                                                    </div>
-                                                </SelectItem>
-                                                <SelectItem value="pdf-upload">
-                                                    <div className="flex items-center gap-2">
-                                                    <FileText className="h-4 w-4"/>
-                                                    <span>Tải lên tệp PDF</span>
+                                                    <Wand2 className="h-4 w-4"/>
+                                                    <span>Kiểm tra Tuân thủ Trực quan (AI)</span>
                                                     </div>
                                                 </SelectItem>
                                                 <SelectItem value="checklist">
@@ -617,28 +626,6 @@ function CreateTaskPageContent() {
                                         </FormItem>
                                     )}
                                     />
-                                    {['photo-upload', 'pdf-upload'].includes(watchCriteria[index]?.type) && (
-                                    <FormField
-                                    control={form.control}
-                                    name={`criteria.${index}.autoEvaluate`}
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-4">
-                                            <div className="space-y-0.5">
-                                            <FormLabel>Tự động đánh giá bằng AI</FormLabel>
-                                            <FormDescription>
-                                            Chỉ áp dụng cho Chụp ảnh/PDF.
-                                            </FormDescription>
-                                        </div>
-                                        <FormControl>
-                                            <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        </FormItem>
-                                    )}
-                                    />
-                                    )}
                                 </div>
                                 </AccordionContent>
                              </div>
@@ -650,7 +637,7 @@ function CreateTaskPageContent() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => append({ type: 'photo-upload', requirement: "", weight: 100, autoEvaluate: false, checklistItems: [], multipleChoiceOptions: [] })}
+                          onClick={() => append({ type: 'visual-compliance-ai', requirement: "", weight: 100, checklistItems: [], multipleChoiceOptions: [] })}
                           >
                           <PlusCircle className="h-4 w-4 mr-2" />
                           Thêm Tiêu chuẩn
