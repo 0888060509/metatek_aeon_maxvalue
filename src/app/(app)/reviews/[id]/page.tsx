@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from "next/link";
@@ -153,15 +152,14 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Kết quả thực hiện</CardTitle>
-              <CardDescription>Báo cáo do <strong>{reviewData.submittedBy}</strong> gửi lúc {reviewData.submittedAt}.</CardDescription>
-            </CardHeader>
-            <CardContent>
+            <div>
+              <h2 className="text-xl font-semibold">Kết quả thực hiện</h2>
+              <p className="text-sm text-muted-foreground mt-1">Báo cáo do <strong>{reviewData.submittedBy}</strong> gửi lúc {reviewData.submittedAt}.</p>
+            </div>
+             <div className="mt-4 space-y-4">
               {reviewData.criteria.map(criterion => (
                 <div key={criterion.id}>
-                    <h3 className="font-semibold mb-2">{criterion.requirement}</h3>
+                    <h3 className="font-semibold mb-2 text-base">{criterion.requirement}</h3>
                     <div className="grid gap-4 items-start">
                         {reviewImage && (
                             <Dialog>
@@ -199,13 +197,15 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                                             className="rounded-lg object-contain"
                                         />
                                         <div>
-                                            <Alert variant={criterion.aiResult === 'Đạt' ? 'default' : 'destructive'} className={criterion.aiResult === 'Đạt' ? 'bg-success/10 border-success/50' : ''}>
-                                                {getAiStatusBadge(criterion.aiResult)}
-                                                <AlertTitle className="mt-2 font-semibold">Kết quả phân tích:</AlertTitle>
-                                                <AlertDescription>
+                                            <Alert variant={criterion.aiResult === 'Đạt' ? 'default' : 'destructive'} className={cn(criterion.aiResult === 'Đạt' ? 'bg-success/10 border-success/50' : '')}>
+                                                <div className="flex items-center">
+                                                    {criterion.aiResult === 'Đạt' ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                                                    <AlertTitle className="ml-2 font-semibold">Kết quả phân tích của AI: {criterion.aiResult}</AlertTitle>
+                                                </div>
+                                                <AlertDescription className="mt-2">
                                                 {criterion.aiReason}
                                                 </AlertDescription>
-                                                <Button variant="link" size="sm" className="p-0 h-auto mt-2">Xem chi tiết phân tích của AI</Button>
+                                                <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">Xem chi tiết phân tích của AI</Button>
                                             </Alert>
                                         </div>
                                     </div>
@@ -215,8 +215,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                     </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
+            </div>
         </div>
         <div className="space-y-6">
           <Card>
@@ -235,20 +234,20 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                             </Avatar>}
                             <div className="flex-1">
                                 <div className="flex items-center justify-between">
-                                    <p className="font-semibold">{comment.author}</p>
+                                    <p className="font-semibold text-sm">{comment.author}</p>
                                     <p className="text-xs text-muted-foreground">{comment.timestamp}</p>
                                 </div>
                                  <div className={cn(
-                                    "p-3 rounded-lg mt-1",
-                                    comment.type === 'rework_request' ? "bg-amber-100 border border-amber-200 dark:bg-amber-900/50 dark:border-amber-800" : "bg-secondary"
+                                    "p-3 rounded-lg mt-1 text-sm",
+                                    comment.type === 'rework_request' ? "border bg-transparent" : "bg-secondary"
                                  )}>
                                     {comment.type === 'rework_request' && 
-                                        <p className="font-semibold text-amber-800 dark:text-amber-300 flex items-center mb-1">
+                                        <p className="font-semibold text-foreground flex items-center mb-2">
                                             <RefreshCw className="h-4 w-4 mr-2" />
                                             Yêu cầu làm lại
                                         </p>
                                     }
-                                    <p className="text-sm">{comment.text}</p>
+                                    <p>{comment.text}</p>
                                 </div>
                             </div>
                         </div>
@@ -303,5 +302,5 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
         </div>
     </div>
   );
-}
 
+    
