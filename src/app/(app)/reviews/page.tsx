@@ -10,6 +10,8 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   useReactTable,
+  ColumnFiltersState,
+  SortingState,
 } from '@tanstack/react-table';
 
 import {
@@ -127,14 +129,23 @@ const columns: ColumnDef<Review>[] = [
 
 
 export default function ReviewsPage() {
-  const [data, setData] = React.useState(reviews);
+  const [data] = React.useState(reviews);
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+
    const table = useReactTable({
     data,
     columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      sorting,
+      columnFilters,
+    },
     initialState: {
         pagination: {
             pageSize: 10,
