@@ -57,7 +57,7 @@ export function AppSidebar() {
       <SidebarFooter>
          <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent transition-colors cursor-pointer">
+            <div className="flex items-center gap-3 p-2 rounded-md hover:bg-accent transition-colors cursor-pointer">
               {userAvatar && <Avatar className="h-10 w-10">
                   <AvatarImage src={userAvatar.imageUrl} alt="User" data-ai-hint={userAvatar.imageHint} />
                   <AvatarFallback>AM</AvatarFallback>
