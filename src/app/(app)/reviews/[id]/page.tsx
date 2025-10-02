@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from "next/link";
@@ -11,8 +10,7 @@ import {
     Send,
     ThumbsUp,
     RefreshCw,
-    Check,
-    Circle,
+    MessageSquarePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -139,8 +137,10 @@ const initialReviewData = {
 export default function ReviewDetailPage({ params }: { params: { id: string } }) {
   const [reviewData, setReviewData] = useState(initialReviewData);
   const [newComment, setNewComment] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectionInput, setShowRejectionInput] = useState(false);
 
-  const handleAddComment = (type: 'comment' | 'rework_request' = 'comment') => {
+  const handleAddComment = () => {
     if (newComment.trim() === "") return;
 
     const commentToAdd = {
@@ -148,16 +148,35 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
       avatarId: 'user-avatar-1',
       text: newComment,
       timestamp: 'Vừa xong',
-      type: type,
+      type: 'comment' as const,
     };
 
     setReviewData(prevData => ({
       ...prevData,
       comments: [...prevData.comments, commentToAdd],
-      status: type === 'rework_request' ? 'Rework Requested' : prevData.status
     }));
     setNewComment("");
   };
+
+  const handleRequestRework = () => {
+    if (rejectionReason.trim() === "") return;
+
+     const commentToAdd = {
+      author: 'Ana Miller',
+      avatarId: 'user-avatar-1',
+      text: rejectionReason,
+      timestamp: 'Vừa xong',
+      type: 'rework_request' as const,
+    };
+
+    setReviewData(prevData => ({
+      ...prevData,
+      comments: [...prevData.comments, commentToAdd],
+      status: 'Rework Requested'
+    }));
+    setRejectionReason("");
+    setShowRejectionInput(false);
+  }
 
   const getAiStatusBadge = (status: string) => {
     switch (status) {
@@ -170,10 +189,10 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     }
   };
 
-  const ApproveButton = ({ isMobile = false }: { isMobile?: boolean }) => {
+  const ApproveButton = () => {
     const button = (
-        <Button className={cn("w-full", isMobile ? "" : "flex-1")}>
-            <ThumbsUp className="mr-2 h-4 w-4" /> Phê duyệt
+        <Button className="w-full sm:w-auto">
+            <ThumbsUp className="mr-2 h-4 w-4" /> Duyệt
         </Button>
     );
 
@@ -198,7 +217,6 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
             </AlertDialog>
         );
     }
-
     return button;
   };
   
@@ -319,7 +337,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 space-y-4 mb-24">
+      <div className="flex-1 space-y-4 mb-32">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" className="h-7 w-7" asChild>
             <Link href="/reviews">
@@ -388,6 +406,33 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                       </div>
                   </ScrollArea>
               </CardContent>
+              <CardFooter className="flex-col items-start gap-2 border-t pt-4">
+                  <Label htmlFor="new-comment">Thêm bình luận</Label>
+                   <div className="relative w-full">
+                        <Textarea 
+                            id="new-comment"
+                            placeholder="Nhập bình luận của bạn..." 
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleAddComment();
+                            }
+                            }}
+                            className="pr-10"
+                        />
+                        <Button 
+                            type="submit" 
+                            size="icon" 
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7" 
+                            disabled={!newComment.trim()}
+                            onClick={handleAddComment}
+                        >
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </div>
+              </CardFooter>
             </Card>
             <Card>
               <CardHeader>
@@ -418,37 +463,44 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 backdrop-blur-sm">
-        <div className={cn("flex items-start gap-4 p-4", "md:ml-56")}>
-             {managerAvatar && <Avatar>
-                  <AvatarImage src={managerAvatar.imageUrl} alt="Manager" data-ai-hint={managerAvatar.imageHint}/>
-                  <AvatarFallback>AM</AvatarFallback>
-              </Avatar>}
-              <div className="flex-1 space-y-2">
-                  <Textarea 
-                    placeholder="Nhập bình luận hoặc lý do yêu cầu làm lại..." 
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleAddComment('comment');
-                      }
-                    }}
-                  />
-                  <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleAddComment('comment')} disabled={!newComment.trim()}>
-                          <Send className="mr-2 h-4 w-4"/>Gửi bình luận
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleAddComment('rework_request')} disabled={!newComment.trim()}>
-                          <RefreshCw className="mr-2 h-4 w-4" /> Yêu cầu làm lại
-                      </Button>
-                      <div className="ml-auto md:hidden">
+        <div className={cn("flex flex-col sm:flex-row items-center gap-4 p-4", "md:ml-56")}>
+            {showRejectionInput ? (
+                <div className="w-full flex-1 space-y-2">
+                    <Label htmlFor="rejection-reason">Lý do từ chối</Label>
+                    <div className="relative">
+                        <Textarea
+                            id="rejection-reason"
+                            placeholder="Nhập lý do yêu cầu làm lại..."
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            className="pr-20"
+                        />
+                         <Button 
+                            variant="secondary"
+                            size="sm" 
+                            className="absolute right-2 top-1/2 -translate-y-1/2" 
+                            disabled={!rejectionReason.trim()}
+                            onClick={handleRequestRework}
+                        >
+                            <Send className="mr-2 h-4 w-4" /> Gửi
+                        </Button>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setShowRejectionInput(false)}>Hủy</Button>
+                </div>
+            ) : (
+                <>
+                    <Button variant="destructive" className="w-full sm:w-auto flex-1 sm:flex-initial" onClick={() => setShowRejectionInput(true)}>
+                        <XCircle className="mr-2 h-4 w-4" /> Từ chối
+                    </Button>
+                    <div className="w-full sm:w-auto flex-1 sm:flex-initial">
                         <ApproveButton />
-                      </div>
-                  </div>
-              </div>
+                    </div>
+                </>
+            )}
         </div>
       </div>
     </div>
   );
 }
+
+    
