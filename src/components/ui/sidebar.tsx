@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -157,7 +158,7 @@ export const SidebarMenuButton = React.forwardRef<
       {isIconButton ? (
         <>{React.Children.toArray(children)[0]}</>
       ) : (
-        <>{children}</>
+        <span className="flex items-center gap-2">{children}</span>
       )}
     </Button>
   );

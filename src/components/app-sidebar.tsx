@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -7,7 +8,9 @@ import {
   ClipboardList,
   BarChart3,
   Settings,
-  ChevronDown
+  ChevronDown,
+  LogOut,
+  HelpCircle,
 } from "lucide-react";
 import Logo from "./logo";
 import {
@@ -76,10 +79,13 @@ export function AppSidebar() {
             <DropdownMenuItem asChild>
                 <Link href="/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuItem>
+              <HelpCircle className="mr-2 h-4 w-4" />
+              Support
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link href="/">Logout</Link>
+                <Link href="/"><LogOut className="mr-2 h-4 w-4" />Logout</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
