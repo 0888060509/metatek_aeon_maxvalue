@@ -8,12 +8,9 @@ import {
     ChevronLeft, 
     CheckCircle2,
     XCircle,
-    MessageSquare,
     Send,
     ThumbsUp,
     RefreshCw,
-    AlertTriangle,
-    Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -23,7 +20,26 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogDescription, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogTrigger 
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 import { cn } from "@/lib/utils";
 
 const reviewData = {
@@ -83,6 +99,39 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     }
   };
 
+  const ApproveButton = ({ isMobile = false }: { isMobile?: boolean }) => {
+    const button = (
+        <Button className={isMobile ? "w-full" : ""}>
+            <ThumbsUp className="mr-2 h-4 w-4" /> Phê duyệt
+        </Button>
+    );
+
+    if (reviewData.aiStatus === 'Không Đạt') {
+        return (
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    {button}
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận ghi đè và phê duyệt?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            AI gợi ý tác vụ này "Không Đạt". Bạn có chắc chắn muốn ghi đè quyết định và phê duyệt báo cáo này không?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction>Xác nhận Phê duyệt</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        );
+    }
+
+    return button;
+  };
+
+
   return (
     <div className="flex-1 space-y-4">
       <div className="flex items-center gap-4">
@@ -99,9 +148,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
           <Button variant="outline">
             <RefreshCw className="mr-2 h-4 w-4" /> Yêu cầu làm lại
           </Button>
-          <Button>
-            <ThumbsUp className="mr-2 h-4 w-4" /> Phê duyệt
-          </Button>
+          <ApproveButton />
         </div>
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
@@ -238,26 +285,13 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
               </div>
             </CardContent>
           </Card>
-           <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Ghi đè gợi ý của AI?</AlertTitle>
-            <AlertDescription>
-                AI gợi ý tác vụ này "Không Đạt". Nếu bạn phê duyệt, quyết định này sẽ được ghi đè và ghi nhận.
-            </AlertDescription>
-            <div className="mt-3 flex gap-2">
-                <Button size="sm">Phê duyệt & Ghi đè</Button>
-                <Button size="sm" variant="outline">Hủy</Button>
-            </div>
-           </Alert>
         </div>
       </div>
        <div className="md:hidden flex items-center gap-2 mt-4">
           <Button variant="outline" className="w-full">
             <RefreshCw className="mr-2 h-4 w-4" /> Yêu cầu làm lại
           </Button>
-          <Button className="w-full">
-            <ThumbsUp className="mr-2 h-4 w-4" /> Phê duyệt
-          </Button>
+          <ApproveButton isMobile={true} />
         </div>
     </div>
   );
