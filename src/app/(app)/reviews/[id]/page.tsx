@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from "next/link";
@@ -23,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 const reviewData = {
   id: 'REV-002',
@@ -235,7 +237,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
             <AlertTitle>Ghi đè gợi ý của AI?</AlertTitle>
             <AlertDescription>
                 AI gợi ý tác vụ này "Không Đạt". Nếu bạn phê duyệt, quyết định này sẽ được ghi đè và ghi nhận.
-            </VscAlertDescription>
+            </AlertDescription>
             <div className="mt-3 flex gap-2">
                 <Button size="sm">Phê duyệt & Ghi đè</Button>
                 <Button size="sm" variant="outline">Hủy</Button>
@@ -254,3 +256,5 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
+
+    
