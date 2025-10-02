@@ -311,58 +311,60 @@ function CreateTaskPageContent() {
   };
 
 
-  const renderMobilePreview = () => (
-    <div className="w-full max-w-[360px] mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold">{form.getValues("taskName") || "Tên tác vụ mẫu"}</h2>
-        <div className="flex items-center space-x-2 text-sm">
-            <span className={cn(
-                "px-2 py-0.5 rounded-full text-xs font-semibold",
-                form.getValues("priority") === "high" && "bg-destructive text-destructive-foreground",
-                form.getValues("priority") === "medium" && "bg-warning text-warning-foreground",
-                form.getValues("priority") === "low" && "bg-blue-500 text-white"
-            )}>
-                {form.getValues("priority") || "Ưu tiên"}
-            </span>
-            <span className="text-gray-500">·</span>
-            <span className="text-gray-500">Đến hạn: {form.getValues("dueDate") ? format(form.getValues("dueDate"), "dd/MM/yyyy") : "N/A"}</span>
-        </div>
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-            <p>{form.getValues("taskDescription") || "Đây là nơi hiển thị mô tả chi tiết của công việc. Nội dung có thể bao gồm hướng dẫn, ghi chú quan trọng và các yêu cầu khác."}</p>
-        </div>
-
-        <div>
-            <h3 className="font-semibold mb-2">Tiêu chuẩn thực thi</h3>
-            <div className="space-y-3">
-                {fields.map((field, index) => (
-                    <div key={field.id} className="bg-white dark:bg-gray-700 p-3 rounded-md border border-gray-200 dark:border-gray-600">
-                        <div className="flex justify-between items-center">
-                            <label className="flex items-center space-x-2">
-                                <Checkbox disabled />
-                                <span className="text-sm">{form.getValues(`criteria.${index}.requirement`) || `Yêu cầu cho tiêu chuẩn ${index + 1}`}</span>
-                            </label>
-                            {form.getValues(`criteria.${index}.type`) === 'visual-compliance-ai' && <span className="text-xs font-semibold text-primary">AI</span>}
-                        </div>
-                         <p className="text-xs text-muted-foreground mt-1 pl-6">
-                            {
-                                {
-                                    'visual-compliance-ai': 'Kiểm tra Tuân thủ Trực quan (AI)',
-                                    'photo-capture': `Chụp tối thiểu ${form.getValues(`criteria.${index}.minPhotos`) || 1} ảnh`,
-                                    'checklist': 'Hoàn thành checklist',
-                                    'text-input': 'Nhập văn bản',
-                                    'number-input': 'Nhập số liệu',
-                                    'multiple-choice': 'Chọn một đáp án'
-                                }[form.getValues(`criteria.${index}.type`)]
-                            }
-                        </p>
-                    </div>
-                ))}
+  const renderMobilePreview = () => {
+    return (
+        <div className="w-full max-w-[360px] mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
+        <div className="space-y-4">
+            <h2 className="text-xl font-bold">{form.getValues("taskName") || "Tên tác vụ mẫu"}</h2>
+            <div className="flex items-center space-x-2 text-sm">
+                <span className={cn(
+                    "px-2 py-0.5 rounded-full text-xs font-semibold",
+                    form.getValues("priority") === "high" && "bg-destructive text-destructive-foreground",
+                    form.getValues("priority") === "medium" && "bg-warning text-warning-foreground",
+                    form.getValues("priority") === "low" && "bg-blue-500 text-white"
+                )}>
+                    {form.getValues("priority") || "Ưu tiên"}
+                </span>
+                <span className="text-gray-500">·</span>
+                <span className="text-gray-500">Đến hạn: {form.getValues("dueDate") ? format(form.getValues("dueDate"), "dd/MM/yyyy") : "N/A"}</span>
             </div>
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+                <p>{form.getValues("taskDescription") || "Đây là nơi hiển thị mô tả chi tiết của công việc. Nội dung có thể bao gồm hướng dẫn, ghi chú quan trọng và các yêu cầu khác."}</p>
+            </div>
+
+            <div>
+                <h3 className="font-semibold mb-2">Tiêu chuẩn thực thi</h3>
+                <div className="space-y-3">
+                    {fields.map((field, index) => (
+                        <div key={field.id} className="bg-white dark:bg-gray-700 p-3 rounded-md border border-gray-200 dark:border-gray-600">
+                            <div className="flex justify-between items-center">
+                                <label className="flex items-center space-x-2">
+                                    <Checkbox disabled />
+                                    <span className="text-sm">{form.getValues(`criteria.${index}.requirement`) || `Yêu cầu cho tiêu chuẩn ${index + 1}`}</span>
+                                </label>
+                                {form.getValues(`criteria.${index}.type`) === 'visual-compliance-ai' && <span className="text-xs font-semibold text-primary">AI</span>}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 pl-6">
+                                {
+                                    {
+                                        'visual-compliance-ai': 'Kiểm tra Tuân thủ Trực quan (AI)',
+                                        'photo-capture': `Chụp tối thiểu ${form.getValues(`criteria.${index}.minPhotos`) || 1} ảnh`,
+                                        'checklist': 'Hoàn thành checklist',
+                                        'text-input': 'Nhập văn bản',
+                                        'number-input': 'Nhập số liệu',
+                                        'multiple-choice': 'Chọn một đáp án'
+                                    }[form.getValues(`criteria.${index}.type`)]
+                                }
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <Button className="w-full">Bắt đầu thực hiện</Button>
         </div>
-        <Button className="w-full">Bắt đầu thực hiện</Button>
-    </div>
-    </div>
-  );
+        </div>
+    );
+  };
 
   return (
     <div className="mx-auto grid max-w-5xl flex-1 auto-rows-max gap-4">
