@@ -12,6 +12,7 @@ import {
   useReactTable,
   ColumnFiltersState,
   SortingState,
+  PaginationState,
 } from '@tanstack/react-table';
 
 import {
@@ -43,7 +44,7 @@ type Review = {
 };
 
 
-const reviews: Review[] = [
+const initialReviews: Review[] = [
     { id: 'REV-001', taskId: 'TSK-002', taskTitle: 'Sanitation Audit', store: 'Uptown', submittedBy: 'John Smith', submittedAt: '2023-10-20', aiStatus: 'Đạt'},
     { id: 'REV-002', taskId: 'TSK-003', taskTitle: 'Holiday Promo Setup', store: 'Eastside', submittedBy: 'Clara Garcia', submittedAt: '2023-10-18', aiStatus: 'Không Đạt'},
     { id: 'REV-003', taskId: 'TSK-008', taskTitle: 'End-cap Display Check', store: 'Downtown', submittedBy: 'Ana Miller', submittedAt: '2023-10-21', aiStatus: 'Đạt'},
@@ -129,15 +130,24 @@ const columns: ColumnDef<Review>[] = [
 
 
 export default function ReviewsPage() {
-  const [data] = React.useState(reviews);
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [data, setData] = React.useState<Review[]>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  React.useEffect(() => {
+    setData(initialReviews);
+  }, []);
 
    const table = useReactTable({
     data,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -145,12 +155,8 @@ export default function ReviewsPage() {
     state: {
       sorting,
       columnFilters,
+      pagination,
     },
-    initialState: {
-        pagination: {
-            pageSize: 10,
-        }
-    }
   });
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;

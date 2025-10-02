@@ -51,7 +51,7 @@ type Task = {
 };
 
 
-const tasks: Task[] = [
+const initialTasks: Task[] = [
     { id: 'TSK-001', title: 'Q3 Product Display Check', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'Completed', dueDate: '2023-10-15' },
     { id: 'TSK-002', title: 'Sanitation Audit', store: 'Uptown', region: 'West', assignedTo: 'John Smith', status: 'Pending Approval', dueDate: '2023-10-20' },
     { id: 'TSK-003', title: 'Holiday Promo Setup', store: 'Eastside', region: 'East', assignedTo: 'Clara Garcia', status: 'Issue', dueDate: '2023-10-18' },
@@ -150,7 +150,7 @@ const columns: ColumnDef<Task>[] = [
 
 
 export default function TasksPage() {
-  const [data] = React.useState(tasks);
+  const [data, setData] = React.useState<Task[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -159,6 +159,9 @@ export default function TasksPage() {
     pageSize: 5,
   });
 
+  React.useEffect(() => {
+    setData(initialTasks);
+  }, []);
 
   const table = useReactTable({
     data,

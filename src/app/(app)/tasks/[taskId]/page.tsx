@@ -65,7 +65,7 @@ type Submission = {
   reviewStatus: 'Pending' | 'Approved' | 'Rework'
 };
 
-const submissions: Submission[] = [
+const initialSubmissions: Submission[] = [
     { reviewId: 'REV-001', store: 'Uptown', submittedBy: 'John Smith', submittedAt: '2023-10-20', aiStatus: 'Đạt', reviewStatus: 'Approved' },
     { reviewId: 'REV-008', store: 'Downtown', submittedBy: 'Michael Johnson', submittedAt: '2023-10-19', aiStatus: 'Không Đạt', reviewStatus: 'Rework' },
     { reviewId: 'REV-012', store: 'Suburbia', submittedBy: 'Emily White', submittedAt: '2023-10-20', aiStatus: 'Đạt', reviewStatus: 'Pending' },
@@ -159,13 +159,17 @@ const columns: ColumnDef<Submission>[] = [
 // --- Main Component ---
 
 export default function TaskDetailPage({ params }: { params: { taskId: string } }) {
-  const [data] = React.useState(submissions);
+  const [data, setData] = React.useState<Submission[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
+
+  React.useEffect(() => {
+    setData(initialSubmissions);
+  }, []);
 
   const table = useReactTable({
     data,
