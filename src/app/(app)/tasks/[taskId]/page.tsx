@@ -158,17 +158,13 @@ const columns: ColumnDef<Submission>[] = [
 // --- Main Component ---
 
 export default function TaskDetailPage({ params }: { params: { taskId: string } }) {
-  const [data, setData] = React.useState<Submission[]>([]);
+  const [data] = React.useState<Submission[]>(() => [...initialSubmissions]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  React.useEffect(() => {
-    setData(initialSubmissions);
-  }, []);
 
   const table = useReactTable({
     data,
@@ -281,5 +277,3 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
     </div>
   );
 }
-
-    

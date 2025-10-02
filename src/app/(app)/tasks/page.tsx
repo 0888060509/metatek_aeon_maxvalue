@@ -150,18 +150,14 @@ const columns: ColumnDef<Task>[] = [
 
 
 export default function TasksPage() {
-  const [data, setData] = React.useState<Task[]>([]);
+  const [data] = React.useState(() => [...initialTasks]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 10,
   });
-
-  React.useEffect(() => {
-    setData(initialTasks);
-  }, []);
 
 
   const table = useReactTable({
@@ -213,5 +209,3 @@ export default function TasksPage() {
     </Card>
   );
 }
-
-    
