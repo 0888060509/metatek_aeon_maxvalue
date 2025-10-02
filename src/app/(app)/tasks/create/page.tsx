@@ -77,6 +77,7 @@ const executionCriterionSchema = z.object({
   autoEvaluate: z.boolean().optional(),
   checklistItems: z.array(checklistItemSchema).optional(),
   multipleChoiceOptions: z.array(multipleChoiceOptionSchema).optional(),
+  minPhotos: z.number().optional(),
 });
 
 
@@ -232,6 +233,22 @@ function CreateTaskPageContent() {
                     </div>
                 </div>
             );
+        case 'photo-capture':
+            return (
+                <FormField
+                    control={form.control}
+                    name={`criteria.${criterionIndex}.minPhotos`}
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Số lượng ảnh tối thiểu</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="ví dụ: 3" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} min={1}/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            );
         default:
             return null;
     }
@@ -298,6 +315,7 @@ function CreateTaskPageContent() {
                             {
                                 {
                                     'visual-compliance-ai': 'Kiểm tra Tuân thủ Trực quan (AI)',
+                                    'photo-capture': `Chụp tối thiểu ${form.getValues(`criteria.${index}.minPhotos`) || 1} ảnh`,
                                     'checklist': 'Hoàn thành checklist',
                                     'text-input': 'Nhập văn bản',
                                     'number-input': 'Nhập số liệu',
@@ -564,6 +582,12 @@ function CreateTaskPageContent() {
                                                     <div className="flex items-center gap-2">
                                                     <Wand2 className="h-4 w-4"/>
                                                     <span>Kiểm tra Tuân thủ Trực quan (AI)</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="photo-capture">
+                                                    <div className="flex items-center gap-2">
+                                                    <Camera className="h-4 w-4"/>
+                                                    <span>Chụp ảnh</span>
                                                     </div>
                                                 </SelectItem>
                                                 <SelectItem value="checklist">
@@ -1018,5 +1042,3 @@ export default function CreateTaskPage() {
         </React.Suspense>
     );
 }
-
-    
