@@ -6,6 +6,9 @@ import Link from 'next/link';
 import {
   ColumnDef,
   getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 
@@ -139,8 +142,8 @@ export default function ReviewsPage() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getCoreRowModel(),
-    getFilteredRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     initialState: {
         pagination: {
             pageSize: 10,
