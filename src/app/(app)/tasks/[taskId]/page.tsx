@@ -237,7 +237,7 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div className="space-y-1">
                         <p className="text-muted-foreground">Status</p>
-                        <p className="font-medium">{getTaskStatusBadge(task.status)}</p>
+                        <div className="font-medium">{getTaskStatusBadge(task.status)}</div>
                     </div>
                     <div className="space-y-1">
                         <p className="text-muted-foreground">Due Date</p>
