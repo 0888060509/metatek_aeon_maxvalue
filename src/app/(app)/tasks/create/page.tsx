@@ -542,7 +542,7 @@ function CreateTaskPageContent() {
                     <Accordion type="multiple" className="w-full space-y-4" defaultValue={[`criterion-0`]}>
                         {fields.map((field, index) => (
                         <AccordionItem key={field.id} value={`criterion-${index}`} className="border-none">
-                             <div className="p-4 border rounded-lg space-y-4">
+                             <div className="p-4 border rounded-lg space-y-4 relative">
                                 <AccordionTrigger className="p-0 hover:no-underline">
                                     <div className="flex items-center gap-2 flex-1">
                                         <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
