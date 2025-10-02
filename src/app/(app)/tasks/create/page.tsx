@@ -4,7 +4,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   GripVertical,
@@ -13,6 +13,7 @@ import {
   Calendar as CalendarIcon,
   UploadCloud,
   Eye,
+  Wand2,
 } from "lucide-react";
 import { format } from "date-fns";
 import React from 'react';
@@ -91,9 +92,26 @@ const formSchema = z.object({
 
 const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
-export default function CreateTaskPage() {
+const sampleTask = {
+    taskName: "Kiểm tra trưng bày khuyến mãi Q4",
+    taskDescription: "Đảm bảo tất cả các sản phẩm trong chương trình khuyến mãi Q4 được trưng bày đúng theo guideline tại các vị trí nổi bật.",
+    priority: 'high',
+    assigneeRole: 'store-manager',
+    store: 'region-west',
+    criteria: [
+        { type: 'photo-upload', requirement: "Chụp ảnh toàn cảnh khu vực trưng bày", weight: 40, autoEvaluate: true },
+        { type: 'pdf-upload', requirement: "Đối chiếu và xác nhận danh sách sản phẩm trưng bày", weight: 60, autoEvaluate: false },
+    ],
+    isRecurring: false,
+};
+
+
+function CreateTaskPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  const isClone = searchParams.get('clone') === 'true';
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -108,6 +126,23 @@ export default function CreateTaskPage() {
     },
   });
 
+  React.useEffect(() => {
+    if (isClone) {
+        form.reset({
+            ...sampleTask,
+            // @ts-ignore
+            startDate: null,
+            // @ts-ignore
+            dueDate: null,
+        });
+         toast({
+            title: "Tác vụ đã được sao chép",
+            description: "Vui lòng điền Ngày bắt đầu và Ngày hết hạn mới.",
+        });
+    }
+  }, [isClone, form, toast]);
+
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "criteria",
@@ -119,12 +154,36 @@ export default function CreateTaskPage() {
   const watchWeeklyDays = form.watch("recurringWeeklyDays", []);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    console.log("Submitted values:", values);
     toast({
       title: "Giao việc thành công",
       description: `Đã giao tác vụ "${values.taskName}" thành công.`,
     });
     router.push("/tasks");
+  }
+
+  function onSaveDraft() {
+    const values = form.getValues();
+    console.log("Saving draft:", values);
+    toast({
+        title: "Lưu nháp thành công",
+        description: `Tác vụ "${values.taskName}" đã được lưu vào bản nháp.`,
+    });
+    router.push("/tasks");
+  }
+
+  function handleCreateFromTemplate() {
+    form.reset({
+        ...sampleTask,
+        // @ts-ignore
+        startDate: null, 
+        // @ts-ignore
+        dueDate: null,
+    });
+    toast({
+        title: "Đã tải mẫu tác vụ",
+        description: "Vui lòng điền các thông tin còn lại và phân công.",
+    });
   }
 
   const renderMobilePreview = () => (
@@ -182,9 +241,10 @@ export default function CreateTaskPage() {
               </Link>
             </Button>
             <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-              Tạo Tác vụ Mới
+              {isClone ? "Sao chép Tác vụ" : "Tạo Tác vụ Mới"}
             </h1>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
+                 <Button variant="outline" size="sm" type="button" onClick={handleCreateFromTemplate}><Wand2 className="mr-2 h-4 w-4" /> Tạo từ mẫu</Button>
                 <Dialog>
                     <DialogTrigger asChild>
                          <Button variant="outline" size="sm" type="button"><Eye className="mr-2 h-4 w-4" /> Xem trước</Button>
@@ -201,6 +261,9 @@ export default function CreateTaskPage() {
                 </Dialog>
               <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
                 Hủy
+              </Button>
+               <Button variant="secondary" size="sm" type="button" onClick={onSaveDraft}>
+                Lưu nháp
               </Button>
               <Button size="sm" type="submit">
                 Giao việc
@@ -253,7 +316,7 @@ export default function CreateTaskPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Mức độ ưu tiên</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Chọn mức độ ưu tiên" />
@@ -378,7 +441,7 @@ export default function CreateTaskPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Loại tiêu chuẩn</FormLabel>
-                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Chọn loại tiêu chuẩn" />
@@ -482,7 +545,7 @@ export default function CreateTaskPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Cửa hàng / Khu vực</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Chọn cửa hàng hoặc khu vực" />
@@ -506,7 +569,7 @@ export default function CreateTaskPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Giao cho Vai trò</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Chọn một vai trò" />
@@ -724,6 +787,9 @@ export default function CreateTaskPage() {
              <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
                 Hủy
               </Button>
+               <Button variant="secondary" size="sm" type="button" onClick={onSaveDraft}>
+                Lưu nháp
+              </Button>
               <Button size="sm" type="submit">
                 Giao việc
               </Button>
@@ -733,3 +799,13 @@ export default function CreateTaskPage() {
     </div>
   );
 }
+
+export default function CreateTaskPage() {
+    return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+            <CreateTaskPageContent />
+        </React.Suspense>
+    );
+}
+
+    

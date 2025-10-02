@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Copy } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const tasks = [
@@ -26,6 +26,7 @@ const tasks = [
     { id: 'TSK-004', title: 'Weekly Stock Count', store: 'Suburbia', region: 'North', assignedTo: 'Robert Brown', status: 'Overdue', dueDate: '2023-10-12' },
     { id: 'TSK-005', title: 'Fire Safety Inspection', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'In Progress', dueDate: '2023-10-25' },
     { id: 'TSK-006', title: 'New Employee Onboarding', store: 'Uptown', region: 'West', assignedTo: 'HR Dept', status: 'Completed', dueDate: '2023-10-05' },
+    { id: 'TSK-007', title: 'Q4 Product Display Check', store: 'All', region: 'All', assignedTo: 'Store Manager', status: 'Draft', dueDate: '2023-12-31' },
 ];
 
 const getStatusBadge = (status: string) => {
@@ -40,6 +41,8 @@ const getStatusBadge = (status: string) => {
             return <Badge className="bg-info hover:bg-info/90 text-info-foreground">Overdue</Badge>;
         case 'In Progress':
             return <Badge variant="secondary">In Progress</Badge>;
+        case 'Draft':
+             return <Badge variant="outline">Draft</Badge>;
         default:
             return <Badge variant="outline">{status}</Badge>;
     }
@@ -99,6 +102,12 @@ export default function TasksPage() {
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem>View Details</DropdownMenuItem>
                       <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                         <Link href="/tasks/create?clone=true">
+                            <Copy className="mr-2 h-4 w-4"/>
+                            Sao chép
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -111,3 +120,5 @@ export default function TasksPage() {
     </Card>
   );
 }
+
+  
