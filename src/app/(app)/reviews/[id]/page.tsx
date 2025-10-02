@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const initialReviewData = {
   id: 'REV-002',
@@ -77,6 +78,27 @@ const initialReviewData = {
           avatarId: 'user-avatar-3',
           text: 'Dạ em đã nhận được yêu cầu. Em sẽ kiểm tra và nộp lại ngay ạ.',
           timestamp: '10 phút trước',
+          type: 'comment'
+      },
+      {
+          author: 'Ana Miller',
+          avatarId: 'user-avatar-1',
+          text: 'Cảm ơn em. Chị sẽ chờ báo cáo mới.',
+          timestamp: '8 phút trước',
+          type: 'comment'
+      },
+      {
+          author: 'Clara Garcia',
+          avatarId: 'user-avatar-3',
+          text: 'Chị ơi, em đã cập nhật lại trưng bày và gửi lại báo cáo mới rồi ạ. Chị kiểm tra giúp em nhé.',
+          timestamp: '2 phút trước',
+          type: 'comment'
+      },
+      {
+          author: 'Ana Miller',
+          avatarId: 'user-avatar-1',
+          text: 'Ok em, để chị xem.',
+          timestamp: '1 phút trước',
           type: 'comment'
       }
   ]
@@ -259,40 +281,42 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
             <CardHeader>
                 <CardTitle>Trao đổi & Lịch sử</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-4">
-                {reviewData.comments.map((comment, index) => {
-                    const authorAvatar = PlaceHolderImages.find(p => p.id === comment.avatarId);
-                    return (
-                        <div key={index} className="flex gap-3">
-                           {authorAvatar && <Avatar>
-                                <AvatarImage src={authorAvatar.imageUrl} alt={comment.author} data-ai-hint={authorAvatar.imageHint}/>
-                                <AvatarFallback>{comment.author.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                            </Avatar>}
-                            <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                    <p className="font-semibold text-sm">{comment.author}</p>
-                                    <p className="text-xs text-muted-foreground">{comment.timestamp}</p>
-                                </div>
-                                 <div className={cn(
-                                    "p-3 rounded-lg mt-1 text-sm",
-                                    comment.type === 'rework_request' ? "border bg-transparent" : "bg-secondary"
-                                 )}>
-                                    {comment.type === 'rework_request' && 
-                                        <p className="font-semibold text-foreground flex items-center mb-2">
-                                            <RefreshCw className="h-4 w-4 mr-2" />
-                                            Yêu cầu làm lại
-                                        </p>
-                                    }
-                                    <p>{comment.text}</p>
+            <CardContent>
+                <ScrollArea className="h-96 pr-4">
+                    <div className="space-y-4">
+                    {reviewData.comments.map((comment, index) => {
+                        const authorAvatar = PlaceHolderImages.find(p => p.id === comment.avatarId);
+                        return (
+                            <div key={index} className="flex gap-3">
+                            {authorAvatar && <Avatar>
+                                    <AvatarImage src={authorAvatar.imageUrl} alt={comment.author} data-ai-hint={authorAvatar.imageHint}/>
+                                    <AvatarFallback>{comment.author.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                                </Avatar>}
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                        <p className="font-semibold text-sm">{comment.author}</p>
+                                        <p className="text-xs text-muted-foreground">{comment.timestamp}</p>
+                                    </div>
+                                    <div className={cn(
+                                        "p-3 rounded-lg mt-1 text-sm",
+                                        comment.type === 'rework_request' ? "border bg-transparent" : "bg-secondary"
+                                    )}>
+                                        {comment.type === 'rework_request' && 
+                                            <p className="font-semibold text-foreground flex items-center mb-2">
+                                                <RefreshCw className="h-4 w-4 mr-2" />
+                                                Yêu cầu làm lại
+                                            </p>
+                                        }
+                                        <p>{comment.text}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
-                </div>
+                        );
+                    })}
+                    </div>
+                </ScrollArea>
             </CardContent>
-            <CardFooter className="flex gap-2">
+            <CardFooter className="flex gap-2 border-t pt-4">
                 {managerAvatar && <Avatar>
                     <AvatarImage src={managerAvatar.imageUrl} alt="Manager" data-ai-hint={managerAvatar.imageHint}/>
                     <AvatarFallback>AM</AvatarFallback>
@@ -350,5 +374,8 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
         </div>
     </div>
   );
+
+    
+}
 
     
