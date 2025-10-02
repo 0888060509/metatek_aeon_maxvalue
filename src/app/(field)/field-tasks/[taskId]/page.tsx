@@ -1,5 +1,4 @@
 
-'use client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft } from "lucide-react";
@@ -46,8 +45,10 @@ export default function FieldTaskDetailPage({ params }: { params: { taskId: stri
             </CardContent>
         </Card>
 
-         <Button size="lg" className="w-full">
-            Submit Report
+         <Button size="lg" className="w-full" asChild>
+            <Link href={`/field-tasks/${task.id}/execute`}>
+                Start Task
+            </Link>
         </Button>
     </div>
   );
