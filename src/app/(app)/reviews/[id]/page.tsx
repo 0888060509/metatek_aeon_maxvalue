@@ -131,6 +131,12 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                                     </div>
                                 </DialogTrigger>
                                 <DialogContent className="max-w-4xl">
+                                    <DialogHeader>
+                                        <DialogTitle>Hình ảnh thực hiện</DialogTitle>
+                                        <DialogDescription>
+                                            Hình ảnh do nhân viên nộp để đánh giá tiêu chuẩn: "{criterion.requirement}"
+                                        </DialogDescription>
+                                    </DialogHeader>
                                     <Image
                                         src={reviewImage.imageUrl}
                                         alt="Submitted task evidence"
@@ -256,5 +262,3 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
-
-    
