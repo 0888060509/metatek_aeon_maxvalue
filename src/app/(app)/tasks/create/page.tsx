@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import Link from "next/link";
@@ -20,6 +22,7 @@ import {
   Type,
   ListTodo,
   FileUp,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import React from 'react';
@@ -130,6 +133,18 @@ function CreateTaskPageContent() {
   const { toast } = useToast();
   
   const [dialogState, setDialogState] = React.useState<{ open: boolean; index: number | null; newType: string | null }>({ open: false, index: null, newType: null });
+  const [uploadedFiles, setUploadedFiles] = React.useState<Record<number, File | null>>({});
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedFiles(prev => ({...prev, [index]: file}));
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => ({...prev, [index]: null}));
+  }
 
 
   const isClone = searchParams.get('clone') === 'true';
@@ -177,7 +192,7 @@ function CreateTaskPageContent() {
   const watchWeeklyDays = form.watch("recurringWeeklyDays", []);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Submitted values:", values);
+    console.log("Submitted values:", values, "Uploaded Files:", uploadedFiles);
     toast({
       title: "Giao việc thành công",
       description: `Đã giao tác vụ "${values.taskName}" thành công.`,
@@ -211,6 +226,8 @@ function CreateTaskPageContent() {
   
   const renderCriterionSpecificFields = (criterionIndex: number) => {
     const criterionType = watchCriteria[criterionIndex]?.type;
+    const file = uploadedFiles[criterionIndex];
+
 
     switch (criterionType) {
         case 'checklist':
@@ -221,16 +238,31 @@ function CreateTaskPageContent() {
              return (
                 <div className="space-y-2">
                     <FormLabel>Tài liệu tham khảo (Planogram)</FormLabel>
-                    <div className="flex items-center justify-center w-full">
-                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary/80">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <FileUp className="w-8 h-8 mb-4 text-muted-foreground" />
-                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả</p>
-                                <p className="text-xs text-muted-foreground">Vui lòng tải lên tệp PDF chứa hình ảnh mẫu và các chú thích yêu cầu</p>
+                     {file ? (
+                        <div className="flex items-center justify-between p-3 border rounded-lg bg-secondary/50">
+                            <div className="flex items-center gap-3">
+                                <FileText className="h-6 w-6 text-muted-foreground" />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-foreground">{file.name}</span>
+                                    <span className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</span>
+                                </div>
                             </div>
-                            <Input id="dropzone-file" type="file" className="hidden" accept=".pdf" />
-                        </label>
-                    </div>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => removeFile(criterionIndex)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center w-full">
+                             <label htmlFor={`dropzone-file-${criterionIndex}`} className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary/80">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <FileUp className="w-8 h-8 mb-4 text-muted-foreground" />
+                                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả</p>
+                                    <p className="text-xs text-muted-foreground">Vui lòng tải lên tệp PDF chứa hình ảnh mẫu và các chú thích yêu cầu</p>
+                                </div>
+                                <Input id={`dropzone-file-${criterionIndex}`} type="file" className="hidden" accept=".pdf" onChange={(e) => handleFileChange(e, criterionIndex)} />
+                            </label>
+                        </div>
+                    )}
                 </div>
             );
         case 'photo-capture':
@@ -713,7 +745,7 @@ function CreateTaskPageContent() {
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Chọn một vai trò" />
-                            </SelectTrigger>
+                            </Trigger>
                           </FormControl>
                           <SelectContent>
                              <SelectItem value="store-manager">Cửa hàng trưởng</SelectItem>
