@@ -58,7 +58,7 @@ const reviewData = {
       id: 'crit-1',
       requirement: 'Chụp ảnh toàn cảnh khu vực trưng bày và đối chiếu với guideline',
       type: 'visual-compliance-ai',
-      submittedImageId: 'review-image-1',
+      submittedImageId: 'task-image-2',
       aiResult: 'Không Đạt',
       aiReason: 'Sản phẩm "Festive Soda" đặt sai vị trí so với planogram. Planogram yêu cầu đặt ở kệ thứ 2, ảnh chụp cho thấy sản phẩm ở kệ thứ 3.',
       score: 0,
@@ -206,7 +206,22 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                                                 <AlertDescription className="mt-2">
                                                 {criterion.aiReason}
                                                 </AlertDescription>
-                                                <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">Xem chi tiết phân tích của AI</Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                         <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">Xem chi tiết phân tích của AI</Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Tính năng đang phát triển</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Tính năng xem chi tiết phân tích của AI đang được phát triển và sẽ sớm ra mắt.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogAction>Đã hiểu</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
                                             </Alert>
                                         </div>
                                     </div>
