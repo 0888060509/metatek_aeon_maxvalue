@@ -25,15 +25,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-    MoreHorizontal,
     CheckCircle,
     XCircle,
     BadgeCheck,
@@ -171,7 +162,12 @@ export default function ReviewsPage() {
         </div>
       </CardHeader>
       <CardContent>
-         <DataTable table={table} columns={columns} />
+         <DataTable 
+            table={table} 
+            columns={columns} 
+            filterColumnId="taskTitle"
+            filterPlaceholder="Filter by title..."
+        />
       </CardContent>
     </Card>
   );

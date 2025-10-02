@@ -181,7 +181,12 @@ export default function TasksPage() {
         </div>
       </CardHeader>
       <CardContent>
-         <DataTable table={table} columns={columns} />
+         <DataTable 
+            table={table} 
+            columns={columns} 
+            filterColumnId="title"
+            filterPlaceholder="Filter tasks..."
+        />
       </CardContent>
     </Card>
   );

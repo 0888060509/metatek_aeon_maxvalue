@@ -21,24 +21,32 @@ import { Input } from "@/components/ui/input"
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   table: TableType<TData>
+  filterColumnId?: string
+  filterPlaceholder?: string
 }
 
 export function DataTable<TData, TValue>({
   table,
   columns,
+  filterColumnId = "title",
+  filterPlaceholder = "Filter items...",
 }: DataTableProps<TData, TValue>) {
+
+  const filterColumn = table.getColumn(filterColumnId);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center">
-        <Input
-          placeholder="Filter tasks..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+        {filterColumn && (
+            <Input
+            placeholder={filterPlaceholder}
+            value={(filterColumn.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+                filterColumn.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+            />
+        )}
       </div>
       <div className="rounded-md border">
         <Table>
