@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link";
@@ -224,6 +223,30 @@ function CreateTaskPageContent() {
     });
   }
   
+  const proceedWithChange = (newType: string | null, index: number | null) => {
+    if (newType === null || index === null) return;
+    const currentCriterion = form.getValues(`criteria.${index}`);
+    update(index, {
+      ...currentCriterion,
+      type: newType,
+      checklistItems: newType === 'checklist' ? [{ label: '' }] : [],
+      multipleChoiceOptions: newType === 'multiple-choice' ? [{ label: '' }] : [],
+    });
+    setDialogState({ open: false, index: null, newType: null });
+  };
+  
+  const handleCriterionTypeChange = (newType: string, index: number) => {
+    const currentCriterion = form.getValues(`criteria.${index}`);
+    const hasChecklistData = (currentCriterion.checklistItems?.length ?? 0) > 0 && currentCriterion.checklistItems?.[0].label !== '';
+    const hasMultipleChoiceData = (currentCriterion.multipleChoiceOptions?.length ?? 0) > 0 && currentCriterion.multipleChoiceOptions?.[0].label !== '';
+
+    if ((currentCriterion.type === 'checklist' && hasChecklistData) || (currentCriterion.type === 'multiple-choice' && hasMultipleChoiceData)) {
+      setDialogState({ open: true, index: index, newType: newType });
+    } else {
+      proceedWithChange(newType, index);
+    }
+  };
+
   const renderCriterionSpecificFields = (criterionIndex: number) => {
     const criterionType = watchCriteria[criterionIndex]?.type;
     const file = uploadedFiles[criterionIndex];
@@ -283,30 +306,6 @@ function CreateTaskPageContent() {
             );
         default:
             return null;
-    }
-  };
-  
-  const proceedWithChange = (newType: string | null, index: number | null) => {
-    if (newType === null || index === null) return;
-    const currentCriterion = form.getValues(`criteria.${index}`);
-    update(index, {
-      ...currentCriterion,
-      type: newType,
-      checklistItems: newType === 'checklist' ? [{ label: '' }] : [],
-      multipleChoiceOptions: newType === 'multiple-choice' ? [{ label: '' }] : [],
-    });
-    setDialogState({ open: false, index: null, newType: null });
-  };
-  
-  const handleCriterionTypeChange = (newType: string, index: number) => {
-    const currentCriterion = form.getValues(`criteria.${index}`);
-    const hasChecklistData = (currentCriterion.checklistItems?.length ?? 0) > 0 && currentCriterion.checklistItems?.[0].label !== '';
-    const hasMultipleChoiceData = (currentCriterion.multipleChoiceOptions?.length ?? 0) > 0 && currentCriterion.multipleChoiceOptions?.[0].label !== '';
-
-    if ((currentCriterion.type === 'checklist' && hasChecklistData) || (currentCriterion.type === 'multiple-choice' && hasMultipleChoiceData)) {
-      setDialogState({ open: true, index: index, newType: newType });
-    } else {
-      proceedWithChange(newType, index);
     }
   };
 
@@ -746,7 +745,7 @@ function CreateTaskPageContent() {
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Chọn một vai trò" />
-                            </Trigger>
+                            </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                              <SelectItem value="store-manager">Cửa hàng trưởng</SelectItem>
