@@ -58,6 +58,8 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const checklistItemSchema = z.object({
   label: z.string().min(1, "Checklist item cannot be empty."),
@@ -125,6 +127,9 @@ function CreateTaskPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  
+  const [dialogState, setDialogState] = React.useState<{ open: boolean; index: number | null; newType: string | null }>({ open: false, index: null, newType: null });
+
 
   const isClone = searchParams.get('clone') === 'true';
 
@@ -215,6 +220,31 @@ function CreateTaskPageContent() {
             return null;
     }
   };
+  
+  const handleCriterionTypeChange = (newType: string, index: number) => {
+    const currentCriterion = form.getValues(`criteria.${index}`);
+    const hasChecklistData = (currentCriterion.checklistItems?.length ?? 0) > 0 && currentCriterion.checklistItems?.[0].label !== '';
+    const hasMultipleChoiceData = (currentCriterion.multipleChoiceOptions?.length ?? 0) > 0 && currentCriterion.multipleChoiceOptions?.[0].label !== '';
+
+    if ((currentCriterion.type === 'checklist' && hasChecklistData) || (currentCriterion.type === 'multiple-choice' && hasMultipleChoiceData)) {
+      setDialogState({ open: true, index: index, newType: newType });
+    } else {
+      proceedWithChange(newType, index);
+    }
+  };
+
+  const proceedWithChange = (newType: string | null, index: number | null) => {
+    if (newType === null || index === null) return;
+    const currentCriterion = form.getValues(`criteria.${index}`);
+    update(index, {
+      ...currentCriterion,
+      type: newType,
+      checklistItems: newType === 'checklist' ? [{ label: '' }] : [],
+      multipleChoiceOptions: newType === 'multiple-choice' ? [{ label: '' }] : [],
+    });
+    setDialogState({ open: false, index: null, newType: null });
+  };
+
 
   const renderMobilePreview = () => (
     <div className="w-full max-w-[360px] mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
@@ -271,6 +301,23 @@ function CreateTaskPageContent() {
 
   return (
     <div className="mx-auto grid max-w-5xl flex-1 auto-rows-max gap-4">
+      <AlertDialog
+        open={dialogState.open}
+        onOpenChange={(open) => !open && setDialogState({ open: false, index: null, newType: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn thay đổi?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Thay đổi loại tiêu chuẩn sẽ xóa các mục con đã nhập. Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDialogState({ open: false, index: null, newType: null })}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={() => proceedWithChange(dialogState.newType, dialogState.index)}>Tiếp tục</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex items-center gap-4 mb-4">
@@ -458,143 +505,146 @@ function CreateTaskPageContent() {
                       Định nghĩa các tiêu chuẩn và các bước cần thiết cho tác vụ này.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                       <div className="flex items-center gap-2">
-                        <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-                        <h4 className="font-semibold flex-1">Tiêu chuẩn {index + 1}</h4>
-                         <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(index)}
-                            disabled={fields.length <= 1}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name={`criteria.${index}.type`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Loại tiêu chuẩn</FormLabel>
-                             <Select onValueChange={(value) => {
-                                 field.onChange(value);
-                                 // Reset specific fields when type changes
-                                 const currentCriterion = form.getValues(`criteria.${index}`);
-                                 update(index, {
-                                     ...currentCriterion,
-                                     type: value,
-                                     checklistItems: value === 'checklist' ? [{ label: '' }] : [],
-                                     multipleChoiceOptions: value === 'multiple-choice' ? [{ label: '' }] : []
-                                 });
-                             }} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Chọn loại tiêu chuẩn" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="photo-upload">
-                                    <div className="flex items-center gap-2">
-                                      <Camera className="h-4 w-4"/>
-                                      <span>Chụp ảnh</span>
+                <CardContent>
+                    <Accordion type="multiple" className="w-full space-y-4" defaultValue={[`criterion-0`]}>
+                        {fields.map((field, index) => (
+                        <AccordionItem key={field.id} value={`criterion-${index}`} className="border-none">
+                             <div className="p-4 border rounded-lg space-y-4">
+                                <AccordionTrigger className="p-0 hover:no-underline">
+                                    <div className="flex items-center gap-2 flex-1">
+                                        <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+                                        <h4 className="font-semibold flex-1 text-left">
+                                          Tiêu chuẩn {index + 1}: {watchCriteria[index].requirement || <span className="text-muted-foreground font-normal">Chưa có nội dung</span>}
+                                        </h4>
                                     </div>
-                                  </SelectItem>
-                                  <SelectItem value="pdf-upload">
-                                    <div className="flex items-center gap-2">
-                                      <FileText className="h-4 w-4"/>
-                                      <span>Tải lên tệp PDF</span>
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem value="checklist">
-                                    <div className="flex items-center gap-2">
-                                      <ListChecks className="h-4 w-4"/>
-                                      <span>Checklist</span>
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem value="text-input">
-                                    <div className="flex items-center gap-2">
-                                      <Type className="h-4 w-4"/>
-                                      <span>Nhập liệu (văn bản)</span>
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem value="number-input">
-                                    <div className="flex items-center gap-2">
-                                      <Type className="h-4 w-4"/>
-                                      <span>Nhập liệu (số)</span>
-                                    </div>
-                                  </SelectItem>
-                                   <SelectItem value="multiple-choice">
-                                    <div className="flex items-center gap-2">
-                                      <ListTodo className="h-4 w-4"/>
-                                      <span>Câu hỏi Trắc nghiệm</span>
-                                    </div>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                       <FormField
-                        control={form.control}
-                        name={`criteria.${index}.requirement`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nội dung yêu cầu</FormLabel>
-                            <FormControl>
-                                <Textarea placeholder="Nhập nội dung yêu cầu/câu hỏi..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      {renderCriterionSpecificFields(index)}
-
-                      <div className="grid grid-cols-2 gap-4">
-                         <FormField
-                          control={form.control}
-                          name={`criteria.${index}.weight`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Trọng số/Điểm</FormLabel>
-                              <FormControl>
-                                  <Input type="number" placeholder="ví dụ: 100" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                         <FormField
-                          control={form.control}
-                          name={`criteria.${index}.autoEvaluate`}
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-4">
-                               <div className="space-y-0.5">
-                                <FormLabel>Tự động đánh giá bằng AI</FormLabel>
-                                <FormDescription>
-                                  Chỉ áp dụng cho Chụp ảnh/PDF.
-                                </FormDescription>
-                              </div>
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  disabled={!['photo-upload', 'pdf-upload'].includes(watchCriteria[index]?.type)}
+                                </AccordionTrigger>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => remove(index)}
+                                    disabled={fields.length <= 1}
+                                    className="absolute top-3 right-3"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                                <AccordionContent className="pt-4 space-y-4">
+                                    <FormField
+                                    control={form.control}
+                                    name={`criteria.${index}.type`}
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Loại tiêu chuẩn</FormLabel>
+                                        <Select
+                                        onValueChange={(value) => handleCriterionTypeChange(value, index)}
+                                        value={field.value}
+                                        >
+                                            <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Chọn loại tiêu chuẩn" />
+                                            </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="photo-upload">
+                                                    <div className="flex items-center gap-2">
+                                                    <Camera className="h-4 w-4"/>
+                                                    <span>Chụp ảnh</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="pdf-upload">
+                                                    <div className="flex items-center gap-2">
+                                                    <FileText className="h-4 w-4"/>
+                                                    <span>Tải lên tệp PDF</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="checklist">
+                                                    <div className="flex items-center gap-2">
+                                                    <ListChecks className="h-4 w-4"/>
+                                                    <span>Checklist</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="text-input">
+                                                    <div className="flex items-center gap-2">
+                                                    <Type className="h-4 w-4"/>
+                                                    <span>Nhập liệu (văn bản)</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="number-input">
+                                                    <div className="flex items-center gap-2">
+                                                    <Type className="h-4 w-4"/>
+                                                    <span>Nhập liệu (số)</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="multiple-choice">
+                                                    <div className="flex items-center gap-2">
+                                                    <ListTodo className="h-4 w-4"/>
+                                                    <span>Câu hỏi Trắc nghiệm</span>
+                                                    </div>
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
                                 />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2">
+                                <FormField
+                                    control={form.control}
+                                    name={`criteria.${index}.requirement`}
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Nội dung yêu cầu</FormLabel>
+                                        <FormControl>
+                                            <Textarea placeholder="Nhập nội dung yêu cầu/câu hỏi..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                
+                                {renderCriterionSpecificFields(index)}
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                    control={form.control}
+                                    name={`criteria.${index}.weight`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Trọng số/Điểm</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" placeholder="ví dụ: 100" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
+                                    <FormField
+                                    control={form.control}
+                                    name={`criteria.${index}.autoEvaluate`}
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-4">
+                                            <div className="space-y-0.5">
+                                            <FormLabel>Tự động đánh giá bằng AI</FormLabel>
+                                            <FormDescription>
+                                            Chỉ áp dụng cho Chụp ảnh/PDF.
+                                            </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                            <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                            disabled={!['photo-upload', 'pdf-upload'].includes(watchCriteria[index]?.type)}
+                                            />
+                                        </FormControl>
+                                        </FormItem>
+                                    )}
+                                    />
+                                </div>
+                                </AccordionContent>
+                             </div>
+                        </AccordionItem>
+                        ))}
+                  </Accordion>
+                  <div className="flex items-center gap-2 mt-4">
                        <Button
                           type="button"
                           variant="outline"
@@ -895,29 +945,32 @@ const ChecklistFields: React.FC<CriterionFieldProps> = ({ criterionIndex, contro
     return (
         <div className="space-y-2 pt-2">
             <FormLabel>Các mục trong checklist</FormLabel>
-            {fields.map((item, k) => (
-                <div key={item.id} className="flex items-center gap-2">
-                    <FormField
-                        control={control}
-                        name={`criteria.${criterionIndex}.checklistItems.${k}.label`}
-                        render={({ field }) => (
-                            <FormItem className="flex-1">
-                                <FormControl>
-                                    <Input {...field} placeholder={`Mục ${k + 1}`} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(k)} disabled={fields.length <=1}>
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-            ))}
+            <div className="space-y-2">
+                {fields.map((item, k) => (
+                    <div key={item.id} className="flex items-center gap-2">
+                        <FormField
+                            control={control}
+                            name={`criteria.${criterionIndex}.checklistItems.${k}.label`}
+                            render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormControl>
+                                        <Input {...field} placeholder={`Mục ${k + 1}`} className="h-9" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(k)} disabled={fields.length <=1}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ))}
+            </div>
             <Button
                 type="button"
                 variant="outline"
                 size="sm"
+                className="mt-2"
                 onClick={() => append({ label: '' })}
             >
                 <PlusCircle className="mr-2 h-4 w-4" /> Thêm mục
@@ -935,29 +988,32 @@ const MultipleChoiceFields: React.FC<CriterionFieldProps> = ({ criterionIndex, c
     return (
         <div className="space-y-2 pt-2">
             <FormLabel>Các lựa chọn</FormLabel>
-            {fields.map((item, k) => (
-                <div key={item.id} className="flex items-center gap-2">
-                    <FormField
-                        control={control}
-                        name={`criteria.${criterionIndex}.multipleChoiceOptions.${k}.label`}
-                        render={({ field }) => (
-                             <FormItem className="flex-1">
-                                <FormControl>
-                                    <Input {...field} placeholder={`Lựa chọn ${k + 1}`} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(k)} disabled={fields.length <=1}>
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-            ))}
+             <div className="space-y-2">
+                {fields.map((item, k) => (
+                    <div key={item.id} className="flex items-center gap-2">
+                        <FormField
+                            control={control}
+                            name={`criteria.${criterionIndex}.multipleChoiceOptions.${k}.label`}
+                            render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormControl>
+                                        <Input {...field} placeholder={`Lựa chọn ${k + 1}`} className="h-9" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(k)} disabled={fields.length <=1}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ))}
+            </div>
             <Button
                 type="button"
                 variant="outline"
                 size="sm"
+                className="mt-2"
                 onClick={() => append({ label: '' })}
             >
                 <PlusCircle className="mr-2 h-4 w-4" /> Thêm lựa chọn
@@ -974,3 +1030,5 @@ export default function CreateTaskPage() {
         </React.Suspense>
     );
 }
+
+    
