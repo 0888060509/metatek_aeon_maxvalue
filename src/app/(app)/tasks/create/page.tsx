@@ -10,11 +10,13 @@ import {
   GripVertical,
   PlusCircle,
   Trash2,
-  Wand2,
   Calendar as CalendarIcon,
   UploadCloud,
+  Eye,
 } from "lucide-react";
 import { format } from "date-fns";
+import React from 'react';
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +50,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 
 const executionCriterionSchema = z.object({
   type: z.string().min(1, "Criterion type is required."),
@@ -57,17 +62,34 @@ const executionCriterionSchema = z.object({
 });
 
 const formSchema = z.object({
-  taskName: z.string().min(1, "Task name is required."),
+  taskName: z.string().min(1, "Tên tác vụ là bắt buộc."),
   taskDescription: z.string().optional(),
-  priority: z.string().min(1, "Please select a priority."),
-  startDate: z.date(),
-  dueDate: z.date(),
-  assignee: z.string().min(1, "Please select an assignee."),
-  store: z.string().min(1, "Please select a store or region."),
-  criteria: z.array(executionCriterionSchema).min(1, "At least one execution criterion is required."),
+  priority: z.string().min(1, "Vui lòng chọn mức độ ưu tiên."),
+  startDate: z.date({ required_error: "Ngày bắt đầu là bắt buộc." }),
+  dueDate: z.date({ required_error: "Ngày hết hạn là bắt buộc." }),
+  assigneeRole: z.string().min(1, "Vui lòng chọn vai trò."),
+  store: z.string().min(1, "Vui lòng chọn cửa hàng hoặc khu vực."),
+  criteria: z.array(executionCriterionSchema).min(1, "Cần ít nhất một tiêu chuẩn thực thi."),
   isRecurring: z.boolean().optional(),
-  recurringFrequency: z.string().optional(),
+  recurringFrequencyType: z.enum(["weekly", "monthly", "custom"]).optional(),
+  recurringWeeklyDays: z.array(z.string()).optional(),
+  recurringMonthlyType: z.enum(["day_of_month", "day_of_week"]).optional(),
+  recurringMonthlyDay: z.number().optional(),
+  recurringCustomValue: z.number().optional(),
+  recurringCustomUnit: z.enum(["days", "weeks", "months"]).optional(),
+  recurringEndType: z.enum(["never", "on_date", "after_occurrences"]).optional(),
+  recurringEndDate: z.date().optional(),
+  recurringEndOccurrences: z.number().optional(),
+}).refine(data => !data.isRecurring || (data.isRecurring && data.recurringFrequencyType), {
+    message: "Frequency type is required for recurring tasks.",
+    path: ["recurringFrequencyType"],
+}).refine(data => !data.isRecurring || (data.isRecurring && data.recurringEndType), {
+    message: "End condition is required for recurring tasks.",
+    path: ["recurringEndType"],
 });
+
+
+const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
 export default function CreateTaskPage() {
   const router = useRouter();
@@ -79,9 +101,10 @@ export default function CreateTaskPage() {
       taskName: "",
       taskDescription: "",
       priority: "medium",
-      startDate: new Date(),
       criteria: [{ type: 'pdf-upload', requirement: "", weight: 100, autoEvaluate: false }],
       isRecurring: false,
+      assigneeRole: "store-manager",
+      recurringEndType: "never",
     },
   });
 
@@ -91,15 +114,61 @@ export default function CreateTaskPage() {
   });
 
   const watchIsRecurring = form.watch("isRecurring");
+  const watchRecurringFrequencyType = form.watch("recurringFrequencyType");
+  const watchRecurringEndType = form.watch("recurringEndType");
+  const watchWeeklyDays = form.watch("recurringWeeklyDays", []);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     toast({
-      title: "Task Created",
-      description: `Task "${values.taskName}" has been successfully created.`,
+      title: "Giao việc thành công",
+      description: `Đã giao tác vụ "${values.taskName}" thành công.`,
     });
     router.push("/tasks");
   }
+
+  const renderMobilePreview = () => (
+    <div className="w-full max-w-[360px] mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold">{form.getValues("taskName") || "Tên tác vụ mẫu"}</h2>
+        <div className="flex items-center space-x-2 text-sm">
+            <span className={cn(
+                "px-2 py-0.5 rounded-full text-xs font-semibold",
+                form.getValues("priority") === "high" && "bg-destructive text-destructive-foreground",
+                form.getValues("priority") === "medium" && "bg-warning text-warning-foreground",
+                form.getValues("priority") === "low" && "bg-blue-500 text-white"
+            )}>
+                {form.getValues("priority") || "Ưu tiên"}
+            </span>
+            <span className="text-gray-500">·</span>
+            <span className="text-gray-500">Đến hạn: {form.getValues("dueDate") ? format(form.getValues("dueDate"), "dd/MM/yyyy") : "N/A"}</span>
+        </div>
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+            <p>{form.getValues("taskDescription") || "Đây là nơi hiển thị mô tả chi tiết của công việc. Nội dung có thể bao gồm hướng dẫn, ghi chú quan trọng và các yêu cầu khác."}</p>
+        </div>
+
+        <div>
+            <h3 className="font-semibold mb-2">Tiêu chuẩn thực thi</h3>
+            <div className="space-y-3">
+                {fields.map((field, index) => (
+                    <div key={field.id} className="bg-white dark:bg-gray-700 p-3 rounded-md border border-gray-200 dark:border-gray-600">
+                        <div className="flex justify-between items-center">
+                            <label className="flex items-center space-x-2">
+                                <Checkbox disabled />
+                                <span className="text-sm">{form.getValues(`criteria.${index}.requirement`) || `Yêu cầu cho tiêu chuẩn ${index + 1}`}</span>
+                            </label>
+                            {form.getValues(`criteria.${index}.autoEvaluate`) && <span className="text-xs font-semibold text-primary">AI</span>}
+                        </div>
+                         <p className="text-xs text-muted-foreground mt-1 pl-6">
+                            {form.getValues(`criteria.${index}.type`) === 'pdf-upload' ? 'Tải lên tệp PDF' : 'Tải lên hình ảnh'}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        </div>
+        <Button className="w-full">Bắt đầu thực hiện</Button>
+    </div>
+  </div>);
 
   return (
     <div className="mx-auto grid max-w-5xl flex-1 auto-rows-max gap-4">
@@ -113,14 +182,28 @@ export default function CreateTaskPage() {
               </Link>
             </Button>
             <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-              Create New Task
+              Tạo Tác vụ Mới
             </h1>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
+                <Dialog>
+                    <DialogTrigger asChild>
+                         <Button variant="outline" size="sm" type="button"><Eye className="mr-2 h-4 w-4" /> Xem trước</Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                        <DialogTitle>Xem trước trên di động</DialogTitle>
+                        <DialogDescription>
+                            Đây là cách tác vụ sẽ hiển thị trên ứng dụng của nhân viên.
+                        </DialogDescription>
+                        </DialogHeader>
+                        {renderMobilePreview()}
+                    </DialogContent>
+                </Dialog>
               <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
-                Cancel
+                Hủy
               </Button>
               <Button size="sm" type="submit">
-                Assign Task
+                Giao việc
               </Button>
             </div>
           </div>
@@ -128,9 +211,9 @@ export default function CreateTaskPage() {
             <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Task Details</CardTitle>
+                  <CardTitle>Chi tiết Tác vụ</CardTitle>
                   <CardDescription>
-                    Fill in the main details of the task.
+                    Điền các thông tin chính của tác vụ.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -139,9 +222,9 @@ export default function CreateTaskPage() {
                     name="taskName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Task Name</FormLabel>
+                        <FormLabel>Tên tác vụ</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Q3 Promotion Setup" {...field} />
+                          <Input placeholder="ví dụ: Kiểm tra trưng bày khuyến mãi Q3" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -152,10 +235,10 @@ export default function CreateTaskPage() {
                     name="taskDescription"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormLabel>Mô tả chi tiết (Tùy chọn)</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Add a brief description about what this task entails."
+                            placeholder="Nhập nội dung hướng dẫn cho người thực thi..."
                             {...field}
                           />
                         </FormControl>
@@ -169,17 +252,17 @@ export default function CreateTaskPage() {
                       name="priority"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Priority</FormLabel>
+                          <FormLabel>Mức độ ưu tiên</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select priority" />
+                                <SelectValue placeholder="Chọn mức độ ưu tiên" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="high">High</SelectItem>
-                              <SelectItem value="medium">Medium</SelectItem>
-                              <SelectItem value="low">Low</SelectItem>
+                              <SelectItem value="high">Cao</SelectItem>
+                              <SelectItem value="medium">Trung bình</SelectItem>
+                              <SelectItem value="low">Thấp</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -191,7 +274,7 @@ export default function CreateTaskPage() {
                       name="startDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>Start Date</FormLabel>
+                          <FormLabel>Ngày bắt đầu</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -205,7 +288,7 @@ export default function CreateTaskPage() {
                                   {field.value ? (
                                     format(field.value, "PPP")
                                   ) : (
-                                    <span>Pick a date</span>
+                                    <span>Chọn ngày</span>
                                   )}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
@@ -229,7 +312,7 @@ export default function CreateTaskPage() {
                       name="dueDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>Due Date</FormLabel>
+                          <FormLabel>Ngày hết hạn</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -243,7 +326,7 @@ export default function CreateTaskPage() {
                                   {field.value ? (
                                     format(field.value, "PPP")
                                   ) : (
-                                    <span>Pick a date</span>
+                                    <span>Chọn ngày</span>
                                   )}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
@@ -267,9 +350,9 @@ export default function CreateTaskPage() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>Execution Criteria</CardTitle>
+                  <CardTitle>Tiêu chuẩn thực thi</CardTitle>
                   <CardDescription>
-                      Define the standards and steps required for this task.
+                      Định nghĩa các tiêu chuẩn và các bước cần thiết cho tác vụ này.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -277,7 +360,7 @@ export default function CreateTaskPage() {
                     <div key={field.id} className="p-4 border rounded-lg space-y-4">
                        <div className="flex items-center gap-2">
                         <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-                        <h4 className="font-semibold flex-1">Criterion {index + 1}</h4>
+                        <h4 className="font-semibold flex-1">Tiêu chuẩn {index + 1}</h4>
                          <Button
                             type="button"
                             variant="ghost"
@@ -294,24 +377,24 @@ export default function CreateTaskPage() {
                         name={`criteria.${index}.type`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Criterion Type</FormLabel>
+                            <FormLabel>Loại tiêu chuẩn</FormLabel>
                              <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select criterion type" />
+                                    <SelectValue placeholder="Chọn loại tiêu chuẩn" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                   <SelectItem value="pdf-upload">
                                     <div className="flex items-center gap-2">
                                       <UploadCloud className="h-4 w-4"/>
-                                      <span>Upload PDF File</span>
+                                      <span>Tải lên tệp PDF</span>
                                     </div>
                                   </SelectItem>
                                   <SelectItem value="photo-upload">
                                     <div className="flex items-center gap-2">
                                       <UploadCloud className="h-4 w-4"/>
-                                      <span>Upload Photo</span>
+                                      <span>Tải lên hình ảnh</span>
                                     </div>
                                   </SelectItem>
                                 </SelectContent>
@@ -325,9 +408,9 @@ export default function CreateTaskPage() {
                         name={`criteria.${index}.requirement`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Requirement</FormLabel>
+                            <FormLabel>Nội dung yêu cầu</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Enter requirement content..." {...field} />
+                                <Textarea placeholder="Nhập nội dung yêu cầu..." {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -339,9 +422,9 @@ export default function CreateTaskPage() {
                           name={`criteria.${index}.weight`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Weight/Score</FormLabel>
+                              <FormLabel>Trọng số/Điểm</FormLabel>
                               <FormControl>
-                                  <Input type="number" placeholder="e.g. 100" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
+                                  <Input type="number" placeholder="ví dụ: 100" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -353,9 +436,9 @@ export default function CreateTaskPage() {
                           render={({ field }) => (
                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-4">
                                <div className="space-y-0.5">
-                                <FormLabel>Evaluate with AI</FormLabel>
+                                <FormLabel>Tự động đánh giá bằng AI</FormLabel>
                                 <FormDescription>
-                                  Automatically evaluate PDF uploads.
+                                  Tự động đánh giá các tệp tải lên.
                                 </FormDescription>
                               </div>
                               <FormControl>
@@ -378,7 +461,7 @@ export default function CreateTaskPage() {
                           onClick={() => append({ type: 'pdf-upload', requirement: "", weight: 100, autoEvaluate: false })}
                           >
                           <PlusCircle className="h-4 w-4 mr-2" />
-                          Add Criterion
+                          Thêm Tiêu chuẩn
                       </Button>
                   </div>
                 </CardContent>
@@ -387,9 +470,9 @@ export default function CreateTaskPage() {
             <div className="grid auto-rows-max items-start gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Assignment</CardTitle>
+                  <CardTitle>Phân công</CardTitle>
                   <CardDescription>
-                    Assign this task to a specific store or team.
+                    Gán tác vụ này cho một cửa hàng hoặc khu vực cụ thể.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -398,19 +481,19 @@ export default function CreateTaskPage() {
                     name="store"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Store / Region</FormLabel>
+                        <FormLabel>Cửa hàng / Khu vực</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a store or region" />
+                              <SelectValue placeholder="Chọn cửa hàng hoặc khu vực" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="all-system">All System</SelectItem>
-                            <SelectItem value="region-west">Region: West</SelectItem>
-                            <SelectItem value="region-east">Region: East</SelectItem>
-                            <SelectItem value="store-123">Store #123 (Downtown)</SelectItem>
-                            <SelectItem value="store-456">Store #456 (Uptown)</SelectItem>
+                            <SelectItem value="all-system">Toàn hệ thống</SelectItem>
+                            <SelectItem value="region-west">Khu vực: Miền Tây</SelectItem>
+                            <SelectItem value="region-east">Khu vực: Miền Đông</SelectItem>
+                            <SelectItem value="store-123">Cửa hàng #123 (Trung tâm)</SelectItem>
+                            <SelectItem value="store-456">Cửa hàng #456 (Ngoại ô)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -419,20 +502,20 @@ export default function CreateTaskPage() {
                   />
                    <FormField
                     control={form.control}
-                    name="assignee"
+                    name="assigneeRole"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Assignee</FormLabel>
+                        <FormLabel>Giao cho Vai trò</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select an assignee" />
+                              <SelectValue placeholder="Chọn một vai trò" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                             <SelectItem value="ana-miller">Ana Miller</SelectItem>
-                             <SelectItem value="john-smith">John Smith</SelectItem>
-                             <SelectItem value="clara-garcia">Clara Garcia</SelectItem>
+                             <SelectItem value="store-manager">Cửa hàng trưởng</SelectItem>
+                             <SelectItem value="shift-supervisor">Giám sát ca</SelectItem>
+                             <SelectItem value="field-staff">Nhân viên</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -442,70 +525,211 @@ export default function CreateTaskPage() {
                 </CardContent>
               </Card>
                <Card>
-                <CardHeader>
-                  <CardTitle>Scheduling</CardTitle>
-                  <CardDescription>Configure recurring task settings.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6">
+                    <CardHeader>
+                    <CardTitle>Lên lịch</CardTitle>
+                    <CardDescription>Cấu hình cài đặt tác vụ lặp lại.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
                     <FormField
-                      control={form.control}
-                      name="isRecurring"
-                      render={({ field }) => (
+                        control={form.control}
+                        name="isRecurring"
+                        render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                          <div className="space-y-0.5">
-                            <FormLabel>Repeat Task</FormLabel>
-                          </div>
-                          <FormControl>
+                            <div className="space-y-0.5">
+                            <FormLabel>Lặp lại Tác vụ</FormLabel>
+                            </div>
+                            <FormControl>
                             <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
                             />
-                          </FormControl>
+                            </FormControl>
                         </FormItem>
-                      )}
+                        )}
                     />
                     {watchIsRecurring && (
-                       <FormField
-                          control={form.control}
-                          name="recurringFrequency"
-                          render={({ field }) => (
+                        <div className="space-y-4 pt-2">
+                        <FormField
+                            control={form.control}
+                            name="recurringFrequencyType"
+                            render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Frequency</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormLabel>Tần suất</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select frequency" />
-                                  </SelectTrigger>
+                                    <SelectTrigger>
+                                    <SelectValue placeholder="Chọn tần suất" />
+                                    </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="daily">Daily</SelectItem>
-                                  <SelectItem value="weekly">Weekly</SelectItem>
-                                  <SelectItem value="monthly">Monthly</SelectItem>
+                                    <SelectItem value="weekly">Hàng tuần</SelectItem>
+                                    <SelectItem value="monthly">Hàng tháng</SelectItem>
+                                    <SelectItem value="custom">Tùy chỉnh</SelectItem>
                                 </SelectContent>
-                              </Select>
-                              <FormMessage />
+                                </Select>
+                                <FormMessage />
                             </FormItem>
-                          )}
+                            )}
                         />
+                        {watchRecurringFrequencyType === 'weekly' && (
+                            <FormField
+                                control={form.control}
+                                name="recurringWeeklyDays"
+                                render={() => (
+                                <FormItem>
+                                    <FormLabel>Vào các ngày</FormLabel>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {daysOfWeek.map(day => (
+                                            <Button
+                                                key={day}
+                                                type="button"
+                                                variant={watchWeeklyDays.includes(day) ? 'secondary' : 'outline'}
+                                                size="sm"
+                                                onClick={() => {
+                                                    const currentDays = form.getValues('recurringWeeklyDays') || [];
+                                                    const newDays = currentDays.includes(day)
+                                                    ? currentDays.filter(d => d !== day)
+                                                    : [...currentDays, day];
+                                                    form.setValue('recurringWeeklyDays', newDays, { shouldValidate: true });
+                                                }}
+                                                className="capitalize"
+                                            >
+                                                {day.substring(0,3)}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        )}
+
+                        {watchRecurringFrequencyType === 'monthly' && (
+                            <FormField
+                                control={form.control}
+                                name="recurringMonthlyDay"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Vào ngày</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" placeholder="ví dụ: 15" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} min={1} max={31}/>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
+                        <FormField
+                            control={form.control}
+                            name="recurringEndType"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Kết thúc lặp lại</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        className="flex flex-col space-y-1"
+                                        >
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                            <RadioGroupItem value="never" />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">Không bao giờ</FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                            <RadioGroupItem value="on_date" />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">Vào ngày</FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                            <RadioGroupItem value="after_occurrences" />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">Sau</FormLabel>
+                                        </FormItem>
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {watchRecurringEndType === 'on_date' && (
+                             <FormField
+                                control={form.control}
+                                name="recurringEndDate"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full pl-3 text-left font-normal",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                            >
+                                            {field.value ? (
+                                                format(field.value, "PPP")
+                                            ) : (
+                                                <span>Chọn ngày kết thúc</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            initialFocus
+                                        />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
+                         {watchRecurringEndType === 'after_occurrences' && (
+                             <FormField
+                                control={form.control}
+                                name="recurringEndOccurrences"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <div className="flex items-center gap-2">
+                                            <Input type="number" className="w-20" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                                            <span>lần lặp lại</span>
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        )}
+                        </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                </Card>
             </div>
           </div>
           <div className="flex items-center justify-center gap-2 md:hidden mt-4">
-            <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
-              Cancel
-            </Button>
-            <Button size="sm" type="submit">
-              Assign Task
-            </Button>
+             <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
+                Hủy
+              </Button>
+              <Button size="sm" type="submit">
+                Giao việc
+              </Button>
           </div>
         </form>
       </Form>
     </div>
   );
 }
-
-    
