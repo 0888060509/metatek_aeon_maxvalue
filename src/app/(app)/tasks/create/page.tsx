@@ -617,6 +617,7 @@ function CreateTaskPageContent() {
                                         </FormItem>
                                     )}
                                     />
+                                    {['photo-upload', 'pdf-upload'].includes(watchCriteria[index]?.type) && (
                                     <FormField
                                     control={form.control}
                                     name={`criteria.${index}.autoEvaluate`}
@@ -632,12 +633,12 @@ function CreateTaskPageContent() {
                                             <Checkbox
                                             checked={field.value}
                                             onCheckedChange={field.onChange}
-                                            disabled={!['photo-upload', 'pdf-upload'].includes(watchCriteria[index]?.type)}
                                             />
                                         </FormControl>
                                         </FormItem>
                                     )}
                                     />
+                                    )}
                                 </div>
                                 </AccordionContent>
                              </div>
