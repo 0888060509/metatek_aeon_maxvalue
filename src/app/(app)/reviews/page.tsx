@@ -130,17 +130,13 @@ const columns: ColumnDef<Review>[] = [
 
 
 export default function ReviewsPage() {
-  const [data, setData] = React.useState<Review[]>([]);
+  const [data] = React.useState(() => [...initialReviews]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  React.useEffect(() => {
-    setData(initialReviews);
-  }, []);
 
    const table = useReactTable({
     data,

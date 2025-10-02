@@ -150,7 +150,7 @@ const columns: ColumnDef<Task>[] = [
 
 
 export default function TasksPage() {
-  const [data, setData] = React.useState<Task[]>([]);
+  const [data] = React.useState(() => [...initialTasks]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -158,10 +158,6 @@ export default function TasksPage() {
     pageIndex: 0,
     pageSize: 5,
   });
-
-  React.useEffect(() => {
-    setData(initialTasks);
-  }, []);
 
   const table = useReactTable({
     data,
