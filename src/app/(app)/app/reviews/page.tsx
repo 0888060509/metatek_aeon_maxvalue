@@ -13,6 +13,7 @@ import {
   ColumnFiltersState,
   SortingState,
   PaginationState,
+  RowSelectionState,
 } from '@tanstack/react-table';
 
 import {
@@ -32,6 +33,7 @@ import {
     XCircle,
     BadgeCheck,
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type Review = {
   id: string;
@@ -87,9 +89,9 @@ const columns: ColumnDef<Review>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'taskId',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Task ID" />,
-    cell: ({ row }) => <div className="font-medium"><Link href={`/app/reviews/${row.original.id}`} className="hover:underline">{row.getValue('taskId')}</Link></div>,
+    accessorKey: 'id',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Review ID" />,
+    cell: ({ row }) => <div className="font-medium"><Link href={`/app/reviews/${row.original.id}`} className="hover:underline">{row.getValue('id')}</Link></div>,
   },
   {
     accessorKey: 'taskTitle',
@@ -130,19 +132,22 @@ const columns: ColumnDef<Review>[] = [
 
 
 export default function ReviewsPage() {
-  const [data] = React.useState(() => [...initialReviews]);
+  const [data, setData] = React.useState(() => [...initialReviews]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
+  const { toast } = useToast();
 
    const table = useReactTable({
     data,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -152,12 +157,44 @@ export default function ReviewsPage() {
     state: {
       sorting,
       columnFilters,
+      rowSelection,
       pagination,
     },
   });
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
-  const canBulkApprove = selectedRows.length > 0 && selectedRows.every(row => row.original.aiStatus === 'Đạt');
+  const canBulkApprove = selectedRows.length > 0;
+  
+  const handleBulkApprove = () => {
+    const validRowsToApprove = selectedRows.filter(row => row.original.aiStatus === 'Đạt');
+    const invalidRowCount = selectedRows.length - validRowsToApprove.length;
+    
+    if(validRowsToApprove.length === 0) {
+        toast({
+            variant: "destructive",
+            title: "Không thể duyệt hàng loạt",
+            description: "Không có bài nộp nào được chọn có trạng thái AI là 'Đạt' để có thể duyệt.",
+        });
+        return;
+    }
+    
+    const approvedIds = validRowsToApprove.map(row => row.original.id);
+    
+    // In a real app, you would make an API call to approve these IDs
+    console.log("Approving IDs:", approvedIds);
+    
+    // Filter out the approved rows from the main data
+    setData(prevData => prevData.filter(review => !approvedIds.includes(review.id)));
+    
+    // Clear selection
+    table.resetRowSelection();
+
+    toast({
+        title: "Duyệt hàng loạt thành công",
+        description: `Đã duyệt thành công ${validRowsToApprove.length} bài nộp. ${invalidRowCount > 0 ? `${invalidRowCount} bài nộp không hợp lệ đã được bỏ qua.` : ''}`,
+    });
+  }
+
 
   return (
     <Card>
@@ -169,7 +206,7 @@ export default function ReviewsPage() {
           </CardDescription>
         </div>
         <div className="ml-auto flex items-center gap-2">
-           <Button disabled={!canBulkApprove}>
+           <Button disabled={!canBulkApprove} onClick={handleBulkApprove}>
               <BadgeCheck className="mr-2 h-4 w-4" />
               Bulk Approve ({selectedRows.length})
           </Button>
