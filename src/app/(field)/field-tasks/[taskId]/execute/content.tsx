@@ -10,7 +10,7 @@ import { ChevronLeft, Camera, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import React, from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -214,18 +214,20 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                             )}
                             <div>
                                <Label className="font-semibold">Ảnh chụp thực tế</Label>
-                               <div className="grid grid-cols-3 gap-2 mt-2">
+                               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-2">
                                    {images.map((imgSrc, index) => (
-                                       <div key={index} className="relative">
-                                           <Image src={imgSrc} alt={`Captured image ${index + 1}`} width={150} height={150} className="rounded-md object-cover"/>
-                                            <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full" onClick={() => handleRemoveImage(criterion.id, index)}>
-                                                <X className="h-4 w-4"/>
-                                            </Button>
+                                       <div key={index} className="relative group aspect-square">
+                                           <Image src={imgSrc} alt={`Captured image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw" className="rounded-md object-cover"/>
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleRemoveImage(criterion.id, index)}>
+                                                    <X className="h-4 w-4"/>
+                                                </Button>
+                                            </div>
                                        </div>
                                    ))}
-                                    <Button variant="outline" className="flex flex-col items-center justify-center aspect-square h-full" onClick={() => handleCaptureImage(criterion.id)}>
-                                        <Camera className="h-6 w-6"/>
-                                        <span className="text-xs mt-1">Chụp ảnh</span>
+                                    <Button variant="outline" className="flex flex-col items-center justify-center aspect-square border-dashed" onClick={() => handleCaptureImage(criterion.id)}>
+                                        <Camera className="h-8 w-8 text-muted-foreground"/>
+                                        <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
                                     </Button>
                                </div>
                             </div>
@@ -305,18 +307,20 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                         <CardContent className="pt-6 space-y-4">
                             <div>
                                <Label className="font-semibold">Ảnh đã chụp ({images.length}/{criterion.minPhotos})</Label>
-                               <div className="grid grid-cols-3 gap-2 mt-2">
+                               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-2">
                                    {images.map((imgSrc, index) => (
-                                       <div key={index} className="relative">
-                                           <Image src={imgSrc} alt={`Captured image ${index + 1}`} width={150} height={150} className="rounded-md object-cover"/>
-                                            <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full" onClick={() => handleRemoveImage(criterion.id, index)}>
-                                                <X className="h-4 w-4"/>
-                                            </Button>
+                                       <div key={index} className="relative group aspect-square">
+                                           <Image src={imgSrc} alt={`Captured image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw" className="rounded-md object-cover"/>
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleRemoveImage(criterion.id, index)}>
+                                                    <X className="h-4 w-4"/>
+                                                </Button>
+                                            </div>
                                        </div>
                                    ))}
-                                    <Button variant="outline" className="flex flex-col items-center justify-center aspect-square h-full" onClick={() => handleCaptureImage(criterion.id)}>
-                                        <Camera className="h-6 w-6"/>
-                                        <span className="text-xs mt-1">Chụp ảnh</span>
+                                    <Button variant="outline" className="flex flex-col items-center justify-center aspect-square border-dashed" onClick={() => handleCaptureImage(criterion.id)}>
+                                        <Camera className="h-8 w-8 text-muted-foreground"/>
+                                        <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
                                     </Button>
                                </div>
                                {images.length < criterion.minPhotos && (
@@ -375,5 +379,3 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
         </div>
     );
 }
-
-    
