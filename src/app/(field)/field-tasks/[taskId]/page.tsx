@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
+import { useParams } from 'next/navigation';
 
 
 // In a real app, you would fetch task details based on params.taskId
@@ -69,8 +70,10 @@ const tasks = {
 };
 
 
-export default function FieldTaskDetailPage({ params }: { params: { taskId: string } }) {
-  const [taskData, setTaskData] = useState(tasks[params.taskId as keyof typeof tasks] || tasks['TSK-002']);
+export default function FieldTaskDetailPage() {
+  const params = useParams();
+  const taskId = params.taskId as string;
+  const [taskData, setTaskData] = useState(tasks[taskId as keyof typeof tasks] || tasks['TSK-002']);
   const [newComment, setNewComment] = useState("");
 
   const handleAddComment = () => {
