@@ -12,6 +12,7 @@ import {
   LogOut,
   HelpCircle,
   ClipboardCheck,
+  Bell,
 } from "lucide-react";
 import Logo from "./logo";
 import {
@@ -25,12 +26,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const menuItems = [
   { href: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/app/tasks", label: "Tasks", icon: ClipboardList },
   { href: "/app/reviews", label: "Reviews", icon: ClipboardCheck },
   { href: "/app/reports", label: "Reports", icon: BarChart3 },
+  { href: "/app/notifications", label: "Notifications", icon: Bell },
   { href: "/app/settings", label: "Settings", icon: Settings },
 ];
 
@@ -53,8 +56,10 @@ export function AppSidebar() {
                 tooltip={item.label}
               >
                 <Link href={item.href}>
-                  <item.icon />
-                  <span>{item.label}</span>
+                  <span className={cn("flex items-center gap-3")}>
+                    <item.icon />
+                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                  </span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
