@@ -23,8 +23,9 @@ import {
   FileUp,
   X,
 } from "lucide-react";
-import { format, setHours, setMinutes, parse } from "date-fns";
+import { format, setHours, setMinutes, parse, differenceInMilliseconds, add, addDays, addWeeks, addMonths, getDay, setDate, nextDay } from "date-fns";
 import React from 'react';
+import { vi } from 'date-fns/locale';
 
 
 import { Button } from "@/components/ui/button";
@@ -96,13 +97,13 @@ const formSchema = z.object({
   store: z.string().min(1, "Vui lòng chọn cửa hàng hoặc khu vực."),
   criteria: z.array(executionCriterionSchema).min(1, "Cần ít nhất một tiêu chuẩn thực thi."),
   isRecurring: z.boolean().optional(),
-  recurringFrequencyType: z.enum(["weekly", "monthly", "custom"]).optional(),
+  recurringFrequencyType: z.string().optional(),
   recurringWeeklyDays: z.array(z.string()).optional(),
-  recurringMonthlyType: z.enum(["day_of_month", "day_of_week"]).optional(),
+  recurringMonthlyType: z.string().optional(),
   recurringMonthlyDay: z.number().optional(),
   recurringCustomValue: z.number().optional(),
-  recurringCustomUnit: z.enum(["days", "weeks", "months"]).optional(),
-  recurringEndType: z.enum(["never", "on_date", "after_occurrences"]).optional(),
+  recurringCustomUnit: z.string().optional(),
+  recurringEndType: z.string().optional(),
   recurringEndDate: z.date().optional(),
   recurringEndOccurrences: z.number().optional(),
 }).refine(data => !data.isRecurring || (data.isRecurring && data.recurringFrequencyType), {
@@ -114,7 +115,8 @@ const formSchema = z.object({
 });
 
 
-const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+const dayNameToIndex: { [key: string]: number } = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
 
 const sampleTask = {
     taskName: "Kiểm tra trưng bày khuyến mãi Q4",
@@ -163,8 +165,12 @@ function CreateTaskPageContent() {
       isRecurring: false,
       assigneeRole: "store-manager",
       recurringEndType: "never",
+      recurringWeeklyDays: [],
     },
   });
+  
+  const watchedFormValues = form.watch();
+
 
   React.useEffect(() => {
     if (isClone) {
@@ -190,13 +196,6 @@ function CreateTaskPageContent() {
     name: "criteria",
   });
   
-  const watchCriteria = form.watch("criteria");
-
-  const watchIsRecurring = form.watch("isRecurring");
-  const watchRecurringFrequencyType = form.watch("recurringFrequencyType");
-  const watchRecurringEndType = form.watch("recurringEndType");
-  const watchWeeklyDays = form.watch("recurringWeeklyDays", []);
-
   const combineDateTime = (date: Date, time: string): Date => {
     const [hours, minutes] = time.split(':').map(Number);
     let newDate = setHours(date, hours);
@@ -274,7 +273,7 @@ function CreateTaskPageContent() {
   };
 
   const renderCriterionSpecificFields = (criterionIndex: number) => {
-    const criterionType = watchCriteria[criterionIndex]?.type;
+    const criterionType = watchedFormValues.criteria[criterionIndex]?.type;
     const file = uploadedFiles[criterionIndex];
 
 
@@ -337,52 +336,51 @@ function CreateTaskPageContent() {
   };
 
   const renderMobilePreview = () => {
-    const dueDate = form.getValues("dueDate");
-    const dueTime = form.getValues("dueTime");
+    const { taskName, taskDescription, priority, dueDate, dueTime, criteria } = watchedFormValues;
     const fullDueDate = dueDate && dueTime ? combineDateTime(dueDate, dueTime) : null;
 
     return (
         <div className="w-full max-w-[360px] mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
         <div className="space-y-4">
-            <h2 className="text-xl font-bold">{form.getValues("taskName") || "Tên tác vụ mẫu"}</h2>
+            <h2 className="text-xl font-bold">{taskName || "Tên tác vụ mẫu"}</h2>
             <div className="flex items-center space-x-2 text-sm">
                 <span className={cn(
                     "px-2 py-0.5 rounded-full text-xs font-semibold",
-                    form.getValues("priority") === "high" && "bg-destructive text-destructive-foreground",
-                    form.getValues("priority") === "medium" && "bg-warning text-warning-foreground",
-                    form.getValues("priority") === "low" && "bg-blue-500 text-white"
+                    priority === "high" && "bg-destructive text-destructive-foreground",
+                    priority === "medium" && "bg-warning text-warning-foreground",
+                    priority === "low" && "bg-blue-500 text-white"
                 )}>
-                    {form.getValues("priority") || "Ưu tiên"}
+                    {priority || "Ưu tiên"}
                 </span>
                 <span className="text-gray-500">·</span>
                 <span className="text-gray-500">Đến hạn: {fullDueDate ? format(fullDueDate, "dd/MM/yyyy HH:mm") : "N/A"}</span>
             </div>
             <div className="prose prose-sm dark:prose-invert max-w-none">
-                <p>{form.getValues("taskDescription") || "Đây là nơi hiển thị mô tả chi tiết của công việc. Nội dung có thể bao gồm hướng dẫn, ghi chú quan trọng và các yêu cầu khác."}</p>
+                <p>{taskDescription || "Đây là nơi hiển thị mô tả chi tiết của công việc. Nội dung có thể bao gồm hướng dẫn, ghi chú quan trọng và các yêu cầu khác."}</p>
             </div>
 
             <div>
                 <h3 className="font-semibold mb-2">Tiêu chuẩn thực thi</h3>
                 <div className="space-y-3">
-                    {fields.map((field, index) => (
-                        <div key={field.id} className="bg-white dark:bg-gray-700 p-3 rounded-md border border-gray-200 dark:border-gray-600">
+                    {criteria.map((field, index) => (
+                        <div key={index} className="bg-white dark:bg-gray-700 p-3 rounded-md border border-gray-200 dark:border-gray-600">
                             <div className="flex justify-between items-center">
                                 <label className="flex items-center space-x-2">
                                     <Checkbox disabled />
-                                    <span className="text-sm">{form.getValues(`criteria.${index}.requirement`) || `Yêu cầu cho tiêu chuẩn ${index + 1}`}</span>
+                                    <span className="text-sm">{field.requirement || `Yêu cầu cho tiêu chuẩn ${index + 1}`}</span>
                                 </label>
-                                {form.getValues(`criteria.${index}.type`) === 'visual-compliance-ai' && <span className="text-xs font-semibold text-primary">AI</span>}
+                                {field.type === 'visual-compliance-ai' && <span className="text-xs font-semibold text-primary">AI</span>}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1 pl-6">
                                 {
                                     {
                                         'visual-compliance-ai': 'Kiểm tra Tuân thủ Trực quan (AI)',
-                                        'photo-capture': `Chụp tối thiểu ${form.getValues(`criteria.${index}.minPhotos`) || 1} ảnh`,
+                                        'photo-capture': `Chụp tối thiểu ${field.minPhotos || 1} ảnh`,
                                         'checklist': 'Hoàn thành checklist',
                                         'text-input': 'Nhập văn bản',
                                         'number-input': 'Nhập số liệu',
                                         'multiple-choice': 'Chọn một đáp án'
-                                    }[form.getValues(`criteria.${index}.type`)]
+                                    }[field.type]
                                 }
                             </p>
                         </div>
@@ -394,6 +392,79 @@ function CreateTaskPageContent() {
         </div>
     );
   };
+  
+    const calculateOccurrences = () => {
+    const {
+      startDate,
+      startTime,
+      dueDate,
+      dueTime,
+      isRecurring,
+      recurringFrequencyType,
+      recurringWeeklyDays,
+      recurringMonthlyDay,
+      recurringEndType,
+      recurringEndDate,
+      recurringEndOccurrences,
+    } = watchedFormValues;
+
+    if (!isRecurring || !startDate || !startTime || !dueDate || !dueTime || !recurringFrequencyType) {
+      return [];
+    }
+
+    const initialStart = combineDateTime(startDate, startTime);
+    const initialDue = combineDateTime(dueDate, dueTime);
+    if (initialStart >= initialDue) return [];
+
+    const taskDuration = differenceInMilliseconds(initialDue, initialStart);
+    
+    let occurrences = [];
+    let currentStartDate = initialStart;
+    const maxOccurrences = 5;
+
+    while (occurrences.length < maxOccurrences) {
+        if (recurringEndType === 'on_date' && recurringEndDate && currentStartDate > recurringEndDate) {
+            break;
+        }
+        if (recurringEndType === 'after_occurrences' && recurringEndOccurrences && occurrences.length >= recurringEndOccurrences) {
+            break;
+        }
+
+        if (recurringFrequencyType === 'weekly') {
+            if (!recurringWeeklyDays || recurringWeeklyDays.length === 0) break;
+            
+            const sortedDays = recurringWeeklyDays.map(d => dayNameToIndex[d]).sort((a,b) => a - b);
+            const currentDayIndex = getDay(currentStartDate);
+
+            let nextDayIndex = sortedDays.find(dayIndex => dayIndex > currentDayIndex);
+            if (nextDayIndex === undefined) { // Wrap to next week
+                 currentStartDate = addWeeks(currentStartDate, 1);
+                 currentStartDate = setDate(currentStartDate, currentStartDate.getDate() - currentDayIndex + sortedDays[0]);
+            } else {
+                 currentStartDate = nextDay(currentStartDate, nextDayIndex as any);
+            }
+
+        } else if (recurringFrequencyType === 'monthly') {
+            if (!recurringMonthlyDay || recurringMonthlyDay < 1 || recurringMonthlyDay > 31) break;
+            currentStartDate = addMonths(currentStartDate, 1);
+            currentStartDate = setDate(currentStartDate, recurringMonthlyDay);
+        } else { // Daily for now
+             currentStartDate = addDays(currentStartDate, 1);
+        }
+
+        if (currentStartDate > new Date(8640000000000000)) break; // Break for invalid dates
+        
+        occurrences.push({
+            start: currentStartDate,
+            due: add(currentStartDate, { milliseconds: taskDuration }),
+        });
+    }
+
+    return occurrences;
+  };
+  
+  const upcomingOccurrences = calculateOccurrences();
+
 
   return (
     <div className="mx-auto grid max-w-5xl flex-1 auto-rows-max gap-4">
@@ -533,7 +604,7 @@ function CreateTaskPageContent() {
                                 >
                                   <CalendarIcon className="mr-2 h-4 w-4" />
                                   {field.value ? (
-                                    format(field.value, "PPP")
+                                    format(field.value, "PPP", { locale: vi })
                                   ) : (
                                     <span>Chọn ngày</span>
                                   )}
@@ -586,7 +657,7 @@ function CreateTaskPageContent() {
                                 >
                                   <CalendarIcon className="mr-2 h-4 w-4" />
                                   {field.value ? (
-                                    format(field.value, "PPP")
+                                    format(field.value, "PPP", { locale: vi })
                                   ) : (
                                     <span>Chọn ngày</span>
                                   )}
@@ -638,7 +709,7 @@ function CreateTaskPageContent() {
                                     <div className="flex items-center gap-2 flex-1">
                                         <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
                                         <h4 className="font-semibold flex-1 text-left">
-                                          Tiêu chuẩn {index + 1}: {watchCriteria[index].requirement || <span className="text-muted-foreground font-normal">Chưa có nội dung</span>}
+                                          Tiêu chuẩn {index + 1}: {watchedFormValues.criteria[index].requirement || <span className="text-muted-foreground font-normal">Chưa có nội dung</span>}
                                         </h4>
                                     </div>
                                 </AccordionTrigger>
@@ -841,7 +912,7 @@ function CreateTaskPageContent() {
                         </FormItem>
                         )}
                     />
-                    {watchIsRecurring && (
+                    {watchedFormValues.isRecurring && (
                         <div className="space-y-4 pt-2">
                         <FormField
                             control={form.control}
@@ -856,16 +927,16 @@ function CreateTaskPageContent() {
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
+                                    <SelectItem value="daily">Hàng ngày</SelectItem>
                                     <SelectItem value="weekly">Hàng tuần</SelectItem>
                                     <SelectItem value="monthly">Hàng tháng</SelectItem>
-                                    <SelectItem value="custom">Tùy chỉnh</SelectItem>
                                 </SelectContent>
                                 </Select>
                                 <FormMessage />
                             </FormItem>
                             )}
                         />
-                        {watchRecurringFrequencyType === 'weekly' && (
+                        {watchedFormValues.recurringFrequencyType === 'weekly' && (
                             <FormField
                                 control={form.control}
                                 name="recurringWeeklyDays"
@@ -873,11 +944,11 @@ function CreateTaskPageContent() {
                                 <FormItem>
                                     <FormLabel>Vào các ngày</FormLabel>
                                     <div className="grid grid-cols-4 gap-2">
-                                        {daysOfWeek.map(day => (
+                                        {daysOfWeek.map((day) => (
                                             <Button
                                                 key={day}
                                                 type="button"
-                                                variant={watchWeeklyDays.includes(day) ? 'secondary' : 'outline'}
+                                                variant={watchedFormValues.recurringWeeklyDays?.includes(day) ? 'secondary' : 'outline'}
                                                 size="sm"
                                                 onClick={() => {
                                                     const currentDays = form.getValues('recurringWeeklyDays') || [];
@@ -898,7 +969,7 @@ function CreateTaskPageContent() {
                             />
                         )}
 
-                        {watchRecurringFrequencyType === 'monthly' && (
+                        {watchedFormValues.recurringFrequencyType === 'monthly' && (
                             <FormField
                                 control={form.control}
                                 name="recurringMonthlyDay"
@@ -951,7 +1022,7 @@ function CreateTaskPageContent() {
                             )}
                         />
 
-                        {watchRecurringEndType === 'on_date' && (
+                        {watchedFormValues.recurringEndType === 'on_date' && (
                              <FormField
                                 control={form.control}
                                 name="recurringEndDate"
@@ -968,7 +1039,7 @@ function CreateTaskPageContent() {
                                             )}
                                             >
                                             {field.value ? (
-                                                format(field.value, "PPP")
+                                                format(field.value, "PPP", { locale: vi })
                                             ) : (
                                                 <span>Chọn ngày kết thúc</span>
                                             )}
@@ -991,7 +1062,7 @@ function CreateTaskPageContent() {
                             />
                         )}
 
-                         {watchRecurringEndType === 'after_occurrences' && (
+                         {watchedFormValues.recurringEndType === 'after_occurrences' && (
                              <FormField
                                 control={form.control}
                                 name="recurringEndOccurrences"
@@ -1007,6 +1078,19 @@ function CreateTaskPageContent() {
                                 </FormItem>
                                 )}
                             />
+                        )}
+                        
+                        {upcomingOccurrences.length > 0 && (
+                            <div className="space-y-2 rounded-md border p-4">
+                                <h4 className="text-sm font-semibold">Dự báo 5 lần lặp lại tiếp theo</h4>
+                                <ul className="space-y-2 text-sm text-muted-foreground">
+                                    {upcomingOccurrences.map((occ, i) => (
+                                        <li key={i} className="text-xs">
+                                            <span className="font-medium text-foreground">{i + 1}.</span> Bắt đầu: {format(occ.start, 'dd/MM/yyyy, HH:mm')} - Hết hạn: {format(occ.due, 'dd/MM/yyyy, HH:mm')}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         )}
                         </div>
                     )}
@@ -1133,3 +1217,4 @@ export default function CreateTaskPage() {
         </React.Suspense>
     );
 }
+
