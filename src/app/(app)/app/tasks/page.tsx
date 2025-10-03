@@ -29,6 +29,9 @@ import {
   Copy,
   MoreHorizontal,
   PlusCircle,
+  Trash2,
+  Pencil,
+  Eye,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -36,6 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
@@ -133,16 +137,23 @@ const columns: ColumnDef<Task>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href={`/app/tasks/${task.id}`}>View Details</Link>
+              <Link href={`/app/tasks/${task.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/app/tasks/create?clone=true">
                 <Copy className="mr-2 h-4 w-4" />
-                Sao chép
+                Duplicate
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">Delete</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
