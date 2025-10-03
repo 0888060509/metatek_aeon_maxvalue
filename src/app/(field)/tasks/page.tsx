@@ -11,11 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from 'react';
 
 const tasks = [
-    { id: 'TSK-002', title: 'Sanitation Audit', store: 'Uptown', status: 'In Progress', dueDate: '2023-10-20', points: 150 },
-    { id: 'TSK-003', title: 'Holiday Promo Setup', store: 'Eastside', status: 'Rework', dueDate: '2023-10-18', points: 250 },
-    { id: 'TSK-004', title: 'Weekly Stock Count', store: 'Suburbia', status: 'Overdue', dueDate: '2023-10-12', points: 100 },
-    { id: 'TSK-005', title: 'Fire Safety Inspection', store: 'Downtown', status: 'New', dueDate: '2023-10-25', points: 200 },
+    { id: 'TSK-002', title: 'Sanitation Audit (AI)', store: 'Uptown', status: 'In Progress', dueDate: '2023-10-20', points: 150 },
+    { id: 'TSK-003', title: 'Holiday Promo Setup (Rework)', store: 'Eastside', status: 'Rework', dueDate: '2023-10-18', points: 250 },
+    { id: 'TSK-004', title: 'Weekly Stock Count (Overdue)', store: 'Suburbia', status: 'Overdue', dueDate: '2023-10-12', points: 100 },
+    { id: 'TSK-005', title: 'Fire Safety Inspection (New)', store: 'Downtown', status: 'New', dueDate: '2023-10-25', points: 200 },
     { id: 'TSK-001', title: 'Q3 Product Display Check', store: 'Downtown', status: 'Completed', dueDate: '2023-10-15', points: 120 },
+    { id: 'TSK-011', title: 'Temperature Log (Input)', store: 'Eastside', status: 'In Progress', dueDate: '2023-10-28', points: 50 },
+    { id: 'TSK-012', title: 'End-of-day Report (Multiple Criteria)', store: 'Downtown', status: 'New', dueDate: '2023-10-29', points: 300 },
 ];
 
 const getStatusInfo = (status: string) => {
