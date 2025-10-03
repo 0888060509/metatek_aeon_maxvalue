@@ -1,9 +1,10 @@
+
 import Image from "next/image";
 import { LoginForm } from "@/components/login-form";
 import Logo from "@/components/logo";
 import {PlaceHolderImages} from "@/lib/placeholder-images";
 
-export default function Home() {
+export default function LoginPage() {
   const loginImage = PlaceHolderImages.find(p => p.id === 'login-background');
   return (
     <main className="flex min-h-screen">

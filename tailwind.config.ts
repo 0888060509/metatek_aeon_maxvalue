@@ -10,6 +10,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        sans: ['"Open Sans"', 'sans-serif'],
         body: ['"Open Sans"', 'sans-serif'],
         headline: ['"Open Sans"', 'sans-serif'],
         code: ['monospace'],

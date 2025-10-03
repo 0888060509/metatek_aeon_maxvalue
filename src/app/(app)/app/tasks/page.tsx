@@ -51,14 +51,16 @@ type Task = {
 };
 
 
-const tasks: Task[] = [
+const initialTasks: Task[] = [
     { id: 'TSK-001', title: 'Q3 Product Display Check', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'Completed', dueDate: '2023-10-15' },
-    { id: 'TSK-002', title: 'Sanitation Audit', store: 'Uptown', region: 'West', assignedTo: 'John Smith', status: 'Pending Approval', dueDate: '2023-10-20' },
-    { id: 'TSK-003', title: 'Holiday Promo Setup', store: 'Eastside', region: 'East', assignedTo: 'Clara Garcia', status: 'Issue', dueDate: '2023-10-18' },
-    { id: 'TSK-004', title: 'Weekly Stock Count', store: 'Suburbia', region: 'North', assignedTo: 'Robert Brown', status: 'Overdue', dueDate: '2023-10-12' },
-    { id: 'TSK-005', title: 'Fire Safety Inspection', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'In Progress', dueDate: '2023-10-25' },
+    { id: 'TSK-002', title: 'Sanitation Audit (AI)', store: 'Uptown', region: 'West', assignedTo: 'John Smith', status: 'Pending Approval', dueDate: '2023-10-20' },
+    { id: 'TSK-003', title: 'Holiday Promo Setup (Rework)', store: 'Eastside', region: 'East', assignedTo: 'Clara Garcia', status: 'Issue', dueDate: '2023-10-18' },
+    { id: 'TSK-004', title: 'Weekly Stock Count (Overdue)', store: 'Suburbia', region: 'North', assignedTo: 'Robert Brown', status: 'Overdue', dueDate: '2023-10-12' },
+    { id: 'TSK-005', title: 'Fire Safety Inspection (In Progress)', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'In Progress', dueDate: '2023-10-25' },
     { id: 'TSK-006', title: 'New Employee Onboarding', store: 'Uptown', region: 'West', assignedTo: 'HR Dept', status: 'Completed', dueDate: '2023-10-05' },
-    { id: 'TSK-007', title: 'Q4 Product Display Check', store: 'All', region: 'All', assignedTo: 'Store Manager', status: 'Draft', dueDate: '2023-12-31' },
+    { id: 'TSK-007', title: 'Q4 Product Display (Draft)', store: 'All', region: 'All', assignedTo: 'Store Manager', status: 'Draft', dueDate: '2023-12-31' },
+    { id: 'TSK-011', title: 'Temperature Log (Input)', store: 'Eastside', region: 'East', assignedTo: 'Clara Garcia', status: 'In Progress', dueDate: '2023-10-28' },
+    { id: 'TSK-012', title: 'End-of-day Report (Multiple Criteria)', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'In Progress', dueDate: '2023-10-29' },
 ];
 
 const getStatusBadge = (status: Task['status']) => {
@@ -84,11 +86,12 @@ const columns: ColumnDef<Task>[] = [
   {
     accessorKey: 'id',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Task ID" />,
-    cell: ({ row }) => <div className="font-medium">{row.getValue('id')}</div>,
+    cell: ({ row }) => <Link href={`/app/tasks/${row.original.id}`} className="font-medium hover:underline">{row.getValue('id')}</Link>,
   },
   {
     accessorKey: 'title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
+     cell: ({ row }) => <Link href={`/app/tasks/${row.original.id}`} className="hover:underline">{row.getValue('title')}</Link>,
   },
   {
     accessorKey: 'store',
@@ -129,10 +132,12 @@ const columns: ColumnDef<Task>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/app/tasks/${task.id}`}>View Details</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/tasks/create?clone=true">
+              <Link href="/app/tasks/create?clone=true">
                 <Copy className="mr-2 h-4 w-4" />
                 Sao chép
               </Link>
@@ -147,13 +152,13 @@ const columns: ColumnDef<Task>[] = [
 
 
 export default function TasksPage() {
-  const [data] = React.useState(tasks);
+  const [data] = React.useState(() => [...initialTasks]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 10,
   });
 
 
@@ -168,6 +173,7 @@ export default function TasksPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    autoResetPageIndex: false,
     state: {
       sorting,
       columnFilters,
@@ -188,7 +194,7 @@ export default function TasksPage() {
         </div>
         <div className="ml-auto flex items-center gap-2">
           <Button asChild size="sm" className="gap-1">
-            <Link href="/tasks/create">
+            <Link href="/app/tasks/create">
               <PlusCircle className="h-4 w-4" />
               Create Task
             </Link>

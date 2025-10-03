@@ -44,7 +44,7 @@ type Review = {
 };
 
 
-const reviews: Review[] = [
+const initialReviews: Review[] = [
     { id: 'REV-001', taskId: 'TSK-002', taskTitle: 'Sanitation Audit', store: 'Uptown', submittedBy: 'John Smith', submittedAt: '2023-10-20', aiStatus: 'Đạt'},
     { id: 'REV-002', taskId: 'TSK-003', taskTitle: 'Holiday Promo Setup', store: 'Eastside', submittedBy: 'Clara Garcia', submittedAt: '2023-10-18', aiStatus: 'Không Đạt'},
     { id: 'REV-003', taskId: 'TSK-008', taskTitle: 'End-cap Display Check', store: 'Downtown', submittedBy: 'Ana Miller', submittedAt: '2023-10-21', aiStatus: 'Đạt'},
@@ -89,12 +89,12 @@ const columns: ColumnDef<Review>[] = [
   {
     accessorKey: 'taskId',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Task ID" />,
-    cell: ({ row }) => <div className="font-medium"><Link href={`/reviews/${row.original.id}`} className="hover:underline">{row.getValue('taskId')}</Link></div>,
+    cell: ({ row }) => <div className="font-medium"><Link href={`/app/reviews/${row.original.id}`} className="hover:underline">{row.getValue('taskId')}</Link></div>,
   },
   {
     accessorKey: 'taskTitle',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Task Title" />,
-    cell: ({ row }) => <Link href={`/reviews/${row.original.id}`} className="hover:underline">{row.getValue('taskTitle')}</Link>,
+    cell: ({ row }) => <Link href={`/app/reviews/${row.original.id}`} className="hover:underline">{row.getValue('taskTitle')}</Link>,
   },
   {
     accessorKey: 'store',
@@ -120,7 +120,7 @@ const columns: ColumnDef<Review>[] = [
     id: 'actions',
     cell: ({ row }) => {
       return (
-        <Link href={`/reviews/${row.original.id}`} className="text-sm font-medium text-primary hover:underline">
+        <Link href={`/app/reviews/${row.original.id}`} className="text-sm font-medium text-primary hover:underline">
           View Details
         </Link>
       );
@@ -130,7 +130,7 @@ const columns: ColumnDef<Review>[] = [
 
 
 export default function ReviewsPage() {
-  const [data] = React.useState(reviews);
+  const [data] = React.useState(() => [...initialReviews]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
@@ -148,6 +148,7 @@ export default function ReviewsPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    autoResetPageIndex: false,
     state: {
       sorting,
       columnFilters,

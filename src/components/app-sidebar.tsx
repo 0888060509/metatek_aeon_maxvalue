@@ -27,10 +27,10 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 const menuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/tasks", label: "Tasks", icon: ClipboardList },
-  { href: "/reviews", label: "Reviews", icon: ClipboardCheck },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/app/tasks", label: "Tasks", icon: ClipboardList },
+  { href: "/app/reviews", label: "Reviews", icon: ClipboardCheck },
+  { href: "/app/reports", label: "Reports", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
@@ -79,7 +79,7 @@ export function AppSidebar() {
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link href="/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link>
+                <Link href="/app/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <HelpCircle className="mr-2 h-4 w-4" />

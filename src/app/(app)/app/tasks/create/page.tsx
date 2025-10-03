@@ -196,7 +196,7 @@ function CreateTaskPageContent() {
       title: "Giao việc thành công",
       description: `Đã giao tác vụ "${values.taskName}" thành công.`,
     });
-    router.push("/tasks");
+    router.push("/app/tasks");
   }
 
   function onSaveDraft() {
@@ -206,7 +206,7 @@ function CreateTaskPageContent() {
         title: "Lưu nháp thành công",
         description: `Tác vụ "${values.taskName}" đã được lưu vào bản nháp.`,
     });
-    router.push("/tasks");
+    router.push("/app/tasks");
   }
 
   function handleCreateFromTemplate() {
@@ -389,7 +389,7 @@ function CreateTaskPageContent() {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex items-center gap-4 mb-4">
             <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-              <Link href="/tasks">
+              <Link href="/app/tasks">
                 <ChevronLeft className="h-4 w-4" />
                 <span className="sr-only">Back</span>
               </Link>

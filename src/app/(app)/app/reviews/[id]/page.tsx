@@ -39,13 +39,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const initialReviewData = {
   id: 'REV-002',
@@ -136,21 +135,13 @@ const initialReviewData = {
 };
 
 export default function ReviewDetailPage({ params }: { params: { id: string } }) {
-  const [reviewData, setReviewData] = useState<typeof initialReviewData | null>(null);
+  const [reviewData, setReviewData] = useState(initialReviewData);
   const [newComment, setNewComment] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionInput, setShowRejectionInput] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    // Simulate fetching data and avoid hydration mismatch
-    setReviewData(initialReviewData);
-    setIsClient(true);
-  }, []);
-
 
   const handleAddComment = () => {
-    if (newComment.trim() === "" || !reviewData) return;
+    if (newComment.trim() === "") return;
 
     const commentToAdd = {
       author: 'Ana Miller', // Assuming the manager is commenting
@@ -160,15 +151,15 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
       type: 'comment' as const,
     };
 
-    setReviewData(prevData => prevData ? ({
+    setReviewData(prevData => ({
       ...prevData,
       comments: [...prevData.comments, commentToAdd],
-    }) : null);
+    }));
     setNewComment("");
   };
 
   const handleRequestRework = () => {
-    if (rejectionReason.trim() === "" || !reviewData) return;
+    if (rejectionReason.trim() === "") return;
 
      const commentToAdd = {
       author: 'Ana Miller',
@@ -178,11 +169,11 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
       type: 'rework_request' as const,
     };
 
-    setReviewData(prevData => prevData ? ({
+    setReviewData(prevData => ({
       ...prevData,
       comments: [...prevData.comments, commentToAdd],
       status: 'Rework Requested'
-    }) : null);
+    }));
     setRejectionReason("");
     setShowRejectionInput(false);
   }
@@ -199,7 +190,6 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
   };
 
   const ApproveButton = () => {
-    if (!reviewData) return null;
     const button = (
         <Button className="w-full sm:w-auto">
             <ThumbsUp className="mr-2 h-4 w-4" /> Duyệt
@@ -230,28 +220,6 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     return button;
   };
   
-  if (!reviewData || !isClient) {
-      return (
-        <div className="space-y-4">
-            <div className="flex items-center gap-4">
-                <Skeleton className="h-7 w-7 rounded-md" />
-                <Skeleton className="h-6 w-48" />
-            </div>
-            <div className="grid gap-6 lg:grid-cols-3">
-                <div className="lg:col-span-2 space-y-6">
-                    <Skeleton className="h-8 w-64" />
-                    <Skeleton className="h-64 w-full" />
-                    <Skeleton className="h-32 w-full" />
-                </div>
-                <div className="space-y-6">
-                    <Skeleton className="h-96 w-full" />
-                    <Skeleton className="h-48 w-full" />
-                </div>
-            </div>
-        </div>
-      );
-  }
-
   const managerAvatar = PlaceHolderImages.find(p => p.id === reviewData.managerAvatar);
   
   const renderCriterion = (criterion: any) => {
@@ -534,5 +502,3 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
-
-    
