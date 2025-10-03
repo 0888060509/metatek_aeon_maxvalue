@@ -11,6 +11,7 @@ import {
     ThumbsUp,
     RefreshCw,
     MessageSquarePlus,
+    Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -39,12 +40,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 
 const initialReviewData = {
   id: 'REV-002',
@@ -69,10 +72,18 @@ const initialReviewData = {
       maxScore: 100,
     },
     {
+      id: 'crit-6',
+      requirement: 'Chụp ảnh chi tiết các góc của khu vực trưng bày (tối thiểu 3 ảnh)',
+      type: 'photo-capture',
+      submittedImageIds: ['task-image-1', 'review-image-1', 'login-background'],
+      score: 30,
+      maxScore: 30,
+    },
+    {
       id: 'crit-2',
       requirement: 'Hoàn thành checklist vệ sinh khu vực trưng bày',
       type: 'checklist',
-      score: 50,
+      score: 40,
       maxScore: 50,
       checklistItems: [
         { label: 'Lau sạch bụi trên kệ', checked: true },
@@ -94,6 +105,22 @@ const initialReviewData = {
         ],
         selectedOption: 'Đúng vị trí'
     },
+    {
+        id: 'crit-4',
+        requirement: 'Báo cáo các vấn đề phát sinh (nếu có)',
+        type: 'text-input',
+        value: 'Khách hàng phàn nàn về việc khó tìm thấy sản phẩm khuyến mãi do bị che khuất.',
+        score: 10,
+        maxScore: 10,
+    },
+    {
+        id: 'crit-5',
+        requirement: 'Nhập số lượng sản phẩm tồn kho trên kệ',
+        type: 'number-input',
+        value: '150',
+        score: 5,
+        maxScore: 5,
+    }
   ],
   comments: [
       {
@@ -110,38 +137,25 @@ const initialReviewData = {
           timestamp: '10 phút trước',
           type: 'comment'
       },
-      {
-          author: 'Ana Miller',
-          avatarId: 'user-avatar-1',
-          text: 'Cảm ơn em. Chị sẽ chờ báo cáo mới.',
-          timestamp: '8 phút trước',
-          type: 'comment'
-      },
-      {
-          author: 'Clara Garcia',
-          avatarId: 'user-avatar-3',
-          text: 'Chị ơi, em đã cập nhật lại trưng bày và gửi lại báo cáo mới rồi ạ. Chị kiểm tra giúp em nhé.',
-          timestamp: '2 phút trước',
-          type: 'comment'
-      },
-      {
-          author: 'Ana Miller',
-          avatarId: 'user-avatar-1',
-          text: 'Ok em, để chị xem.',
-          timestamp: '1 phút trước',
-          type: 'comment'
-      }
   ]
 };
 
 export default function ReviewDetailPage({ params }: { params: { id: string } }) {
-  const [reviewData, setReviewData] = useState(initialReviewData);
+  const [reviewData, setReviewData] = useState<typeof initialReviewData | null>(null);
   const [newComment, setNewComment] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionInput, setShowRejectionInput] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // Simulate fetching data and avoid hydration mismatch
+    setReviewData(initialReviewData);
+    setIsClient(true);
+  }, []);
+
 
   const handleAddComment = () => {
-    if (newComment.trim() === "") return;
+    if (newComment.trim() === "" || !reviewData) return;
 
     const commentToAdd = {
       author: 'Ana Miller', // Assuming the manager is commenting
@@ -151,15 +165,15 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
       type: 'comment' as const,
     };
 
-    setReviewData(prevData => ({
+    setReviewData(prevData => prevData ? ({
       ...prevData,
       comments: [...prevData.comments, commentToAdd],
-    }));
+    }) : null);
     setNewComment("");
   };
 
   const handleRequestRework = () => {
-    if (rejectionReason.trim() === "") return;
+    if (rejectionReason.trim() === "" || !reviewData) return;
 
      const commentToAdd = {
       author: 'Ana Miller',
@@ -169,11 +183,11 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
       type: 'rework_request' as const,
     };
 
-    setReviewData(prevData => ({
+    setReviewData(prevData => prevData ? ({
       ...prevData,
       comments: [...prevData.comments, commentToAdd],
       status: 'Rework Requested'
-    }));
+    }) : null);
     setRejectionReason("");
     setShowRejectionInput(false);
   }
@@ -190,6 +204,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
   };
 
   const ApproveButton = () => {
+    if (!reviewData) return null;
     const button = (
         <Button className="w-full sm:w-auto">
             <ThumbsUp className="mr-2 h-4 w-4" /> Duyệt
@@ -220,6 +235,28 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     return button;
   };
   
+  if (!reviewData || !isClient) {
+      return (
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-7 w-7 rounded-md" />
+                <Skeleton className="h-6 w-48" />
+            </div>
+            <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-6">
+                    <Skeleton className="h-8 w-64" />
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-32 w-full" />
+                </div>
+                <div className="space-y-6">
+                    <Skeleton className="h-96 w-full" />
+                    <Skeleton className="h-48 w-full" />
+                </div>
+            </div>
+        </div>
+      );
+  }
+
   const managerAvatar = PlaceHolderImages.find(p => p.id === reviewData.managerAvatar);
   
   const renderCriterion = (criterion: any) => {
@@ -329,6 +366,66 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
             </Card>
         );
         
+      case 'text-input':
+          return (
+              <Card className="bg-secondary/50">
+                  <CardContent className="pt-6">
+                      <p className="text-sm text-foreground">{criterion.value}</p>
+                  </CardContent>
+              </Card>
+          );
+
+      case 'number-input':
+          return (
+              <Card className="bg-secondary/50">
+                  <CardContent className="pt-6">
+                      <p className="text-sm font-semibold text-foreground">{criterion.value}</p>
+                  </CardContent>
+              </Card>
+          );
+      
+      case 'photo-capture':
+          const images = criterion.submittedImageIds.map((id: string) => PlaceHolderImages.find(p => p.id === id)).filter(Boolean);
+          return (
+              <Card className="bg-secondary/50">
+                  <CardContent className="pt-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          {images.map((image: any, index: number) => (
+                              <Dialog key={index}>
+                                  <DialogTrigger asChild>
+                                    <div className="relative cursor-pointer group aspect-square">
+                                        <Image
+                                            src={image.imageUrl}
+                                            alt={`Submitted photo ${index + 1}`}
+                                            fill
+                                            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                                            className="rounded-lg object-cover"
+                                            data-ai-hint={image.imageHint}
+                                        />
+                                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                                            <span className="text-white font-semibold text-xs text-center">Xem ảnh</span>
+                                        </div>
+                                    </div>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-4xl">
+                                      <DialogHeader>
+                                          <DialogTitle>Ảnh đã nộp {index + 1}</DialogTitle>
+                                      </DialogHeader>
+                                      <Image
+                                          src={image.imageUrl}
+                                          alt={`Submitted photo ${index + 1}`}
+                                          width={1920}
+                                          height={1080}
+                                          className="rounded-lg object-contain max-h-[75vh]"
+                                      />
+                                  </DialogContent>
+                              </Dialog>
+                          ))}
+                      </div>
+                  </CardContent>
+              </Card>
+          );
+
       default:
         return null;
     }
@@ -358,7 +455,10 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
               <div className="mt-4 space-y-6">
                 {reviewData.criteria.map(criterion => (
                   <div key={criterion.id}>
-                      <h3 className="font-semibold mb-2 text-base">{criterion.requirement}</h3>
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold text-base flex-1">{criterion.requirement}</h3>
+                        <span className="text-sm font-bold text-foreground/80">{criterion.score}/{criterion.maxScore}</span>
+                      </div>
                       <div className="grid gap-4 items-start">
                           {renderCriterion(criterion)}
                       </div>
@@ -451,6 +551,11 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                   <span className="text-muted-foreground">Thời gian:</span>
                   <span>{reviewData.submittedAt}</span>
                 </div>
+                 <Separator className="my-2"/>
+                <div className="flex justify-between items-center font-semibold">
+                  <span>Tổng điểm:</span>
+                  <span className="text-xl">{reviewData.criteria.reduce((acc, c) => acc + c.score, 0)}/{reviewData.criteria.reduce((acc, c) => acc + c.maxScore, 0)}</span>
+                </div>
                 <Separator className="my-2"/>
                 <div className="flex justify-between font-semibold">
                   <span>Trạng thái hiện tại:</span>
@@ -502,3 +607,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
+
+    
+
+    
