@@ -280,7 +280,7 @@ function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     );
 }
 
-
+// This is now a Server Component that passes the taskId to the Client Component.
 export default function TaskExecutionPage({ params }: { params: { taskId: string } }) {
     const { taskId } = params;
     return (
@@ -289,3 +289,5 @@ export default function TaskExecutionPage({ params }: { params: { taskId: string
         </React.Suspense>
     );
 }
+
+    
