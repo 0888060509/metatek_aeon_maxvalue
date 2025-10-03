@@ -4,8 +4,23 @@ import { Search, Bell } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { SidebarTrigger } from "./ui/sidebar";
+import { UserMenu } from "./user-menu";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export function AppHeader() {
+  const { user, userRole } = useCurrentUser();
+
+  const getRoleDisplayName = () => {
+    switch (userRole) {
+      case 'store':
+        return 'Nhân viên cửa hàng';
+      case 'admin':
+        return 'Quản lý';
+      default:
+        return 'Người dùng';
+    }
+  };
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <div className="flex items-center gap-2">
@@ -25,6 +40,16 @@ export function AppHeader() {
           <Bell className="h-5 w-5" />
           <span className="sr-only">Toggle notifications</span>
         </Button>
+        
+        {user && (
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden lg:block">
+              <p className="text-sm font-medium">{user.name || user.username}</p>
+              <p className="text-xs text-muted-foreground">{getRoleDisplayName()}</p>
+            </div>
+            <UserMenu />
+          </div>
+        )}
       </div>
     </header>
   );

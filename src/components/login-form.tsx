@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +19,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "./ui/checkbox";
+import { useLogin, tokenManager, ApiError, decodeJWT, getUserRole } from "@/api";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
+  username: z.string().min(1, { message: "Username is required." }),
   password: z.string().min(1, { message: "Password is required." }),
   remember: z.boolean().optional(),
 });
@@ -28,33 +30,58 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const { loading, error, execute: login } = useLogin();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
       remember: false,
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Here you would typically handle authentication
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      setIsSubmitting(true);
+      setLoginError(null); // Clear previous errors
+      
+      const result = await login({
+        username: values.username,
+        password: values.password,
+      });
 
-    toast({
-      title: "Login Successful",
-      description: "Redirecting...",
-    });
+      if (result?.accessToken) {
+        tokenManager.storeTokens(result.accessToken, result.refreshToken!);
 
-    // Mock role-based redirection
-    // In a real app, you'd get the user's role from your auth provider
-    const isFieldUser = values.email.includes("field");
+        // Get user role from access token for immediate routing
+        const userInfo = decodeJWT(result.accessToken);
+        const userRole = getUserRole(userInfo);
 
-    if (isFieldUser) {
-        router.push("/home"); // Redirect Field User to their home page
-    } else {
-        router.push("/app/dashboard"); // Redirect Back Office user to dashboard
+        toast({
+          title: "Đăng nhập thành công",
+          description: "Đang chuyển hướng...",
+        });
+
+        // Role-based redirection
+        if (userRole === 'field') {
+          router.push("/home"); // Redirect Field User to their home page
+        } else {
+          router.push("/app/dashboard"); // Redirect Back Office user to dashboard
+        }
+      }
+    } catch (err: any) {
+      setLoginError(err.message);
+      
+      toast({
+        title: "Đăng nhập thất bại",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -63,12 +90,12 @@ export function LoginForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="email"
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email address</FormLabel>
+              <FormLabel>Tên đăng nhập</FormLabel>
               <FormControl>
-                <Input placeholder="you@example.com" {...field} />
+                <Input placeholder="Nhập tên đăng nhập" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -79,7 +106,7 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Mật khẩu</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
@@ -87,39 +114,22 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <div className="flex items-center justify-between">
-            <FormField
-            control={form.control}
-            name="remember"
-            render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                    <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                    <FormLabel>
-                    Remember me
-                    </FormLabel>
-                </div>
-                </FormItem>
-            )}
-            />
-            <div className="text-sm">
-                <a href="#" className="font-semibold text-primary hover:text-primary/90">
-                Forgot password?
-                </a>
-            </div>
-        </div>
         <div>
-          <Button type="submit" className="w-full">
-            Sign in
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={loading || isSubmitting}
+          >
+            {loading || isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
-           <p className="mt-4 text-xs text-center text-muted-foreground">
-              Hint: Use `user@field.com` for Field User view, or any other email for Back Office view.
+          {(loginError || error) && (
+            <p className="mt-2 text-sm text-destructive text-center">
+              {loginError || error}
             </p>
+          )}
+          <p className="mt-4 text-xs text-center text-muted-foreground">
+            Gợi ý: Sử dụng tên đăng nhập có chứa "field" để truy cập giao diện Field User.
+          </p>
         </div>
       </form>
     </Form>
