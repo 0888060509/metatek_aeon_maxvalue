@@ -31,6 +31,7 @@ const menuItems = [
   { href: "/app/tasks", label: "Tasks", icon: ClipboardList },
   { href: "/app/reviews", label: "Reviews", icon: ClipboardCheck },
   { href: "/app/reports", label: "Reports", icon: BarChart3 },
+  { href: "/app/settings", label: "Settings", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -79,7 +80,7 @@ export function AppSidebar() {
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link href="/app/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link>
+                <Link href="/app/settings"><Settings className="mr-2 h-4 w-4" />Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <HelpCircle className="mr-2 h-4 w-4" />
