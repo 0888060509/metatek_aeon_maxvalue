@@ -1,6 +1,5 @@
 
-'use client';
-
+import React from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -17,7 +16,6 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import React from 'react';
 
 // Mock data for a single task's execution criteria
 const taskExecutionData = {
@@ -82,7 +80,9 @@ const reworkTaskData = {
     ]
 };
 
+// TaskExecutionPageContent remains a Client Component
 function TaskExecutionPageContent({ taskId }: { taskId: string }) {
+    'use client';
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
@@ -289,5 +289,3 @@ export default function TaskExecutionPage({ params }: { params: { taskId: string
         </React.Suspense>
     );
 }
-
-    
