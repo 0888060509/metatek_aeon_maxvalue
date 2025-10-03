@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -20,6 +21,7 @@ import { TasksOverview } from "@/components/dashboard/tasks-overview";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import Link from "next/link";
+import { Skeleton } from '@/components/ui/skeleton';
 
 const regionNames: { [key: string]: string } = {
     north: 'Miền Bắc',
@@ -29,6 +31,33 @@ const regionNames: { [key: string]: string } = {
 };
 
 export default function RegionDashboardPage({ params }: { params: { region: string } }) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 w-64" />
+            </div>
+             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+                <Skeleton className="lg:col-span-4 h-80" />
+                <Skeleton className="lg:col-span-3 h-80" />
+            </div>
+        </div>
+    );
+  }
+
   const regionName = regionNames[params.region] || params.region;
 
   // In a real app, you would fetch data specific to this region
