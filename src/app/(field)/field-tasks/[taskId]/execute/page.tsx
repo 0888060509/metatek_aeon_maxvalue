@@ -15,10 +15,10 @@ import Image from 'next/image';
 // Client Component for task execution UI and logic
 function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     'use client';
-
+    
     const { useRouter, useSearchParams } = require('next/navigation');
     const { useToast } = require('@/hooks/use-toast');
-    const { useState } = React;
+    const [useState] = React.useState;
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -89,10 +89,8 @@ function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     
     const isRework = searchParams.get('rework') === 'true';
 
-    const initialData = isRework ? reworkTaskData : taskExecutionData;
-
-    const [taskData, setTaskData] = useState(initialData);
-    const [capturedImages, setCapturedImages] = useState<Record<string, string[]>>(() => {
+    const [taskData, setTaskData] = React.useState(isRework ? reworkTaskData : taskExecutionData);
+    const [capturedImages, setCapturedImages] = React.useState<Record<string, string[]>>(() => {
         return isRework ? { 'crit-1': [PlaceHolderImages.find(p => p.id === 'review-image-1')?.imageUrl || ''] } : {};
     });
 
