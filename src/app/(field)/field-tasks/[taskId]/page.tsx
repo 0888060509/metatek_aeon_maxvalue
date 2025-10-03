@@ -20,9 +20,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 // In a real app, you would fetch task details based on params.taskId
 const tasks = {
+    'TSK-001': {
+        id: 'TSK-001',
+        reviewId: 'REV-001',
+        title: 'Q3 Product Display Check',
+        description: 'Review the product displays for the Q3 campaign to ensure they are compliant with brand guidelines.',
+        store: 'Downtown',
+        dueDate: '2023-10-15',
+        status: 'Completed',
+        rejectionReason: null,
+        points: 120,
+        comments: [],
+    },
     'TSK-002': {
         id: 'TSK-002',
-        reviewId: 'REV-008', // Example review ID
+        reviewId: 'REV-008',
         title: 'Sanitation Audit',
         description: 'Perform a comprehensive sanitation audit of the store premises, including shelves, floors, and storage areas. Ensure compliance with health and safety regulations.',
         store: 'Uptown',
@@ -34,7 +46,7 @@ const tasks = {
     },
     'TSK-003': {
         id: 'TSK-003',
-        reviewId: 'REV-002', // Example review ID
+        reviewId: 'REV-002',
         title: 'Holiday Promo Setup',
         description: 'Set up the main promotional display for the holiday season according to the provided planogram.',
         store: 'Eastside',
@@ -59,16 +71,28 @@ const tasks = {
             },
         ]
     },
-    'TSK-001': {
-        id: 'TSK-001',
-        reviewId: 'REV-001', // Example review ID
-        title: 'Q3 Product Display Check',
-        description: 'Review the product displays for the Q3 campaign to ensure they are compliant with brand guidelines.',
-        store: 'Downtown',
-        dueDate: '2023-10-15',
-        status: 'Completed',
+    'TSK-004': {
+        id: 'TSK-004',
+        reviewId: 'REV-004',
+        title: 'Weekly Stock Count',
+        description: 'Perform weekly stock count for all high-value items.',
+        store: 'Suburbia',
+        dueDate: '2023-10-12',
+        status: 'Overdue',
         rejectionReason: null,
-        points: 120,
+        points: 100,
+        comments: [],
+    },
+    'TSK-005': {
+        id: 'TSK-005',
+        reviewId: 'REV-005',
+        title: 'Fire Safety Inspection',
+        description: 'Check all fire extinguishers and emergency exits are clear.',
+        store: 'Downtown',
+        dueDate: '2023-10-25',
+        status: 'New',
+        rejectionReason: null,
+        points: 200,
         comments: [],
     }
 };
@@ -134,7 +158,7 @@ export default function FieldTaskDetailPage() {
         );
     }
 
-    // Default action for 'In Progress', 'New', etc.
+    // Default action for 'In Progress', 'New', 'Overdue' etc.
     return (
         <Button size="lg" className="w-full" asChild>
             <Link href={`/field-tasks/${id}/execute`}>
@@ -146,7 +170,7 @@ export default function FieldTaskDetailPage() {
   
   if (!taskData) {
       return (
-        <div className="space-y-4 pb-20">
+        <div className="space-y-4 pb-20 2xl:pb-0">
             <div className="flex items-center gap-4">
                  <Skeleton className="h-8 w-8 rounded-md" />
             </div>
@@ -176,7 +200,7 @@ export default function FieldTaskDetailPage() {
   }
 
   return (
-    <div className="space-y-4 pb-20">
+    <div className="space-y-4 pb-20 2xl:pb-0">
         <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                 <Link href="/tasks">
