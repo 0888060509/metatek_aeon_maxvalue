@@ -10,7 +10,7 @@ import { ChevronLeft, Camera, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -28,6 +28,7 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     // Mock data for a single task's execution criteria
     const taskExecutionData = {
         id: 'TSK-003',
+        reviewId: 'REV-002',
         title: 'Holiday Promo Setup',
         description: 'Set up the main promotional display for the holiday season according to the provided planogram.',
         store: 'Eastside',
@@ -128,6 +129,14 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
         return initialImages;
     });
 
+    useEffect(() => {
+        // Record start time when the user enters the execution page
+        const startTime = localStorage.getItem(`task-startTime-${taskId}`);
+        if (!startTime) {
+            localStorage.setItem(`task-startTime-${taskId}`, new Date().toISOString());
+        }
+    }, [taskId]);
+
     const handleChecklistChange = (criterionId: string, itemId: string, checked: boolean) => {
         setTaskData(prevData => ({
             ...prevData,
@@ -182,13 +191,23 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     };
 
     const handleSubmit = () => {
-        console.log("Submitting task report:", { taskData, capturedImages });
+        // Get start time from localStorage
+        const startTime = localStorage.getItem(`task-startTime-${taskId}`);
+        const endTime = new Date().toISOString();
+
+        // Clean up localStorage
+        localStorage.removeItem(`task-startTime-${taskId}`);
+
+        console.log("Submitting task report:", { taskData, capturedImages, startTime, endTime });
+
         toast({
             title: `Báo cáo đã được ${isRework ? 'nộp lại' : 'gửi'}`,
             description: `Cảm ơn bạn. Báo cáo của bạn đã được gửi đi để xét duyệt.`,
         });
-        // Redirect back to the task list after submission
-        router.push('/tasks');
+        
+        // Redirect to review page with timestamps
+        const reviewUrl = `/app/reviews/${taskData.reviewId}?startTime=${startTime}&endTime=${endTime}`;
+        router.push(reviewUrl);
     };
 
     const renderCriterion = (criterion: any) => {

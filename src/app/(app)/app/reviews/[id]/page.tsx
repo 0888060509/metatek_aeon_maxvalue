@@ -13,6 +13,7 @@ import {
     MessageSquarePlus,
     Camera,
     FileText,
+    Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -51,6 +52,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "next/navigation";
+import { format, formatDistanceToNow } from "date-fns";
+import { vi } from 'date-fns/locale';
 
 const initialReviewData = {
   id: 'REV-002',
@@ -58,7 +62,7 @@ const initialReviewData = {
   taskTitle: 'Holiday Promo Setup',
   store: 'Eastside',
   submittedBy: 'Clara Garcia',
-  submittedAt: '2023-10-18 02:30 PM',
+  submittedAt: '2023-10-18T14:30:00Z',
   status: 'Pending Approval',
   aiStatus: 'Không Đạt',
   userAvatar: 'user-avatar-3',
@@ -143,19 +147,24 @@ const initialReviewData = {
   ]
 };
 
-export default function ReviewDetailPage({ params }: { params: { id: string } }) {
+function ReviewDetailPageContent({ params }: { params: { id: string } }) {
   const [reviewData, setReviewData] = useState<typeof initialReviewData | null>(null);
   const [newComment, setNewComment] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionInput, setShowRejectionInput] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  const startTime = searchParams.get('startTime');
+  const endTime = searchParams.get('endTime');
 
   useEffect(() => {
     // Simulate fetching data and avoid hydration mismatch
+    // In a real app, you would fetch data by params.id
     setReviewData(initialReviewData);
     setIsClient(true);
-  }, []);
+  }, [params.id]);
 
 
   const handleAddComment = () => {
@@ -268,6 +277,15 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     }
     return button;
   };
+
+  const calculateDuration = () => {
+    if (startTime && endTime) {
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+      return formatDistanceToNow(start, { addSuffix: false, locale: vi, unit: 'minute' }).replace('khoảng ','');
+    }
+    return null;
+  }
   
   if (!reviewData || !isClient) {
       return (
@@ -506,7 +524,9 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
           <div className="lg:col-span-2 space-y-6">
               <div>
                 <h2 className="text-xl font-semibold">Kết quả thực hiện</h2>
-                <p className="text-sm text-muted-foreground mt-1">Báo cáo do <strong>{reviewData.submittedBy}</strong> gửi lúc {reviewData.submittedAt}.</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                    Báo cáo do <strong>{reviewData.submittedBy}</strong> gửi lúc {format(new Date(reviewData.submittedAt), "Pp", { locale: vi })}.
+                </p>
               </div>
                <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full space-y-4">
                 {reviewData.criteria.map((criterion, index) => (
@@ -612,10 +632,23 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                   <span className="text-muted-foreground">Người nộp:</span>
                   <span>{reviewData.submittedBy}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Thời gian:</span>
-                  <span>{reviewData.submittedAt}</span>
-                </div>
+                 {startTime && endTime && (
+                    <>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Bắt đầu:</span>
+                        <span>{format(new Date(startTime), "Pp", { locale: vi })}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Kết thúc:</span>
+                        <span>{format(new Date(endTime), "Pp", { locale: vi })}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Thời gian thực hiện:</span>
+                        <span className="font-semibold flex items-center gap-1"><Clock className="h-4 w-4"/> {calculateDuration()}</span>
+                    </div>
+                    </>
+                 )}
+
                  <Separator className="my-2"/>
                 <div className="flex justify-between items-center font-semibold">
                   <span>Tổng điểm:</span>
@@ -680,4 +713,12 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
   );
 }
 
-    
+// Wrapper component to handle Suspense for useSearchParams
+export default function ReviewDetailPage({ params }: { params: { id: string } }) {
+    return (
+        <React.Suspense fallback={<div>Loading review details...</div>}>
+            <ReviewDetailPageContent params={params} />
+        </React.Suspense>
+    );
+}
+
