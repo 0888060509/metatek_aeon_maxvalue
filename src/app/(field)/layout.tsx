@@ -9,7 +9,7 @@ export default function FieldAppLayout({ children }: { children: React.ReactNode
       <FieldAppDesktopSidebar />
       <div className="flex flex-1 flex-col">
         <FieldAppHeader />
-        <main className="flex-1 bg-muted/40 p-4 md:p-6 mb-16 2xl:mb-0 2xl:ml-64">
+        <main className="flex-1 bg-muted/40 p-4 md:p-6 2xl:mb-0 2xl:ml-64">
           {children}
         </main>
       </div>

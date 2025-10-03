@@ -322,7 +322,7 @@ export default function FieldTaskDetailPage() {
             </CardFooter>
         </Card>
 
-        <div className="fixed bottom-0 left-0 right-0 z-10 p-4 border-t bg-background/95 backdrop-blur-sm 2xl:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-20 p-4 border-t bg-background/95 backdrop-blur-sm 2xl:hidden">
             {getAction()}
         </div>
         <div className="hidden pt-4 2xl:flex 2xl:justify-end">
