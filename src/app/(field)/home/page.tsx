@@ -10,10 +10,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const summary = {
-    pending: 2,
+    pending: 3,
     overdue: 1,
     rework: 1,
 };
+
+const pendingTasks = [
+    { id: 'TSK-002', title: 'Sanitation Audit', store: 'Uptown', status: 'In Progress', dueDate: '2023-10-20' },
+    { id: 'TSK-005', title: 'Fire Safety Inspection', store: 'Downtown', status: 'New', dueDate: '2023-10-25' },
+    { id: 'TSK-011', title: 'Temperature Log (Input)', store: 'Eastside', status: 'In Progress', dueDate: '2023-10-28' },
+];
 
 const recentActivities = [
     { type: 'rework', description: 'Task "Holiday Promo Setup" was rejected.', time: '30m ago', link: '/field-tasks/TSK-003' },
@@ -75,15 +81,24 @@ export default function FieldHomePage() {
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Công việc của tôi</CardTitle>
-                        <CardDescription>Xem và bắt đầu thực hiện các công việc được giao.</CardDescription>
+                        <CardTitle>Công việc đang chờ</CardTitle>
+                        <CardDescription>Các công việc bạn cần thực hiện sớm nhất.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                         <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg">
-                            <ClipboardList className="h-12 w-12 text-muted-foreground" />
-                            <h3 className="text-xl font-semibold mt-4">Sẵn sàng làm việc?</h3>
-                            <p className="text-muted-foreground mt-2">Tất cả các công việc đang chờ, quá hạn và cần làm lại đều ở trong danh sách công việc của bạn.</p>
-                        </div>
+                    <CardContent className="space-y-4">
+                        {pendingTasks.map((task) => (
+                             <div key={task.id} className="flex items-center p-3 -m-3 rounded-lg hover:bg-secondary/50 transition-colors">
+                                <div className="mr-4">
+                                     <Clock className="h-6 w-6 text-info" />
+                                </div>
+                                <div className="space-y-1 flex-1">
+                                    <p className="text-sm font-medium leading-none">{task.title}</p>
+                                    <p className="text-sm text-muted-foreground">{task.store} • Hạn: {task.dueDate}</p>
+                                </div>
+                                <Button asChild variant="outline" size="sm" className="ml-auto">
+                                    <Link href={`/field-tasks/${task.id}`}>Bắt đầu</Link>
+                                </Button>
+                            </div>
+                        ))}
                     </CardContent>
                     <CardFooter>
                          <Button className="w-full" asChild>
