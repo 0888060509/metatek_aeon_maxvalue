@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -142,7 +143,7 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
             description: `Cảm ơn bạn. Báo cáo của bạn đã được gửi đi để xét duyệt.`,
         });
         // Redirect back to the task list after submission
-        router.push('/field-tasks');
+        router.push('/home');
     };
 
     const renderCriterion = (criterion: any) => {
@@ -274,3 +275,5 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
         </div>
     );
 }
+
+    

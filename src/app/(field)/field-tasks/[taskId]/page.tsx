@@ -80,7 +80,7 @@ export default function FieldTaskDetailPage({ params }: { params: { taskId: stri
     <div className="space-y-4 pb-20">
         <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                <Link href="/field-tasks">
+                <Link href="/home">
                 <ChevronLeft className="h-5 w-5" />
                 <span className="sr-only">Back to tasks</span>
                 </Link>
@@ -147,3 +147,5 @@ export default function FieldTaskDetailPage({ params }: { params: { taskId: stri
     </div>
   );
 }
+
+    
