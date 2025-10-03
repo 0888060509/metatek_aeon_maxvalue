@@ -18,7 +18,7 @@ function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     
     const { useRouter, useSearchParams } = require('next/navigation');
     const { useToast } = require('@/hooks/use-toast');
-    const [useState] = React.useState;
+    const { useState } = React;
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -89,8 +89,8 @@ function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     
     const isRework = searchParams.get('rework') === 'true';
 
-    const [taskData, setTaskData] = React.useState(isRework ? reworkTaskData : taskExecutionData);
-    const [capturedImages, setCapturedImages] = React.useState<Record<string, string[]>>(() => {
+    const [taskData, setTaskData] = useState(isRework ? reworkTaskData : taskExecutionData);
+    const [capturedImages, setCapturedImages] = useState<Record<string, string[]>>(() => {
         return isRework ? { 'crit-1': [PlaceHolderImages.find(p => p.id === 'review-image-1')?.imageUrl || ''] } : {};
     });
 
