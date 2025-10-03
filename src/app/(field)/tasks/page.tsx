@@ -24,37 +24,31 @@ const getStatusInfo = (status: string) => {
     switch (status) {
         case 'New':
             return {
-                badge: <Badge variant="secondary">Mới</Badge>,
                 icon: <Info className="h-4 w-4 text-muted-foreground" />,
-                textColor: 'text-foreground'
+                textColor: 'text-muted-foreground'
             };
         case 'In Progress':
             return {
-                badge: <Badge className="bg-info text-info-foreground hover:bg-info/90">Đang thực hiện</Badge>,
                 icon: <Clock className="h-4 w-4 text-info" />,
-                textColor: 'text-info-foreground'
+                textColor: 'text-info'
             };
         case 'Overdue':
             return {
-                badge: <Badge variant="destructive">Quá hạn</Badge>,
                 icon: <Clock className="h-4 w-4 text-destructive" />,
                 textColor: 'text-destructive'
             };
         case 'Completed':
             return {
-                badge: <Badge className="bg-success text-success-foreground hover:bg-success/90">Hoàn thành</Badge>,
                 icon: <CheckCircle2 className="h-4 w-4 text-success" />,
-                textColor: 'text-success-foreground'
+                textColor: 'text-success'
             };
         case 'Rework':
             return {
-                badge: <Badge variant="destructive">Yêu cầu làm lại</Badge>,
                 icon: <RefreshCw className="h-4 w-4 text-destructive" />,
                 textColor: 'text-destructive'
             };
         default:
             return {
-                badge: <Badge variant="outline">{status}</Badge>,
                 icon: <Info className="h-4 w-4 text-muted-foreground" />,
                 textColor: 'text-muted-foreground'
             };
@@ -69,17 +63,14 @@ const TaskCard = ({ task }: { task: typeof tasks[0] }) => {
                 <CardTitle className="line-clamp-2">{task.title}</CardTitle>
                 <CardDescription>{task.store}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-               <div className="flex items-center gap-2 text-sm">
+            <CardContent>
+               <div className="flex items-center gap-2 text-sm font-medium">
                    {statusInfo.icon}
                    <span className={statusInfo.textColor}>Hạn chót: {task.dueDate}</span>
                </div>
-               <div className="flex items-center">
-                   {statusInfo.badge}
-               </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
-                <span className="font-semibold">{task.points} điểm</span>
+            <CardFooter className="flex justify-between items-center">
+                <span className="text-sm font-semibold">{task.points} điểm</span>
                 <Button asChild variant="outline" size="sm">
                     <Link href={`/field-tasks/${task.id}`}>
                         {task.status === 'Completed' ? 'Xem báo cáo' : 'Xem chi tiết'}
