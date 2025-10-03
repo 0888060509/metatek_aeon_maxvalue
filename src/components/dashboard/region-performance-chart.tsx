@@ -1,7 +1,8 @@
 
 "use client"
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { useRouter } from 'next/navigation';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart"
 
 
@@ -20,6 +21,14 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function RegionPerformanceChart() {
+  const router = useRouter();
+
+  const handleBarClick = (data: any) => {
+    if (data.link) {
+      router.push(data.link);
+    }
+  };
+
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <ResponsiveContainer width="100%" height={250}>
@@ -49,6 +58,8 @@ export function RegionPerformanceChart() {
             radius={5}
             layout="vertical"
             label={{ position: 'right', fill: 'hsl(var(--foreground))', fontSize: 12, formatter: (value: number) => `${value}%` }}
+            onClick={handleBarClick}
+            style={{ cursor: 'pointer' }}
           />
         </BarChart>
       </ResponsiveContainer>
