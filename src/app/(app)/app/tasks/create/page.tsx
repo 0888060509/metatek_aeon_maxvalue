@@ -971,36 +971,48 @@ function CreateTaskPageContent() {
                                                 )}
                                             />
                                         </div>
-                                        <FormItem className="flex items-center space-x-3 space-y-0">
-                                            <FormControl>
+                                         <div className="flex items-center space-x-3 space-y-0">
                                             <RadioGroupItem value="after_occurrences" />
-                                            </FormControl>
-                                            <FormLabel className="font-normal">Sau</FormLabel>
-                                        </FormItem>
+                                            <FormField
+                                                control={form.control}
+                                                name="recurringEndOccurrences"
+                                                render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                     <div 
+                                                        className={cn(
+                                                            "w-full h-auto p-0 text-left font-normal cursor-pointer",
+                                                            watchedFormValues.recurringEndType !== 'after_occurrences' && "text-muted-foreground"
+                                                        )}
+                                                        onClick={() => form.setValue('recurringEndType', 'after_occurrences')}
+                                                    >
+                                                        <FormLabel className={cn("font-normal cursor-pointer", watchedFormValues.recurringEndType !== 'after_occurrences' && "text-muted-foreground")}>
+                                                            Sau
+                                                        </FormLabel>
+                                                        {watchedFormValues.recurringEndType === 'after_occurrences' && (
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <FormControl>
+                                                                    <Input 
+                                                                        type="number" 
+                                                                        className="w-20 h-8"
+                                                                        value={field.value ?? ''}
+                                                                        onChange={e => field.onChange(parseInt(e.target.value, 10))}
+                                                                    />
+                                                                </FormControl>
+                                                                <span className="text-sm">lần lặp lại</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                                )}
+                                            />
+                                        </div>
                                         </RadioGroup>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-
-                         {watchedFormValues.recurringEndType === 'after_occurrences' && (
-                             <FormField
-                                control={form.control}
-                                name="recurringEndOccurrences"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormControl>
-                                        <div className="flex items-center gap-2">
-                                            <Input type="number" className="w-20" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
-                                            <span>lần lặp lại</span>
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        )}
                         
                         {watchedFormValues.isRecurring && watchedFormValues.startDate && watchedFormValues.dueDate && (
                             <FormDescription>
