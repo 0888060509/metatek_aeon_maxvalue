@@ -392,79 +392,6 @@ function CreateTaskPageContent() {
         </div>
     );
   };
-  
-    const calculateOccurrences = () => {
-    const {
-      startDate,
-      startTime,
-      dueDate,
-      dueTime,
-      isRecurring,
-      recurringFrequencyType,
-      recurringWeeklyDays,
-      recurringMonthlyDay,
-      recurringEndType,
-      recurringEndDate,
-      recurringEndOccurrences,
-    } = watchedFormValues;
-
-    if (!isRecurring || !startDate || !startTime || !dueDate || !dueTime || !recurringFrequencyType) {
-      return [];
-    }
-
-    const initialStart = combineDateTime(startDate, startTime);
-    const initialDue = combineDateTime(dueDate, dueTime);
-    if (initialStart >= initialDue) return [];
-
-    const taskDuration = differenceInMilliseconds(initialDue, initialStart);
-    
-    let occurrences = [];
-    let currentStartDate = initialStart;
-    const maxOccurrences = 5;
-
-    while (occurrences.length < maxOccurrences) {
-        if (recurringEndType === 'on_date' && recurringEndDate && currentStartDate > recurringEndDate) {
-            break;
-        }
-        if (recurringEndType === 'after_occurrences' && recurringEndOccurrences && occurrences.length >= recurringEndOccurrences) {
-            break;
-        }
-
-        if (recurringFrequencyType === 'weekly') {
-            if (!recurringWeeklyDays || recurringWeeklyDays.length === 0) break;
-            
-            const sortedDays = recurringWeeklyDays.map(d => dayNameToIndex[d]).sort((a,b) => a - b);
-            const currentDayIndex = getDay(currentStartDate);
-
-            let nextDayIndex = sortedDays.find(dayIndex => dayIndex > currentDayIndex);
-            if (nextDayIndex === undefined) { // Wrap to next week
-                 currentStartDate = addWeeks(currentStartDate, 1);
-                 currentStartDate = setDate(currentStartDate, currentStartDate.getDate() - currentDayIndex + sortedDays[0]);
-            } else {
-                 currentStartDate = nextDay(currentStartDate, nextDayIndex as any);
-            }
-
-        } else if (recurringFrequencyType === 'monthly') {
-            if (!recurringMonthlyDay || recurringMonthlyDay < 1 || recurringMonthlyDay > 31) break;
-            currentStartDate = addMonths(currentStartDate, 1);
-            currentStartDate = setDate(currentStartDate, recurringMonthlyDay);
-        } else { // Daily for now
-             currentStartDate = addDays(currentStartDate, 1);
-        }
-
-        if (currentStartDate > new Date(8640000000000000)) break; // Break for invalid dates
-        
-        occurrences.push({
-            start: currentStartDate,
-            due: add(currentStartDate, { milliseconds: taskDuration }),
-        });
-    }
-
-    return occurrences;
-  };
-  
-  const upcomingOccurrences = calculateOccurrences();
-
 
   return (
     <div className="mx-auto grid max-w-5xl flex-1 auto-rows-max gap-4">
@@ -1080,17 +1007,10 @@ function CreateTaskPageContent() {
                             />
                         )}
                         
-                        {upcomingOccurrences.length > 0 && (
-                            <div className="space-y-2 rounded-md border p-4">
-                                <h4 className="text-sm font-semibold">Dự báo 5 lần lặp lại tiếp theo</h4>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    {upcomingOccurrences.map((occ, i) => (
-                                        <li key={i} className="text-xs">
-                                            <span className="font-medium text-foreground">{i + 1}.</span> Bắt đầu: {format(occ.start, 'dd/MM/yyyy, HH:mm')} - Hết hạn: {format(occ.due, 'dd/MM/yyyy, HH:mm')}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                        {watchedFormValues.isRecurring && watchedFormValues.startDate && watchedFormValues.dueDate && (
+                            <FormDescription>
+                                Hạn chót của các tác vụ lặp lại trong tương lai sẽ được tự động tính toán dựa trên khoảng thời gian giữa ngày bắt đầu và ngày hết hạn bạn đã thiết lập.
+                            </FormDescription>
                         )}
                         </div>
                     )}
