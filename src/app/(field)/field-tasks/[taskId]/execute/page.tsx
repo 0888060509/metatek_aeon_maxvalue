@@ -82,7 +82,7 @@ const reworkTaskData = {
     ]
 };
 
-function TaskExecutionPageContent({ params }: { params: { taskId: string } }) {
+function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
@@ -241,7 +241,7 @@ function TaskExecutionPageContent({ params }: { params: { taskId: string } }) {
         <div className="space-y-4 pb-16">
              <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                    <Link href={`/field-tasks/${params.taskId}`}>
+                    <Link href={`/field-tasks/${taskId}`}>
                     <ChevronLeft className="h-5 w-5" />
                     <span className="sr-only">Back</span>
                     </Link>
@@ -284,7 +284,7 @@ function TaskExecutionPageContent({ params }: { params: { taskId: string } }) {
 export default function TaskExecutionPage({ params }: { params: { taskId: string } }) {
     return (
         <React.Suspense fallback={<div>Loading...</div>}>
-            <TaskExecutionPageContent params={params} />
+            <TaskExecutionPageContent taskId={params.taskId} />
         </React.Suspense>
     );
 }
