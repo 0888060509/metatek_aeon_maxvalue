@@ -266,10 +266,10 @@ export default function FieldTaskDetailPage() {
             </CardFooter>
         </Card>
 
-        <div className="fixed bottom-0 left-0 right-0 z-10 p-4 border-t bg-background/95 backdrop-blur-sm md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-10 p-4 border-t bg-background/95 backdrop-blur-sm 2xl:hidden">
             {getAction()}
         </div>
-        <div className="hidden md:flex justify-end pt-4">
+        <div className="hidden 2xl:flex justify-end pt-4">
             {getAction()}
         </div>
     </div>

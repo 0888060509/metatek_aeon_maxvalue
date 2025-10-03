@@ -22,7 +22,7 @@ export function FieldAppSidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background 2xl:hidden">
       <nav className="grid grid-cols-4 h-16 items-center">
         {menuItems.map((item) => (
           <Link
@@ -30,7 +30,7 @@ export function FieldAppSidebar() {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center gap-1 text-sm font-medium",
-              (pathname.startsWith(item.href) && item.href !== '/') || (pathname === '/' && item.href === '/home')
+              (pathname.startsWith(item.href) && item.href !== '/home') || (pathname === '/home' && item.href === '/home') || (pathname === '/' && item.href === '/home') || (pathname === '/tasks' && item.href === '/tasks')
                 ? "text-primary"
                 : "text-muted-foreground hover:text-primary"
             )}

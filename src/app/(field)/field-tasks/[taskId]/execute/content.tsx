@@ -262,12 +262,12 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                 </div>
             ))}
             
-            <div className="fixed bottom-0 left-0 right-0 z-10 p-4 border-t bg-background/95 backdrop-blur-sm lg:hidden">
+            <div className="fixed bottom-0 left-0 right-0 z-10 p-4 border-t bg-background/95 backdrop-blur-sm 2xl:hidden">
                  <Button size="lg" className="w-full" onClick={handleSubmit}>
                     {isRework ? 'Nộp lại Báo cáo' : 'Nộp Báo cáo'}
                 </Button>
             </div>
-             <div className="hidden lg:flex justify-end pt-4">
+             <div className="hidden 2xl:flex justify-end pt-4">
                  <Button size="lg" onClick={handleSubmit}>
                      {isRework ? 'Nộp lại Báo cáo' : 'Nộp Báo cáo'}
                 </Button>

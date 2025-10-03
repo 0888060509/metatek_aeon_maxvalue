@@ -23,7 +23,7 @@ export function FieldAppDesktopSidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-50 lg:w-64 lg:border-r lg:bg-background">
+    <div className="hidden 2xl:flex 2xl:flex-col 2xl:fixed 2xl:inset-y-0 2xl:z-50 2xl:w-64 2xl:border-r 2xl:bg-background">
         <div className="flex h-16 shrink-0 items-center px-6">
             <Logo />
         </div>
@@ -34,7 +34,7 @@ export function FieldAppDesktopSidebar() {
                 href={item.href}
                 className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                    (pathname.startsWith(item.href) && item.href !== '/') || (pathname === '/' && item.href === '/home')
+                    (pathname.startsWith(item.href) && item.href !== '/home') || (pathname === '/home' && item.href === '/home') || (pathname === '/' && item.href === '/home') || (pathname === '/tasks' && item.href === '/tasks')
                     ? "bg-muted text-primary"
                     : ""
                 )}
