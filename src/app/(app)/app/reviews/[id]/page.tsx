@@ -476,10 +476,10 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                 <p className="text-sm text-muted-foreground mt-1">Báo cáo do <strong>{reviewData.submittedBy}</strong> gửi lúc {reviewData.submittedAt}.</p>
               </div>
               <div className="mt-4 space-y-6">
-                {reviewData.criteria.map(criterion => (
+                {reviewData.criteria.map((criterion, index) => (
                   <div key={criterion.id}>
                       <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold text-base flex-1">{criterion.requirement}</h3>
+                        <h3 className="font-semibold text-base flex-1">{`${index + 1}. ${criterion.requirement}`}</h3>
                         <span className="text-sm font-bold text-foreground/80">{criterion.score}/{criterion.maxScore}</span>
                       </div>
                       <div className="grid gap-4 items-start">
