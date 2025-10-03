@@ -249,9 +249,11 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
                     </div>
                      <div className="space-y-1 col-span-2 md:col-span-4">
                         <p className="text-muted-foreground">Guidelines & Attachments</p>
-                         <Button variant="outline" size="sm" className="mt-1">
-                            <FileText className="mr-2 h-4 w-4" />
-                            View Planogram.pdf
+                         <Button variant="outline" size="sm" className="mt-1" asChild>
+                            <a href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" target="_blank" rel="noopener noreferrer">
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Planogram.pdf
+                            </a>
                         </Button>
                     </div>
                 </div>

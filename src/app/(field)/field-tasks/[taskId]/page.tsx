@@ -253,9 +253,11 @@ export default function FieldTaskDetailPage() {
 
                 <div>
                     <h3 className="font-semibold text-base mb-2">Tài liệu & Yêu cầu</h3>
-                     <Button variant="outline" size="sm" className="mt-1">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Xem Planogram.pdf
+                     <Button variant="outline" size="sm" className="mt-1" asChild>
+                        <a href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" target="_blank" rel="noopener noreferrer">
+                            <FileText className="mr-2 h-4 w-4" />
+                            Xem Planogram.pdf
+                        </a>
                     </Button>
                 </div>
             </CardContent>
