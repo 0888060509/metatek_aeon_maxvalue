@@ -13,7 +13,6 @@ import {
   ColumnFiltersState,
   SortingState,
   PaginationState,
-  RowSelectionState,
 } from '@tanstack/react-table';
 
 import {
@@ -25,15 +24,12 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
     CheckCircle,
     XCircle,
-    BadgeCheck,
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 type Review = {
   id: string;
@@ -66,28 +62,6 @@ const getAiStatusBadge = (status: Review['aiStatus']) => {
 };
 
 const columns: ColumnDef<Review>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
   {
     accessorKey: 'id',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Review ID" />,
@@ -132,22 +106,19 @@ const columns: ColumnDef<Review>[] = [
 
 
 export default function ReviewsPage() {
-  const [data, setData] = React.useState(() => [...initialReviews]);
+  const [data] = React.useState(() => [...initialReviews]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
-  const { toast } = useToast();
 
    const table = useReactTable({
     data,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -157,59 +128,18 @@ export default function ReviewsPage() {
     state: {
       sorting,
       columnFilters,
-      rowSelection,
       pagination,
     },
   });
 
-  const selectedRows = table.getFilteredSelectedRowModel().rows;
-  const canBulkApprove = selectedRows.length > 0;
-  
-  const handleBulkApprove = () => {
-    const validRowsToApprove = selectedRows.filter(row => row.original.aiStatus === 'Đạt');
-    const invalidRowCount = selectedRows.length - validRowsToApprove.length;
-    
-    if(validRowsToApprove.length === 0) {
-        toast({
-            variant: "destructive",
-            title: "Không thể duyệt hàng loạt",
-            description: "Không có bài nộp nào được chọn có trạng thái AI là 'Đạt' để có thể duyệt.",
-        });
-        return;
-    }
-    
-    const approvedIds = validRowsToApprove.map(row => row.original.id);
-    
-    // In a real app, you would make an API call to approve these IDs
-    console.log("Approving IDs:", approvedIds);
-    
-    // Filter out the approved rows from the main data
-    setData(prevData => prevData.filter(review => !approvedIds.includes(review.id)));
-    
-    // Clear selection
-    table.resetRowSelection();
-
-    toast({
-        title: "Duyệt hàng loạt thành công",
-        description: `Đã duyệt thành công ${validRowsToApprove.length} bài nộp. ${invalidRowCount > 0 ? `${invalidRowCount} bài nộp không hợp lệ đã được bỏ qua.` : ''}`,
-    });
-  }
-
-
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start md:items-center">
+      <CardHeader>
         <div className="grid gap-2">
           <CardTitle>Submissions</CardTitle>
           <CardDescription>
             Xem xét, duyệt hoặc yêu cầu làm lại các bài nộp từ cửa hàng.
           </CardDescription>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-           <Button disabled={!canBulkApprove} onClick={handleBulkApprove}>
-              <BadgeCheck className="mr-2 h-4 w-4" />
-              Bulk Approve ({selectedRows.length})
-          </Button>
         </div>
       </CardHeader>
       <CardContent>
