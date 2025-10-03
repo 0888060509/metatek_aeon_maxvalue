@@ -40,6 +40,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 // --- Mock Data ---
 
@@ -249,12 +250,23 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
                     </div>
                      <div className="space-y-1 col-span-2 md:col-span-4">
                         <p className="text-muted-foreground">Guidelines & Attachments</p>
-                         <Button variant="outline" size="sm" className="mt-1" asChild>
-                            <a href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" target="_blank" rel="noopener noreferrer">
-                                <FileText className="mr-2 h-4 w-4" />
-                                View Planogram.pdf
-                            </a>
-                        </Button>
+                         <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="mt-1">
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    View Planogram.pdf
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl h-[90vh]">
+                                <DialogHeader>
+                                    <DialogTitle>Planogram.pdf</DialogTitle>
+                                    <DialogDescription>Tài liệu hướng dẫn trưng bày sản phẩm.</DialogDescription>
+                                </DialogHeader>
+                                <div className="h-full w-full">
+                                    <iframe src="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" className="h-full w-full" />
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
 
@@ -280,3 +292,5 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
     </div>
   );
 }
+
+    
