@@ -10,11 +10,13 @@ import { ChevronLeft, Camera, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import React, { useState } from 'react';
+import React, from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 // Client Component for task execution UI and logic
 export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
@@ -60,6 +62,24 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                 ],
                 selectedOption: ''
             },
+            {
+                id: 'crit-4',
+                requirement: 'Báo cáo các vấn đề phát sinh (nếu có)',
+                type: 'text-input',
+                value: ''
+            },
+            {
+                id: 'crit-5',
+                requirement: 'Nhập số lượng sản phẩm tồn kho trên kệ',
+                type: 'number-input',
+                value: ''
+            },
+            {
+                id: 'crit-6',
+                requirement: 'Chụp ảnh chi tiết các góc của khu vực trưng bày (tối thiểu 3 ảnh)',
+                type: 'photo-capture',
+                minPhotos: 3,
+            }
         ],
     };
 
@@ -81,15 +101,30 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
             { // multiple choice with an option selected
                 ...taskExecutionData.criteria[2],
                 selectedOption: 'Đúng vị trí'
-            }
+            },
+            {...taskExecutionData.criteria[3], value: 'Khách hàng phàn nàn về việc khó tìm thấy sản phẩm khuyến mãi.'},
+            {...taskExecutionData.criteria[4], value: '150'},
+            {...taskExecutionData.criteria[5]},
         ]
     };
     
     const isRework = searchParams.get('rework') === 'true';
 
-    const [taskData, setTaskData] = useState(isRework ? reworkTaskData : taskExecutionData);
-    const [capturedImages, setCapturedImages] = useState<Record<string, string[]>>(() => {
-        return isRework ? { 'crit-1': [PlaceHolderImages.find(p => p.id === 'review-image-1')?.imageUrl || ''] } : {};
+    const [taskData, setTaskData] = React.useState(isRework ? reworkTaskData : taskExecutionData);
+    const [capturedImages, setCapturedImages] = React.useState<Record<string, string[]>>(() => {
+        const initialImages: Record<string, string[]> = {};
+        if (isRework) {
+            const visualComplianceImg = PlaceHolderImages.find(p => p.id === 'review-image-1')?.imageUrl;
+            if (visualComplianceImg) {
+                initialImages['crit-1'] = [visualComplianceImg];
+            }
+            const photoCaptureImg1 = PlaceHolderImages.find(p => p.id === 'task-image-1')?.imageUrl;
+            const photoCaptureImg2 = PlaceHolderImages.find(p => p.id === 'task-image-2')?.imageUrl;
+            if(photoCaptureImg1 && photoCaptureImg2) {
+                initialImages['crit-6'] = [photoCaptureImg1, photoCaptureImg2];
+            }
+        }
+        return initialImages;
     });
 
     const handleChecklistChange = (criterionId: string, itemId: string, checked: boolean) => {
@@ -114,6 +149,15 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
             ...prevData,
             criteria: prevData.criteria.map(c =>
                 c.id === criterionId && c.type === 'multiple-choice' ? { ...c, selectedOption: value } : c
+            )
+        }));
+    };
+    
+    const handleTextChange = (criterionId: string, value: string) => {
+        setTaskData(prevData => ({
+            ...prevData,
+            criteria: prevData.criteria.map(c =>
+                c.id === criterionId && (c.type === 'text-input' || c.type === 'number-input') ? { ...c, value } : c
             )
         }));
     };
@@ -226,6 +270,62 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                         </CardContent>
                     </Card>
                 );
+            
+            case 'text-input':
+                return (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <Textarea
+                                placeholder="Nhập báo cáo của bạn ở đây..."
+                                value={criterion.value}
+                                onChange={(e) => handleTextChange(criterion.id, e.target.value)}
+                                rows={4}
+                            />
+                        </CardContent>
+                    </Card>
+                );
+
+            case 'number-input':
+                return (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <Input
+                                type="number"
+                                placeholder="Nhập số liệu..."
+                                value={criterion.value}
+                                onChange={(e) => handleTextChange(criterion.id, e.target.value)}
+                            />
+                        </CardContent>
+                    </Card>
+                );
+
+            case 'photo-capture':
+                 return (
+                     <Card>
+                        <CardContent className="pt-6 space-y-4">
+                            <div>
+                               <Label className="font-semibold">Ảnh đã chụp ({images.length}/{criterion.minPhotos})</Label>
+                               <div className="grid grid-cols-3 gap-2 mt-2">
+                                   {images.map((imgSrc, index) => (
+                                       <div key={index} className="relative">
+                                           <Image src={imgSrc} alt={`Captured image ${index + 1}`} width={150} height={150} className="rounded-md object-cover"/>
+                                            <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full" onClick={() => handleRemoveImage(criterion.id, index)}>
+                                                <X className="h-4 w-4"/>
+                                            </Button>
+                                       </div>
+                                   ))}
+                                    <Button variant="outline" className="flex flex-col items-center justify-center aspect-square h-full" onClick={() => handleCaptureImage(criterion.id)}>
+                                        <Camera className="h-6 w-6"/>
+                                        <span className="text-xs mt-1">Chụp ảnh</span>
+                                    </Button>
+                               </div>
+                               {images.length < criterion.minPhotos && (
+                                   <p className="text-xs text-destructive mt-2">Cần chụp thêm {criterion.minPhotos - images.length} ảnh.</p>
+                               )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                );
 
             default:
                 return null;
@@ -275,3 +375,5 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
         </div>
     );
 }
+
+    
