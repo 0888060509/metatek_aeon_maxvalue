@@ -39,25 +39,29 @@ type Review = {
   submittedBy: string;
   submittedAt: string;
   aiStatus: 'Đạt' | 'Không Đạt' | 'Lỗi';
+  status: 'Pending' | 'Approved' | 'Rework';
 };
 
 
 const initialReviews: Review[] = [
-    { id: 'REV-001', taskId: 'TSK-002', taskTitle: 'Sanitation Audit', store: 'Uptown', submittedBy: 'John Smith', submittedAt: '2023-10-20', aiStatus: 'Đạt'},
-    { id: 'REV-002', taskId: 'TSK-003', taskTitle: 'Holiday Promo Setup', store: 'Eastside', submittedBy: 'Clara Garcia', submittedAt: '2023-10-18', aiStatus: 'Không Đạt'},
-    { id: 'REV-003', taskId: 'TSK-008', taskTitle: 'End-cap Display Check', store: 'Downtown', submittedBy: 'Ana Miller', submittedAt: '2023-10-21', aiStatus: 'Đạt'},
-    { id: 'REV-004', taskId: 'TSK-009', taskTitle: 'Expired Goods Removal', store: 'Suburbia', submittedBy: 'Robert Brown', submittedAt: '2023-10-22', aiStatus: 'Đạt'},
-    { id: 'REV-005', taskId: 'TSK-010', taskTitle: 'Weekly Freezer Temp Log', store: 'Eastside', submittedBy: 'Clara Garcia', submittedAt: '2023-10-23', aiStatus: 'Lỗi'},
+    { id: 'REV-001', taskId: 'TSK-002', taskTitle: 'Sanitation Audit', store: 'Uptown', submittedBy: 'John Smith', submittedAt: '2023-10-20', aiStatus: 'Đạt', status: 'Approved' },
+    { id: 'REV-002', taskId: 'TSK-003', taskTitle: 'Holiday Promo Setup', store: 'Eastside', submittedBy: 'Clara Garcia', submittedAt: '2023-10-18', aiStatus: 'Không Đạt', status: 'Rework' },
+    { id: 'REV-003', taskId: 'TSK-008', taskTitle: 'End-cap Display Check', store: 'Downtown', submittedBy: 'Ana Miller', submittedAt: '2023-10-21', aiStatus: 'Đạt', status: 'Approved' },
+    { id: 'REV-004', taskId: 'TSK-009', taskTitle: 'Expired Goods Removal', store: 'Suburbia', submittedBy: 'Robert Brown', submittedAt: '2023-10-22', aiStatus: 'Đạt', status: 'Pending' },
+    { id: 'REV-005', taskId: 'TSK-010', taskTitle: 'Weekly Freezer Temp Log', store: 'Eastside', submittedBy: 'Clara Garcia', submittedAt: '2023-10-23', aiStatus: 'Lỗi', status: 'Pending' },
 ];
 
-const getAiStatusBadge = (status: Review['aiStatus']) => {
+
+const getReviewStatusBadge = (status: Review['status']) => {
   switch (status) {
-    case 'Đạt':
-      return <Badge className="bg-success hover:bg-success/90 text-success-foreground"><CheckCircle className="mr-1 h-3 w-3" />Đạt</Badge>;
-    case 'Không Đạt':
-      return <Badge variant="destructive"><XCircle className="mr-1 h-3 w-3" />Không Đạt</Badge>;
+    case 'Approved':
+      return <Badge className="bg-success hover:bg-success/90 text-success-foreground">Approved</Badge>;
+    case 'Rework':
+      return <Badge variant="destructive">Rework</Badge>;
+    case 'Pending':
+       return <Badge className="bg-warning hover:bg-warning/90 text-warning-foreground">Pending</Badge>;
     default:
-      return <Badge variant="outline">Lỗi</Badge>;
+      return <Badge variant="secondary">{status}</Badge>;
   }
 };
 
@@ -85,9 +89,9 @@ const columns: ColumnDef<Review>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Submitted At" />,
   },
   {
-    accessorKey: 'aiStatus',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="AI Status" />,
-    cell: ({ row }) => getAiStatusBadge(row.getValue('aiStatus')),
+    accessorKey: 'status',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+    cell: ({ row }) => getReviewStatusBadge(row.getValue('status')),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
