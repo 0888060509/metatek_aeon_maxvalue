@@ -33,6 +33,7 @@ export default function LoginPage() {
             alt="Abstract background image"
             data-ai-hint={loginImage.imageHint}
             fill
+            sizes="100vw"
             priority
           />
         )}
