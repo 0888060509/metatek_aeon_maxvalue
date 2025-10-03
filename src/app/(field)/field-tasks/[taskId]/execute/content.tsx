@@ -201,6 +201,9 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                         <DialogTrigger asChild>
                             <div className="relative group aspect-square cursor-pointer">
                                 <Image src={imgSrc} alt={`Captured image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw" className="rounded-md object-cover"/>
+                                <button className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <X className="h-4 w-4"/>
+                                </button>
                             </div>
                         </DialogTrigger>
                         <DialogContent className="max-w-3xl">
@@ -347,7 +350,7 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
 
 
     return (
-        <div className="space-y-4 pb-16">
+        <div className="space-y-4 pb-16 2xl:pb-4">
              <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                     <Link href={`/field-tasks/${taskId}`}>
@@ -388,6 +391,3 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
         </div>
     );
 }
-
-    
-    
