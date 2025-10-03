@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const tasks = {
     'TSK-002': {
         id: 'TSK-002',
+        reviewId: 'REV-008', // Example review ID
         title: 'Sanitation Audit',
         description: 'Perform a comprehensive sanitation audit of the store premises, including shelves, floors, and storage areas. Ensure compliance with health and safety regulations.',
         store: 'Uptown',
@@ -33,6 +34,7 @@ const tasks = {
     },
     'TSK-003': {
         id: 'TSK-003',
+        reviewId: 'REV-002', // Example review ID
         title: 'Holiday Promo Setup',
         description: 'Set up the main promotional display for the holiday season according to the provided planogram.',
         store: 'Eastside',
@@ -59,6 +61,7 @@ const tasks = {
     },
     'TSK-001': {
         id: 'TSK-001',
+        reviewId: 'REV-001', // Example review ID
         title: 'Q3 Product Display Check',
         description: 'Review the product displays for the Q3 campaign to ensure they are compliant with brand guidelines.',
         store: 'Downtown',
@@ -104,33 +107,37 @@ export default function FieldTaskDetailPage() {
   };
 
   const getAction = () => {
-    if (!taskData) return null;
+    if (!taskData) {
+        return null; // Don't render any button while data is loading
+    }
 
-    const isCompleted = taskData.status === 'Completed';
-    const isRework = taskData.status === 'Rework';
-
-    if (isCompleted) {
+    const { status, id, reviewId } = taskData;
+    
+    if (status === 'Completed') {
         return (
             <Button size="lg" className="w-full" asChild>
-                <Link href={`/app/reviews/REV-001`}> 
+                <Link href={`/app/reviews/${reviewId}`}> 
                     Xem lại báo cáo đã nộp
                 </Link>
             </Button>
         );
     }
-    if (isRework) {
+    
+    if (status === 'Rework') {
         return (
              <Button size="lg" className="w-full" asChild>
-                <Link href={`/field-tasks/${taskData.id}/execute?rework=true`}>
+                <Link href={`/field-tasks/${id}/execute?rework=true`}>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Bắt đầu làm lại
                 </Link>
             </Button>
         );
     }
+
+    // Default action for 'In Progress', 'New', etc.
     return (
         <Button size="lg" className="w-full" asChild>
-            <Link href={`/field-tasks/${taskData.id}/execute`}>
+            <Link href={`/field-tasks/${id}/execute`}>
                 Bắt đầu thực hiện
             </Link>
         </Button>
@@ -324,5 +331,3 @@ export default function FieldTaskDetailPage() {
     </div>
   );
 }
-
-    
