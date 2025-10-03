@@ -28,21 +28,22 @@ export function FieldAppDesktopSidebar() {
             <Logo />
         </div>
         <nav className="flex flex-col flex-1 gap-1 px-4 py-2">
-            {menuItems.map((item) => (
-            <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                    (pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/home'))
-                    ? "bg-muted text-primary"
-                    : ""
-                )}
-            >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-            </Link>
-            ))}
+            {menuItems.map((item) => {
+              const isActive = (pathname === item.href) || (pathname.startsWith(item.href) && item.href !== '/home');
+              return (
+                <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                        isActive ? "bg-muted text-primary" : ""
+                    )}
+                >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                </Link>
+              );
+            })}
         </nav>
     </div>
   );
