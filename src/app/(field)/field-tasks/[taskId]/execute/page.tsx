@@ -1,6 +1,7 @@
 
-import React from 'react';
-import { useState } from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -80,9 +81,7 @@ const reworkTaskData = {
     ]
 };
 
-// TaskExecutionPageContent remains a Client Component
 function TaskExecutionPageContent({ taskId }: { taskId: string }) {
-    'use client';
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
