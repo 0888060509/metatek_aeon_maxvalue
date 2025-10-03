@@ -163,9 +163,9 @@ export default function ReviewsPage() {
     <Card>
       <CardHeader className="flex flex-row items-start md:items-center">
         <div className="grid gap-2">
-          <CardTitle>Task Reviews</CardTitle>
+          <CardTitle>Submissions</CardTitle>
           <CardDescription>
-            Review and approve task reports from your team.
+            Xem xét, duyệt hoặc yêu cầu làm lại các bài nộp từ cửa hàng.
           </CardDescription>
         </div>
         <div className="ml-auto flex items-center gap-2">
