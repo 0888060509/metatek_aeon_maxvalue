@@ -517,7 +517,7 @@ function CreateTaskPageContent() {
                       control={form.control}
                       name="startDate"
                       render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
                           <FormLabel>Ngày bắt đầu</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
@@ -570,7 +570,7 @@ function CreateTaskPageContent() {
                       control={form.control}
                       name="dueDate"
                       render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
                           <FormLabel>Ngày hết hạn</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
@@ -983,7 +983,7 @@ function CreateTaskPageContent() {
                                                             "w-full h-auto p-0 text-left font-normal cursor-pointer",
                                                             watchedFormValues.recurringEndType !== 'after_occurrences' && "text-muted-foreground"
                                                         )}
-                                                        onClick={() => form.setValue('recurringEndType', 'after_occurrences')}
+                                                         onClick={() => form.setValue('recurringEndType', 'after_occurrences')}
                                                     >
                                                         <FormLabel className={cn("font-normal cursor-pointer", watchedFormValues.recurringEndType !== 'after_occurrences' && "text-muted-foreground")}>
                                                             Sau
