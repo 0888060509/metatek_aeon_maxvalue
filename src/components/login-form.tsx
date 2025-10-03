@@ -52,7 +52,7 @@ export function LoginForm() {
     const isFieldUser = values.email.includes("field");
 
     if (isFieldUser) {
-        router.push("/field-tasks"); // Redirect Field User to their task list
+        router.push("/home"); // Redirect Field User to their home page
     } else {
         router.push("/app/dashboard"); // Redirect Back Office user to dashboard
     }
