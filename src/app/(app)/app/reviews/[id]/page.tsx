@@ -49,6 +49,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const initialReviewData = {
   id: 'REV-002',
@@ -193,12 +194,12 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     setShowRejectionInput(false);
   }
 
-  const getAiStatusBadge = (status: string) => {
+  const getAiStatusBadge = (status: string, minimal: boolean = false) => {
     switch (status) {
       case 'Đạt':
-        return <Badge className="bg-success hover:bg-success/90 text-success-foreground"><CheckCircle2 className="mr-2 h-4 w-4" />AI: Đạt</Badge>;
+        return <Badge className="bg-success hover:bg-success/90 text-success-foreground"><CheckCircle2 className="mr-2 h-4 w-4" />{minimal ? '' : 'AI: '}Đạt</Badge>;
       case 'Không Đạt':
-        return <Badge variant="destructive"><XCircle className="mr-2 h-4 w-4" />AI: Không Đạt</Badge>;
+        return <Badge variant="destructive"><XCircle className="mr-2 h-4 w-4" />{minimal ? '' : 'AI: '}Không Đạt</Badge>;
       default:
         return <Badge variant="secondary">Lỗi phân tích</Badge>;
     }
@@ -259,7 +260,8 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
   }
 
   const managerAvatar = PlaceHolderImages.find(p => p.id === reviewData.managerAvatar);
-  
+  const defaultAccordionValues = reviewData.criteria.map((_, index) => `criterion-${index}`);
+
   const renderCriterion = (criterion: any) => {
     switch (criterion.type) {
       case 'visual-compliance-ai':
@@ -280,9 +282,6 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                 />
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
                   <span className="text-white font-semibold">Xem chi tiết & Phân tích AI</span>
-                </div>
-                <div className="absolute top-2 right-2">
-                  {getAiStatusBadge(criterion.aiResult)}
                 </div>
               </div>
             </DialogTrigger>
@@ -475,19 +474,28 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                 <h2 className="text-xl font-semibold">Kết quả thực hiện</h2>
                 <p className="text-sm text-muted-foreground mt-1">Báo cáo do <strong>{reviewData.submittedBy}</strong> gửi lúc {reviewData.submittedAt}.</p>
               </div>
-              <div className="mt-4 space-y-6">
+               <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full space-y-4">
                 {reviewData.criteria.map((criterion, index) => (
-                  <div key={criterion.id}>
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold text-base flex-1">{`${index + 1}. ${criterion.requirement}`}</h3>
-                        <span className="text-sm font-bold text-foreground/80">{criterion.score}/{criterion.maxScore}</span>
-                      </div>
-                      <div className="grid gap-4 items-start">
-                          {renderCriterion(criterion)}
-                      </div>
-                  </div>
+                  <AccordionItem key={criterion.id} value={`criterion-${index}`} className="border rounded-lg overflow-hidden">
+                    <AccordionTrigger className="flex items-center gap-4 p-4 hover:bg-muted/50 hover:no-underline">
+                        <div className="flex-1 text-left">
+                            <h4 className="font-semibold text-base leading-tight">
+                                {`${index + 1}. ${criterion.requirement}`}
+                            </h4>
+                        </div>
+                        {criterion.type === 'visual-compliance-ai' && criterion.aiResult !== 'Đạt' && (
+                             getAiStatusBadge(criterion.aiResult, true)
+                        )}
+                        <span className="text-lg font-bold text-foreground/80 pl-4">{criterion.score}/{criterion.maxScore}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 pt-0">
+                        <div className="grid gap-4 items-start pt-4 border-t">
+                            {renderCriterion(criterion)}
+                        </div>
+                    </AccordionContent>
+                  </AccordionItem>
                 ))}
-              </div>
+              </Accordion>
           </div>
           <div className="space-y-6">
             <Card>
@@ -630,9 +638,5 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
-
-    
-
-    
 
     
