@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ChevronLeft, RefreshCw, FileText, Send, MessageSquare } from "lucide-react";
@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useParams } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 // In a real app, you would fetch task details based on params.taskId
@@ -69,15 +70,23 @@ const tasks = {
     }
 };
 
+type Task = typeof tasks[keyof typeof tasks];
 
 export default function FieldTaskDetailPage() {
   const params = useParams();
   const taskId = params.taskId as string;
-  const [taskData, setTaskData] = useState(tasks[taskId as keyof typeof tasks] || tasks['TSK-002']);
+  const [taskData, setTaskData] = useState<Task | null>(null);
   const [newComment, setNewComment] = useState("");
 
+  useEffect(() => {
+    if (taskId) {
+      const data = tasks[taskId as keyof typeof tasks];
+      setTaskData(data || null);
+    }
+  }, [taskId]);
+
   const handleAddComment = () => {
-    if (newComment.trim() === "") return;
+    if (newComment.trim() === "" || !taskData) return;
 
     const commentToAdd = {
       author: 'Clara Garcia', // Assuming the field user is commenting
@@ -87,18 +96,19 @@ export default function FieldTaskDetailPage() {
       type: 'comment' as const,
     };
 
-    setTaskData(prevData => ({
+    setTaskData(prevData => prevData ? ({
       ...prevData,
       comments: [...prevData.comments, commentToAdd],
-    }));
+    }) : null);
     setNewComment("");
   };
 
-
-  const isRework = taskData.status === 'Rework';
-  const isCompleted = taskData.status === 'Completed';
-
   const getAction = () => {
+    if (!taskData) return null;
+
+    const isCompleted = taskData.status === 'Completed';
+    const isRework = taskData.status === 'Rework';
+
     if (isCompleted) {
         return (
             <Button size="lg" className="w-full" asChild>
@@ -126,6 +136,37 @@ export default function FieldTaskDetailPage() {
         </Button>
     );
   };
+  
+  if (!taskData) {
+      return (
+        <div className="space-y-4 pb-20">
+            <div className="flex items-center gap-4">
+                 <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-8 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                    <Skeleton className="h-24 w-full" />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-1/4" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-40 w-full" />
+                </CardContent>
+                 <CardFooter className="flex-col items-start gap-2 border-t pt-4">
+                    <Skeleton className="h-5 w-1/5" />
+                    <Skeleton className="h-20 w-full" />
+                </CardFooter>
+            </Card>
+        </div>
+      );
+  }
 
   return (
     <div className="space-y-4 pb-20">
@@ -146,7 +187,7 @@ export default function FieldTaskDetailPage() {
                 </CardDescription>
             </div>
              <CardContent className="p-6 space-y-6">
-                 {isRework && taskData.rejectionReason && (
+                 {taskData.status === 'Rework' && taskData.rejectionReason && (
                     <Alert variant="destructive">
                         <RefreshCw className="h-4 w-4" />
                         <AlertTitle>Yêu cầu làm lại</AlertTitle>
@@ -283,3 +324,5 @@ export default function FieldTaskDetailPage() {
     </div>
   );
 }
+
+    
