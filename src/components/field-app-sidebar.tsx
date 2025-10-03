@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 const menuItems = [
   { href: "/home", label: "Home", icon: Home },
-  { href: "/field-tasks", label: "Tasks", icon: ClipboardList },
+  { href: "/tasks", label: "Tasks", icon: ClipboardList },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/account", label: "Account", icon: CircleUser },
 ];
@@ -30,7 +30,7 @@ export function FieldAppSidebar() {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center gap-1 text-sm font-medium",
-              (pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/'))
+              (pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/home' && item.href !== '/'))
                 ? "text-primary"
                 : "text-muted-foreground hover:text-primary"
             )}

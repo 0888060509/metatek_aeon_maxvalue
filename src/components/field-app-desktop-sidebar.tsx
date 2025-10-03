@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 const menuItems = [
   { href: "/home", label: "Home", icon: Home },
+  { href: "/tasks", label: "Tasks", icon: ClipboardList },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/account", label: "Account", icon: CircleUser },
 ];

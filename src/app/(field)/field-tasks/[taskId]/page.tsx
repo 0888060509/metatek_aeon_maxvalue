@@ -131,7 +131,7 @@ export default function FieldTaskDetailPage() {
     <div className="space-y-4 pb-20">
         <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                <Link href="/home">
+                <Link href="/tasks">
                 <ChevronLeft className="h-5 w-5" />
                 <span className="sr-only">Back to tasks</span>
                 </Link>

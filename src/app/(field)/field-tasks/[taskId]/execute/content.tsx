@@ -143,7 +143,7 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
             description: `Cảm ơn bạn. Báo cáo của bạn đã được gửi đi để xét duyệt.`,
         });
         // Redirect back to the task list after submission
-        router.push('/home');
+        router.push('/tasks');
     };
 
     const renderCriterion = (criterion: any) => {
@@ -275,5 +275,3 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
         </div>
     );
 }
-
-    

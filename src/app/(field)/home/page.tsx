@@ -1,145 +1,120 @@
 
-
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { ArrowRight, Clock, Info, CheckCircle2, RefreshCw, ClipboardList } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React from 'react';
+import { ArrowRight, ClipboardList, Clock, RefreshCw, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-const tasks = [
-    { id: 'TSK-002', title: 'Sanitation Audit', store: 'Uptown', status: 'In Progress', dueDate: '2023-10-20', points: 150 },
-    { id: 'TSK-003', title: 'Holiday Promo Setup', store: 'Eastside', status: 'Rework', dueDate: '2023-10-18', points: 250 },
-    { id: 'TSK-004', title: 'Weekly Stock Count', store: 'Suburbia', status: 'Overdue', dueDate: '2023-10-12', points: 100 },
-    { id: 'TSK-005', title: 'Fire Safety Inspection', store: 'Downtown', status: 'New', dueDate: '2023-10-25', points: 200 },
-    { id: 'TSK-001', title: 'Q3 Product Display Check', store: 'Downtown', status: 'Completed', dueDate: '2023-10-15', points: 120 },
+const summary = {
+    pending: 2,
+    overdue: 1,
+    rework: 1,
+};
+
+const recentActivities = [
+    { type: 'rework', description: 'Task "Holiday Promo Setup" was rejected.', time: '30m ago', link: '/field-tasks/TSK-003' },
+    { type: 'approved', description: 'Task "Sanitation Audit" was approved.', time: '2h ago', link: '/field-tasks/TSK-002' },
+    { type: 'new_task', description: 'New task assigned: "Fire Safety Inspection".', time: '1d ago', link: '/field-tasks/TSK-005' },
 ];
 
-const getStatusInfo = (status: string) => {
-    switch (status) {
-        case 'New':
-            return {
-                badge: <Badge variant="secondary">Mới</Badge>,
-                icon: <Info className="h-4 w-4 text-muted-foreground" />,
-                textColor: 'text-foreground'
-            };
-        case 'In Progress':
-            return {
-                badge: <Badge className="bg-info text-info-foreground hover:bg-info/90">Đang thực hiện</Badge>,
-                icon: <Clock className="h-4 w-4 text-info" />,
-                textColor: 'text-info-foreground'
-            };
-        case 'Overdue':
-            return {
-                badge: <Badge variant="destructive">Quá hạn</Badge>,
-                icon: <Clock className="h-4 w-4 text-destructive" />,
-                textColor: 'text-destructive'
-            };
-        case 'Completed':
-            return {
-                badge: <Badge className="bg-success text-success-foreground hover:bg-success/90">Hoàn thành</Badge>,
-                icon: <CheckCircle2 className="h-4 w-4 text-success" />,
-                textColor: 'text-success-foreground'
-            };
-        case 'Rework':
-            return {
-                badge: <Badge variant="destructive">Yêu cầu làm lại</Badge>,
-                icon: <RefreshCw className="h-4 w-4 text-destructive" />,
-                textColor: 'text-destructive'
-            };
-        default:
-            return {
-                badge: <Badge variant="outline">{status}</Badge>,
-                icon: <Info className="h-4 w-4 text-muted-foreground" />,
-                textColor: 'text-muted-foreground'
-            };
-    }
-};
-
-const TaskCard = ({ task }: { task: typeof tasks[0] }) => {
-    const statusInfo = getStatusInfo(task.status);
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="line-clamp-2">{task.title}</CardTitle>
-                <CardDescription>{task.store}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-               <div className="flex items-center gap-2 text-sm">
-                   {statusInfo.icon}
-                   <span className={statusInfo.textColor}>Hạn chót: {task.dueDate}</span>
-               </div>
-               <div className="flex items-center">
-                   {statusInfo.badge}
-               </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-                <span className="font-semibold">{task.points} điểm</span>
-                <Button asChild variant="outline" size="sm">
-                    <Link href={`/field-tasks/${task.id}`}>
-                        {task.status === 'Completed' ? 'Xem báo cáo' : 'Xem chi tiết'}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                </Button>
-            </CardFooter>
-        </Card>
-    );
-};
-
-const EmptyState = ({ title, description }: { title: string; description: string; }) => (
-    <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg mt-6">
-        <ClipboardList className="h-12 w-12 text-muted-foreground" />
-        <h3 className="text-xl font-semibold mt-4">{title}</h3>
-        <p className="text-muted-foreground mt-2">{description}</p>
-    </div>
-);
-
-export default function FieldTasksPage() {
-    const pendingTasks = tasks.filter(t => ['New', 'In Progress', 'Rework'].includes(t.status));
-    const overdueTasks = tasks.filter(t => t.status === 'Overdue');
-    const completedTasks = tasks.filter(t => t.status === 'Completed');
+export default function FieldHomePage() {
+    const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-3');
 
     return (
-        <div className="space-y-4">
-            <h1 className="text-2xl font-bold">Tác vụ của tôi</h1>
+        <div className="space-y-6">
+            <div className="flex items-center gap-4">
+                {userAvatar && (
+                    <Avatar className="h-16 w-16">
+                        <AvatarImage src={userAvatar.imageUrl} alt="Clara Garcia" data-ai-hint={userAvatar.imageHint}/>
+                        <AvatarFallback>CG</AvatarFallback>
+                    </Avatar>
+                )}
+                <div>
+                    <h1 className="text-2xl font-bold">Chào mừng trở lại, Clara!</h1>
+                    <p className="text-muted-foreground">Đây là tóm tắt công việc hôm nay của bạn.</p>
+                </div>
+            </div>
 
-            <Tabs defaultValue="pending" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="pending">Đang chờ</TabsTrigger>
-                    <TabsTrigger value="overdue">Quá hạn</TabsTrigger>
-                    <TabsTrigger value="completed">Hoàn thành</TabsTrigger>
-                </TabsList>
-                <TabsContent value="pending">
-                    {pendingTasks.length > 0 ? (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-                            {pendingTasks.map(task => <TaskCard key={task.id} task={task} />)}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Đang chờ</CardTitle>
+                        <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{summary.pending}</div>
+                        <p className="text-xs text-muted-foreground">công việc cần hoàn thành</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Quá hạn</CardTitle>
+                        <Clock className="h-4 w-4 text-destructive" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{summary.overdue}</div>
+                         <p className="text-xs text-muted-foreground">công việc đã trễ hạn</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Cần làm lại</CardTitle>
+                        <RefreshCw className="h-4 w-4 text-warning" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{summary.rework}</div>
+                         <p className="text-xs text-muted-foreground">công việc bị từ chối</p>
+                    </CardContent>
+                </Card>
+            </div>
+            
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Công việc của tôi</CardTitle>
+                        <CardDescription>Xem và bắt đầu thực hiện các công việc được giao.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg">
+                            <ClipboardList className="h-12 w-12 text-muted-foreground" />
+                            <h3 className="text-xl font-semibold mt-4">Sẵn sàng làm việc?</h3>
+                            <p className="text-muted-foreground mt-2">Tất cả các công việc đang chờ, quá hạn và cần làm lại đều ở trong danh sách công việc của bạn.</p>
                         </div>
-                    ) : (
-                        <EmptyState title="Không có tác vụ nào" description="Bạn đã hoàn thành hết các công việc được giao. Làm tốt lắm!" />
-                    )}
-                </TabsContent>
-                <TabsContent value="overdue">
-                    {overdueTasks.length > 0 ? (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-                            {overdueTasks.map(task => <TaskCard key={task.id} task={task} />)}
-                        </div>
-                    ) : (
-                        <EmptyState title="Không có tác vụ quá hạn" description="Tất cả các công việc của bạn đều đang trong thời hạn." />
-                    )}
-                </TabsContent>
-                <TabsContent value="completed">
-                    {completedTasks.length > 0 ? (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-                            {completedTasks.map(task => <TaskCard key={task.id} task={task} />)}
-                        </div>
-                    ) : (
-                        <EmptyState title="Chưa có tác vụ hoàn thành" description="Các công việc đã hoàn thành của bạn sẽ xuất hiện ở đây." />
-                    )}
-                </TabsContent>
-            </Tabs>
+                    </CardContent>
+                    <CardFooter>
+                         <Button className="w-full" asChild>
+                            <Link href="/tasks">
+                                Đi đến danh sách công việc
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Hoạt động gần đây</CardTitle>
+                        <CardDescription>Các cập nhật mới nhất về công việc của bạn.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {recentActivities.map((activity, index) => (
+                             <div key={index} className="flex items-center">
+                                <div className="ml-4 space-y-1">
+                                <p className="text-sm font-medium leading-none">{activity.description}</p>
+                                <p className="text-sm text-muted-foreground">{activity.time}</p>
+                                </div>
+                                <Button asChild variant="secondary" size="sm" className="ml-auto">
+                                    <Link href={activity.link}>Xem</Link>
+                                </Button>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
+
         </div>
     );
 }
