@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ChevronLeft, RefreshCw, FileText, Send } from "lucide-react";
+import { ChevronLeft, RefreshCw, FileText, Send, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
@@ -194,48 +194,56 @@ export default function FieldTaskDetailPage() {
                 <CardTitle>Trao đổi</CardTitle>
             </CardHeader>
             <CardContent>
-                <ScrollArea className="h-72 pr-4">
-                    <div className="space-y-4">
-                    {taskData.comments.map((comment, index) => {
-                        const authorAvatar = PlaceHolderImages.find(p => p.id === comment.avatarId);
-                        const isUser = comment.author === 'Clara Garcia';
-                        return (
-                            <div key={index} className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}>
-                                {!isUser && authorAvatar && (
-                                    <Avatar>
-                                        <AvatarImage src={authorAvatar.imageUrl} alt={comment.author} data-ai-hint={authorAvatar.imageHint}/>
-                                        <AvatarFallback>{comment.author.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                                    </Avatar>
-                                )}
-                                <div className={cn("flex-initial max-w-xs md:max-w-md", isUser ? "order-1" : "order-2")}>
-                                    <div className={cn("flex items-center", isUser ? "justify-end" : "justify-between")}>
-                                        {!isUser && <p className="font-semibold text-sm">{comment.author}</p>}
-                                        <p className="text-xs text-muted-foreground ml-2">{comment.timestamp}</p>
+                {taskData.comments.length > 0 ? (
+                    <ScrollArea className="h-72 pr-4">
+                        <div className="space-y-4">
+                        {taskData.comments.map((comment, index) => {
+                            const authorAvatar = PlaceHolderImages.find(p => p.id === comment.avatarId);
+                            const isUser = comment.author === 'Clara Garcia';
+                            return (
+                                <div key={index} className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}>
+                                    {!isUser && authorAvatar && (
+                                        <Avatar>
+                                            <AvatarImage src={authorAvatar.imageUrl} alt={comment.author} data-ai-hint={authorAvatar.imageHint}/>
+                                            <AvatarFallback>{comment.author.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                                        </Avatar>
+                                    )}
+                                    <div className={cn("flex-initial max-w-xs md:max-w-md", isUser ? "order-1" : "order-2")}>
+                                        <div className={cn("flex items-center", isUser ? "justify-end" : "justify-between")}>
+                                            {!isUser && <p className="font-semibold text-sm">{comment.author}</p>}
+                                            <p className="text-xs text-muted-foreground ml-2">{comment.timestamp}</p>
+                                        </div>
+                                        <div className={cn(
+                                            "p-3 rounded-lg mt-1 text-sm",
+                                            isUser ? "bg-primary text-primary-foreground" : (comment.type === 'rework_request' ? "border bg-transparent" : "bg-secondary")
+                                        )}>
+                                            {comment.type === 'rework_request' && 
+                                                <p className="font-semibold text-foreground flex items-center mb-2">
+                                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                                    Yêu cầu làm lại
+                                                </p>
+                                            }
+                                            <p>{comment.text}</p>
+                                        </div>
                                     </div>
-                                    <div className={cn(
-                                        "p-3 rounded-lg mt-1 text-sm",
-                                        isUser ? "bg-primary text-primary-foreground" : (comment.type === 'rework_request' ? "border bg-transparent" : "bg-secondary")
-                                    )}>
-                                        {comment.type === 'rework_request' && 
-                                            <p className="font-semibold text-foreground flex items-center mb-2">
-                                                <RefreshCw className="h-4 w-4 mr-2" />
-                                                Yêu cầu làm lại
-                                            </p>
-                                        }
-                                        <p>{comment.text}</p>
-                                    </div>
+                                     {isUser && authorAvatar && (
+                                        <Avatar className="order-2">
+                                            <AvatarImage src={authorAvatar.imageUrl} alt={comment.author} data-ai-hint={authorAvatar.imageHint}/>
+                                            <AvatarFallback>{comment.author.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                                        </Avatar>
+                                    )}
                                 </div>
-                                 {isUser && authorAvatar && (
-                                    <Avatar className="order-2">
-                                        <AvatarImage src={authorAvatar.imageUrl} alt={comment.author} data-ai-hint={authorAvatar.imageHint}/>
-                                        <AvatarFallback>{comment.author.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                                    </Avatar>
-                                )}
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                        </div>
+                    </ScrollArea>
+                ) : (
+                    <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-72">
+                        <MessageSquare className="h-10 w-10 text-muted-foreground" />
+                        <h3 className="text-xl font-semibold mt-4">Chưa có trao đổi</h3>
+                        <p className="text-muted-foreground mt-2">Hãy là người đầu tiên đặt câu hỏi hoặc gửi bình luận về công việc này.</p>
                     </div>
-                </ScrollArea>
+                )}
             </CardContent>
             <CardFooter className="flex-col items-start gap-2 border-t pt-4">
                 <Label htmlFor="new-comment">Thêm bình luận</Label>
