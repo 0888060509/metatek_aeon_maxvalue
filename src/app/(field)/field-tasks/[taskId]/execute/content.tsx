@@ -17,7 +17,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 // Client Component for task execution UI and logic
 export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
@@ -209,11 +209,17 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                             </div>
                         </DialogTrigger>
                         <DialogContent className="max-w-3xl">
+                             <DialogHeader>
+                                <DialogTitle>Xem lại ảnh đã chụp</DialogTitle>
+                                <DialogDescription>
+                                    Ảnh {index + 1} của tiêu chuẩn "{criterion.requirement}"
+                                </DialogDescription>
+                            </DialogHeader>
                              <Image src={imgSrc} alt={`Captured image ${index + 1}`} width={1920} height={1080} className="rounded-md object-contain"/>
                         </DialogContent>
                     </Dialog>
                 ))}
-                <Button variant="outline" className="flex flex-col items-center justify-center aspect-square border-dashed" onClick={() => handleCaptureImage(criterion.id)}>
+                <Button variant="outline" className="flex flex-col items-center justify-center aspect-square border-dashed hover:bg-accent" onClick={() => handleCaptureImage(criterion.id)}>
                     <Camera className="h-8 w-8 text-muted-foreground"/>
                     <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
                 </Button>
