@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,10 +12,12 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, Camera, X } from 'lucide-react';
+import { ChevronLeft, Camera, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import React from 'react';
 
 // Mock data for a single task's execution criteria
 const taskExecutionData = {
@@ -24,12 +26,14 @@ const taskExecutionData = {
     description: 'Set up the main promotional display for the holiday season according to the provided planogram.',
     store: 'Eastside',
     dueDate: '2023-10-18',
+    isRework: false,
+    rejectionReason: '',
     criteria: [
         {
           id: 'crit-1',
           requirement: 'Chụp ảnh toàn cảnh khu vực trưng bày và đối chiếu với guideline',
           type: 'visual-compliance-ai',
-          planogramImageId: 'task-image-2' // Reference to an image for the planogram
+          planogramImageId: 'task-image-2' 
         },
         {
           id: 'crit-2',
@@ -56,12 +60,41 @@ const taskExecutionData = {
     ],
 };
 
+const reworkTaskData = {
+    ...taskExecutionData,
+    isRework: true,
+    rejectionReason: 'Sản phẩm "Festive Soda" đặt sai vị trí so với planogram. Planogram yêu cầu đặt ở kệ thứ 2, ảnh chụp cho thấy sản phẩm ở kệ thứ 3.',
+    criteria: [
+        { ...taskExecutionData.criteria[0] }, // visual compliance
+        { // checklist with some items checked
+          ...taskExecutionData.criteria[1],
+          checklistItems: [
+            { id: 'c2-1', label: 'Lau sạch bụi trên kệ', checked: true },
+            { id: 'c2-2', label: 'Sắp xếp sản phẩm gọn gàng, đúng hàng lối', checked: true },
+            { id: 'c2-3', label: 'Kiểm tra và thay thế bảng giá bị hỏng', checked: false },
+            { id: 'c2-4', label: 'Dọn dẹp rác xung quanh khu vực', checked: true },
+          ]
+        },
+        { // multiple choice with an option selected
+            ...taskExecutionData.criteria[2],
+            selectedOption: 'Đúng vị trí'
+        }
+    ]
+};
 
-export default function TaskExecutionPage({ params }: { params: { taskId: string } }) {
+function TaskExecutionPageContent({ params }: { params: { taskId: string } }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
-    const [taskData, setTaskData] = useState(taskExecutionData);
-    const [capturedImages, setCapturedImages] = useState<Record<string, string[]>>({});
+    
+    const isRework = searchParams.get('rework') === 'true';
+
+    const initialData = isRework ? reworkTaskData : taskExecutionData;
+
+    const [taskData, setTaskData] = useState(initialData);
+    const [capturedImages, setCapturedImages] = useState<Record<string, string[]>>(() => {
+        return isRework ? { 'crit-1': [PlaceHolderImages.find(p => p.id === 'review-image-1')?.imageUrl || ''] } : {};
+    });
 
     const handleChecklistChange = (criterionId: string, itemId: string, checked: boolean) => {
         setTaskData(prevData => ({
@@ -91,7 +124,7 @@ export default function TaskExecutionPage({ params }: { params: { taskId: string
 
     const handleCaptureImage = (criterionId: string) => {
         // This is a mock function. In a real app, this would open the camera.
-        const mockImage = PlaceHolderImages.find(p => p.id === 'review-image-1');
+        const mockImage = PlaceHolderImages.find(p => p.id === 'task-image-1');
         if (mockImage) {
             setCapturedImages(prev => ({
                 ...prev,
@@ -110,8 +143,8 @@ export default function TaskExecutionPage({ params }: { params: { taskId: string
     const handleSubmit = () => {
         console.log("Submitting task report:", { taskData, capturedImages });
         toast({
-            title: "Báo cáo đã được gửi",
-            description: "Cảm ơn bạn. Báo cáo của bạn đã được gửi đi để xét duyệt.",
+            title: `Báo cáo đã được ${isRework ? 'nộp lại' : 'gửi'}`,
+            description: `Cảm ơn bạn. Báo cáo của bạn đã được gửi đi để xét duyệt.`,
         });
         // Redirect back to the task list after submission
         router.push('/field-tasks');
@@ -215,6 +248,16 @@ export default function TaskExecutionPage({ params }: { params: { taskId: string
                 </Button>
                 <h1 className="text-2xl font-bold flex-1 truncate">{taskData.title}</h1>
             </div>
+            
+             {isRework && taskData.rejectionReason && (
+                <Alert variant="destructive">
+                    <RefreshCw className="h-4 w-4" />
+                    <AlertTitle>Yêu cầu làm lại</AlertTitle>
+                    <AlertDescription>
+                        {taskData.rejectionReason}
+                    </AlertDescription>
+                </Alert>
+            )}
 
             {taskData.criteria.map(criterion => (
                 <div key={criterion.id}>
@@ -225,14 +268,23 @@ export default function TaskExecutionPage({ params }: { params: { taskId: string
             
             <div className="fixed bottom-0 left-0 right-0 z-10 p-4 border-t bg-background/95 backdrop-blur-sm md:hidden">
                  <Button size="lg" className="w-full" onClick={handleSubmit}>
-                    Nộp Báo cáo
+                    {isRework ? 'Nộp lại Báo cáo' : 'Nộp Báo cáo'}
                 </Button>
             </div>
              <div className="hidden md:flex justify-end pt-4">
                  <Button size="lg" onClick={handleSubmit}>
-                    Nộp Báo cáo
+                     {isRework ? 'Nộp lại Báo cáo' : 'Nộp Báo cáo'}
                 </Button>
             </div>
         </div>
+    );
+}
+
+
+export default function TaskExecutionPage({ params }: { params: { taskId: string } }) {
+    return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+            <TaskExecutionPageContent params={params} />
+        </React.Suspense>
     );
 }
