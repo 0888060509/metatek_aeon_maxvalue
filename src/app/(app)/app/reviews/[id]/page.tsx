@@ -12,6 +12,7 @@ import {
     RefreshCw,
     MessageSquarePlus,
     Camera,
+    FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -300,7 +301,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                   height={800}
                   className="rounded-lg object-contain"
                 />
-                <div>
+                <div className="space-y-4">
                   <Alert variant={criterion.aiResult === 'Đạt' ? 'default' : 'destructive'} className={cn(criterion.aiResult === 'Đạt' ? 'bg-success/10 border-success/50' : '')}>
                     <div className="flex items-center">
                       {criterion.aiResult === 'Đạt' ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
@@ -309,9 +310,32 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                     <AlertDescription className="mt-2">
                       {criterion.aiReason}
                     </AlertDescription>
-                    <AlertDialog>
+                  </Alert>
+
+                  <div className="space-y-2">
+                     <p className="text-sm font-medium">Tài liệu tham khảo</p>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                                <FileText className="mr-2 h-4 w-4" />
+                                Xem Planogram.pdf
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl h-[90vh]">
+                            <DialogHeader>
+                                <DialogTitle>Planogram.pdf</DialogTitle>
+                                <DialogDescription>Tài liệu hướng dẫn trưng bày sản phẩm được sử dụng để đối chiếu.</DialogDescription>
+                            </DialogHeader>
+                            <div className="h-full w-full border rounded-md">
+                                <iframe src="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" className="h-full w-full" />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                  </div>
+
+                   <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">Xem chi tiết phân tích của AI</Button>
+                        <Button variant="link" size="sm" className="p-0 h-auto text-xs">Xem chi tiết phân tích của AI</Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
@@ -325,7 +349,6 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                  </Alert>
                 </div>
               </div>
             </DialogContent>
@@ -607,6 +630,8 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
+
+    
 
     
 
