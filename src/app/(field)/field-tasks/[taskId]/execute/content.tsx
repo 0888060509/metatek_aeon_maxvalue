@@ -202,7 +202,7 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                             <div className="relative group aspect-square cursor-pointer">
                                 <Image src={imgSrc} alt={`Captured image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw" className="rounded-md object-cover"/>
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full z-10" onClick={(e) => { e.stopPropagation(); handleRemoveImage(criterionId, index); }}>
+                                    <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 rounded-full z-10 p-0" onClick={(e) => { e.stopPropagation(); handleRemoveImage(criterionId, index); }}>
                                         <X className="h-4 w-4"/>
                                     </Button>
                                 </div>
@@ -219,9 +219,11 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                         </DialogContent>
                     </Dialog>
                 ))}
-                <Button variant="outline" className="flex flex-col items-center justify-center aspect-square border-dashed hover:bg-accent" onClick={() => handleCaptureImage(criterion.id)}>
-                    <Camera className="h-8 w-8 text-muted-foreground"/>
-                    <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
+                <Button variant="outline" className="relative flex-col aspect-square border-dashed hover:bg-accent h-full w-full" onClick={() => handleCaptureImage(criterion.id)}>
+                    <div className="flex flex-col items-center justify-center">
+                        <Camera className="h-8 w-8 text-muted-foreground"/>
+                        <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
+                    </div>
                 </Button>
             </div>
         );
@@ -383,3 +385,5 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
         </div>
     );
 }
+
+    
