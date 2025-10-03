@@ -32,7 +32,7 @@ const menuItems = [
   { href: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/app/tasks", label: "Tasks", icon: ClipboardList },
   { href: "/app/reviews", label: "Reviews", icon: ClipboardCheck },
-  { href: "/app/reports", label: "Reports", icon: BarChart3 },
+  { href: "/app/reports", label: "Reports", icon: BarChart3, className: "group-data-[collapsible=icon]:hidden" },
   { href: "/app/notifications", label: "Notifications", icon: Bell },
   { href: "/app/settings", label: "Settings", icon: Settings },
 ];
@@ -56,10 +56,8 @@ export function AppSidebar() {
                 tooltip={item.label}
               >
                 <Link href={item.href}>
-                  <span className={cn("flex items-center gap-3")}>
-                    <item.icon />
-                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                  </span>
+                  <item.icon />
+                  <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

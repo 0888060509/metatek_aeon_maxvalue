@@ -155,11 +155,7 @@ export const SidebarMenuButton = React.forwardRef<
       )}
       {...props}
     >
-      {isIconButton ? (
-        <>{React.Children.toArray(children)[0]}</>
-      ) : (
-        <span className="flex items-center gap-2">{children}</span>
-      )}
+      {children}
     </Button>
   );
 
@@ -246,4 +242,3 @@ export function SidebarTrigger({ className }: { className?: string }) {
 
 // Re-export AppSidebar to avoid circular dependency
 import { AppSidebar } from "@/components/app-sidebar";
-
