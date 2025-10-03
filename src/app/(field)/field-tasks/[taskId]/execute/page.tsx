@@ -282,9 +282,10 @@ function TaskExecutionPageContent({ taskId }: { taskId: string }) {
 
 
 export default function TaskExecutionPage({ params }: { params: { taskId: string } }) {
+    const { taskId } = params;
     return (
         <React.Suspense fallback={<div>Loading...</div>}>
-            <TaskExecutionPageContent taskId={params.taskId} />
+            <TaskExecutionPageContent taskId={taskId} />
         </React.Suspense>
     );
 }
