@@ -17,7 +17,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 // Client Component for task execution UI and logic
 export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
@@ -201,11 +201,6 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                         <DialogTrigger asChild>
                             <div className="relative group aspect-square cursor-pointer">
                                 <Image src={imgSrc} alt={`Captured image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw" className="rounded-md object-cover"/>
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 rounded-full z-10 p-0" onClick={(e) => { e.stopPropagation(); handleRemoveImage(criterionId, index); }}>
-                                        <X className="h-4 w-4"/>
-                                    </Button>
-                                </div>
                             </div>
                         </DialogTrigger>
                         <DialogContent className="max-w-3xl">
@@ -215,15 +210,23 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                                     Ảnh {index + 1} của tiêu chuẩn "{criterion.requirement}"
                                 </DialogDescription>
                             </DialogHeader>
-                             <Image src={imgSrc} alt={`Captured image ${index + 1}`} width={1920} height={1080} className="rounded-md object-contain"/>
+                             <div className="relative">
+                                <Image src={imgSrc} alt={`Captured image ${index + 1}`} width={1920} height={1080} className="rounded-md object-contain max-h-[70vh]"/>
+                             </div>
+                             <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="destructive" onClick={() => handleRemoveImage(criterionId, index)}>
+                                        <X className="mr-2 h-4 w-4" />
+                                        Xóa ảnh
+                                    </Button>
+                                </DialogClose>
+                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
                 ))}
-                <Button variant="outline" className="relative flex-col aspect-square border-dashed hover:bg-accent h-full w-full" onClick={() => handleCaptureImage(criterion.id)}>
-                    <div className="flex flex-col items-center justify-center">
-                        <Camera className="h-8 w-8 text-muted-foreground"/>
-                        <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
-                    </div>
+                <Button variant="outline" className="flex flex-col items-center justify-center aspect-square border-dashed hover:bg-accent h-full w-full p-0" onClick={() => handleCaptureImage(criterion.id)}>
+                    <Camera className="h-8 w-8 text-muted-foreground"/>
+                    <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
                 </Button>
             </div>
         );
@@ -386,4 +389,5 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     );
 }
 
+    
     
