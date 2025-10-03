@@ -50,6 +50,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useToast } from "@/hooks/use-toast";
 
 const initialReviewData = {
   id: 'REV-002',
@@ -148,6 +149,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionInput, setShowRejectionInput] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Simulate fetching data and avoid hydration mismatch
@@ -192,7 +194,24 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     }) : null);
     setRejectionReason("");
     setShowRejectionInput(false);
+    toast({
+        title: "Yêu cầu làm lại đã được gửi",
+        description: `Một bình luận đã được thêm và trạng thái đã được cập nhật.`,
+        variant: "default",
+    });
   }
+
+  const handleApprove = () => {
+    if (!reviewData) return;
+    setReviewData(prevData => prevData ? ({
+      ...prevData,
+      status: 'Approved'
+    }) : null);
+    toast({
+        title: "Phê duyệt thành công",
+        description: "Báo cáo này đã được phê duyệt.",
+    });
+  };
 
   const getAiStatusBadge = (status: string, minimal: boolean = false) => {
     switch (status) {
@@ -204,11 +223,24 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
         return <Badge variant="secondary">Lỗi phân tích</Badge>;
     }
   };
+  
+  const getStatusBadge = (status: string) => {
+     switch (status) {
+        case 'Approved':
+            return <Badge className="bg-success hover:bg-success/90 text-success-foreground">Đã duyệt</Badge>;
+        case 'Rework Requested':
+            return <Badge variant="destructive">Yêu cầu làm lại</Badge>;
+        case 'Pending Approval':
+            return <Badge className="bg-warning hover:bg-warning/90 text-warning-foreground">Chờ duyệt</Badge>;
+        default:
+            return <Badge variant="secondary">{status}</Badge>;
+     }
+  }
 
   const ApproveButton = () => {
     if (!reviewData) return null;
     const button = (
-        <Button className="w-full sm:w-auto">
+        <Button className="w-full sm:w-auto" onClick={handleApprove}>
             <ThumbsUp className="mr-2 h-4 w-4" /> Duyệt
         </Button>
     );
@@ -228,7 +260,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <AlertDialogAction>Xác nhận Phê duyệt</AlertDialogAction>
+                        <AlertDialogAction onClick={handleApprove}>Xác nhận Phê duyệt</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -261,6 +293,8 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
 
   const managerAvatar = PlaceHolderImages.find(p => p.id === reviewData.managerAvatar);
   const defaultAccordionValues = reviewData.criteria.map((_, index) => `criterion-${index}`);
+  const isFinalStatus = reviewData.status === 'Approved' || reviewData.status === 'Rework Requested';
+
 
   const renderCriterion = (criterion: any) => {
     switch (criterion.type) {
@@ -590,7 +624,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                 <Separator className="my-2"/>
                 <div className="flex justify-between font-semibold">
                   <span>Trạng thái hiện tại:</span>
-                  <Badge variant={reviewData.status === 'Rework Requested' ? 'destructive' : 'secondary'}>{reviewData.status}</Badge>
+                  {getStatusBadge(reviewData.status)}
                 </div>
               </CardContent>
             </Card>
@@ -600,7 +634,14 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
 
       <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 backdrop-blur-sm">
         <div className={cn("flex flex-col sm:flex-row items-center gap-4 p-4", "md:ml-56")}>
-            {showRejectionInput ? (
+            {isFinalStatus ? (
+                 <div className="w-full text-center sm:text-left">
+                    <p className="font-semibold">Đánh giá này đã hoàn tất.</p>
+                    <p className="text-sm text-muted-foreground">
+                        Trạng thái cuối cùng: {reviewData.status === 'Approved' ? 'Đã duyệt' : 'Đã yêu cầu làm lại'}.
+                    </p>
+                </div>
+            ) : showRejectionInput ? (
                 <div className="w-full flex-1 space-y-2">
                     <Label htmlFor="rejection-reason">Lý do từ chối</Label>
                     <div className="relative">
