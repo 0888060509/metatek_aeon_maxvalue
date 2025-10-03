@@ -1,22 +1,19 @@
 
-'use client';
-
-import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { ChevronLeft, Camera, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import React, { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
 
 // Mock data for a single task's execution criteria
 const taskExecutionData = {
@@ -82,6 +79,7 @@ const reworkTaskData = {
 };
 
 function TaskExecutionPageContent({ taskId }: { taskId: string }) {
+    'use client';
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
