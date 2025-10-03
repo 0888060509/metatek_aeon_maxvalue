@@ -15,6 +15,7 @@ import {
   useReactTable,
   PaginationState,
 } from '@tanstack/react-table';
+import { format } from 'date-fns';
 
 import {
   Card,
@@ -51,20 +52,20 @@ type Task = {
   region: string;
   assignedTo: string;
   status: 'Completed' | 'Pending Approval' | 'Issue' | 'Overdue' | 'In Progress' | 'Draft';
-  dueDate: string;
+  dueDate: Date;
 };
 
 
 const initialTasks: Task[] = [
-    { id: 'TSK-001', title: 'Q3 Product Display Check', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'Completed', dueDate: '2023-10-15' },
-    { id: 'TSK-002', title: 'Sanitation Audit (AI)', store: 'Uptown', region: 'West', assignedTo: 'John Smith', status: 'Pending Approval', dueDate: '2023-10-20' },
-    { id: 'TSK-003', title: 'Holiday Promo Setup (Rework)', store: 'Eastside', region: 'East', assignedTo: 'Clara Garcia', status: 'Issue', dueDate: '2023-10-18' },
-    { id: 'TSK-004', title: 'Weekly Stock Count (Overdue)', store: 'Suburbia', region: 'North', assignedTo: 'Robert Brown', status: 'Overdue', dueDate: '2023-10-12' },
-    { id: 'TSK-005', title: 'Fire Safety Inspection (In Progress)', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'In Progress', dueDate: '2023-10-25' },
-    { id: 'TSK-006', title: 'New Employee Onboarding', store: 'Uptown', region: 'West', assignedTo: 'HR Dept', status: 'Completed', dueDate: '2023-10-05' },
-    { id: 'TSK-007', title: 'Q4 Product Display (Draft)', store: 'All', region: 'All', assignedTo: 'Store Manager', status: 'Draft', dueDate: '2023-12-31' },
-    { id: 'TSK-011', title: 'Temperature Log (Input)', store: 'Eastside', region: 'East', assignedTo: 'Clara Garcia', status: 'In Progress', dueDate: '2023-10-28' },
-    { id: 'TSK-012', title: 'End-of-day Report (Multiple Criteria)', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'In Progress', dueDate: '2023-10-29' },
+    { id: 'TSK-001', title: 'Q3 Product Display Check', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'Completed', dueDate: new Date('2023-10-15T23:59:00') },
+    { id: 'TSK-002', title: 'Sanitation Audit (AI)', store: 'Uptown', region: 'West', assignedTo: 'John Smith', status: 'Pending Approval', dueDate: new Date('2023-10-20T17:00:00') },
+    { id: 'TSK-003', title: 'Holiday Promo Setup (Rework)', store: 'Eastside', region: 'East', assignedTo: 'Clara Garcia', status: 'Issue', dueDate: new Date('2023-10-18T12:00:00') },
+    { id: 'TSK-004', title: 'Weekly Stock Count (Overdue)', store: 'Suburbia', region: 'North', assignedTo: 'Robert Brown', status: 'Overdue', dueDate: new Date('2023-10-12T09:00:00') },
+    { id: 'TSK-005', title: 'Fire Safety Inspection (In Progress)', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'In Progress', dueDate: new Date('2023-10-25T23:59:00') },
+    { id: 'TSK-006', title: 'New Employee Onboarding', store: 'Uptown', region: 'West', assignedTo: 'HR Dept', status: 'Completed', dueDate: new Date('2023-10-05T18:00:00') },
+    { id: 'TSK-007', title: 'Q4 Product Display (Draft)', store: 'All', region: 'All', assignedTo: 'Store Manager', status: 'Draft', dueDate: new Date('2023-12-31T23:59:00') },
+    { id: 'TSK-011', title: 'Temperature Log (Input)', store: 'Eastside', region: 'East', assignedTo: 'Clara Garcia', status: 'In Progress', dueDate: new Date('2023-10-28T22:00:00') },
+    { id: 'TSK-012', title: 'End-of-day Report (Multiple Criteria)', store: 'Downtown', region: 'West', assignedTo: 'Ana Miller', status: 'In Progress', dueDate: new Date('2023-10-29T21:00:00') },
 ];
 
 const getStatusBadge = (status: Task['status']) => {
@@ -121,6 +122,7 @@ const columns: ColumnDef<Task>[] = [
   {
     accessorKey: 'dueDate',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Due Date" />,
+    cell: ({ row }) => format(row.getValue('dueDate'), "PPp"),
   },
   {
     id: 'actions',

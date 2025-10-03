@@ -23,7 +23,7 @@ import {
   FileUp,
   X,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, setHours, setMinutes, parse } from "date-fns";
 import React from 'react';
 
 
@@ -82,13 +82,16 @@ const executionCriterionSchema = z.object({
   minPhotos: z.number().optional(),
 });
 
+const timeStringSchema = z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format. Use HH:mm");
 
 const formSchema = z.object({
   taskName: z.string().min(1, "Tên tác vụ là bắt buộc."),
   taskDescription: z.string().optional(),
   priority: z.string().min(1, "Vui lòng chọn mức độ ưu tiên."),
   startDate: z.date({ required_error: "Ngày bắt đầu là bắt buộc." }),
+  startTime: timeStringSchema,
   dueDate: z.date({ required_error: "Ngày hết hạn là bắt buộc." }),
+  dueTime: timeStringSchema,
   assigneeRole: z.string().min(1, "Vui lòng chọn vai trò."),
   store: z.string().min(1, "Vui lòng chọn cửa hàng hoặc khu vực."),
   criteria: z.array(executionCriterionSchema).min(1, "Cần ít nhất một tiêu chuẩn thực thi."),
@@ -154,6 +157,8 @@ function CreateTaskPageContent() {
       taskName: "",
       taskDescription: "",
       priority: "medium",
+      startTime: "09:00",
+      dueTime: "17:00",
       criteria: [{ type: 'visual-compliance-ai', requirement: "", weight: 100, checklistItems: [], multipleChoiceOptions: [] }],
       isRecurring: false,
       assigneeRole: "store-manager",
@@ -169,6 +174,8 @@ function CreateTaskPageContent() {
             startDate: null,
             // @ts-ignore
             dueDate: null,
+            startTime: "09:00",
+            dueTime: "17:00",
         });
          toast({
             title: "Tác vụ đã được sao chép",
@@ -190,8 +197,24 @@ function CreateTaskPageContent() {
   const watchRecurringEndType = form.watch("recurringEndType");
   const watchWeeklyDays = form.watch("recurringWeeklyDays", []);
 
+  const combineDateTime = (date: Date, time: string): Date => {
+    const [hours, minutes] = time.split(':').map(Number);
+    let newDate = setHours(date, hours);
+    newDate = setMinutes(newDate, minutes);
+    return newDate;
+  };
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Submitted values:", values, "Uploaded Files:", uploadedFiles);
+    const fullStartDate = combineDateTime(values.startDate, values.startTime);
+    const fullDueDate = combineDateTime(values.dueDate, values.dueTime);
+
+    const submissionData = {
+        ...values,
+        startDate: fullStartDate,
+        dueDate: fullDueDate,
+    };
+
+    console.log("Submitted values:", submissionData, "Uploaded Files:", uploadedFiles);
     toast({
       title: "Giao việc thành công",
       description: `Đã giao tác vụ "${values.taskName}" thành công.`,
@@ -216,6 +239,8 @@ function CreateTaskPageContent() {
         startDate: null, 
         // @ts-ignore
         dueDate: null,
+        startTime: "09:00",
+        dueTime: "17:00",
     });
     toast({
         title: "Đã tải mẫu tác vụ",
@@ -312,6 +337,10 @@ function CreateTaskPageContent() {
   };
 
   const renderMobilePreview = () => {
+    const dueDate = form.getValues("dueDate");
+    const dueTime = form.getValues("dueTime");
+    const fullDueDate = dueDate && dueTime ? combineDateTime(dueDate, dueTime) : null;
+
     return (
         <div className="w-full max-w-[360px] mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
         <div className="space-y-4">
@@ -326,7 +355,7 @@ function CreateTaskPageContent() {
                     {form.getValues("priority") || "Ưu tiên"}
                 </span>
                 <span className="text-gray-500">·</span>
-                <span className="text-gray-500">Đến hạn: {form.getValues("dueDate") ? format(form.getValues("dueDate"), "dd/MM/yyyy") : "N/A"}</span>
+                <span className="text-gray-500">Đến hạn: {fullDueDate ? format(fullDueDate, "dd/MM/yyyy HH:mm") : "N/A"}</span>
             </div>
             <div className="prose prose-sm dark:prose-invert max-w-none">
                 <p>{form.getValues("taskDescription") || "Đây là nơi hiển thị mô tả chi tiết của công việc. Nội dung có thể bao gồm hướng dẫn, ghi chú quan trọng và các yêu cầu khác."}</p>
@@ -463,29 +492,29 @@ function CreateTaskPageContent() {
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="priority"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mức độ ưu tiên</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Chọn mức độ ưu tiên" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="high">Cao</SelectItem>
-                              <SelectItem value="medium">Trung bình</SelectItem>
-                              <SelectItem value="low">Thấp</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mức độ ưu tiên</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Chọn mức độ ưu tiên" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="high">Cao</SelectItem>
+                            <SelectItem value="medium">Trung bình</SelectItem>
+                            <SelectItem value="low">Thấp</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="startDate"
@@ -498,16 +527,16 @@ function CreateTaskPageContent() {
                                 <Button
                                   variant={"outline"}
                                   className={cn(
-                                    "w-full pl-3 text-left font-normal",
+                                    "w-full justify-start text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                   )}
                                 >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
                                   {field.value ? (
                                     format(field.value, "PPP")
                                   ) : (
                                     <span>Chọn ngày</span>
                                   )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -526,6 +555,21 @@ function CreateTaskPageContent() {
                     />
                     <FormField
                       control={form.control}
+                      name="startTime"
+                      render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Thời gian bắt đầu</FormLabel>
+                            <FormControl>
+                                <Input type="time" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                     <FormField
+                      control={form.control}
                       name="dueDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
@@ -536,16 +580,16 @@ function CreateTaskPageContent() {
                                 <Button
                                   variant={"outline"}
                                   className={cn(
-                                    "w-full pl-3 text-left font-normal",
+                                    "w-full justify-start text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                   )}
                                 >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
                                   {field.value ? (
                                     format(field.value, "PPP")
                                   ) : (
                                     <span>Chọn ngày</span>
                                   )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -559,6 +603,19 @@ function CreateTaskPageContent() {
                             </PopoverContent>
                           </Popover>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="dueTime"
+                      render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Thời gian hết hạn</FormLabel>
+                            <FormControl>
+                                <Input type="time" {...field} />
+                            </FormControl>
+                            <FormMessage />
                         </FormItem>
                       )}
                     />

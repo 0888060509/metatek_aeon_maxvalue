@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { format } from 'date-fns';
 
 // --- Mock Data ---
 
@@ -49,7 +50,7 @@ const taskDetails = {
     title: 'Sanitation Audit',
     description: 'Perform a comprehensive sanitation audit of the store premises, including shelves, floors, and storage areas. Ensure compliance with health and safety regulations.',
     status: 'Pending Approval',
-    dueDate: '2023-10-20',
+    dueDate: new Date('2023-10-20T17:00:00'),
     priority: 'High',
     assignedTo: 'Store Manager',
     store: 'All Stores',
@@ -238,7 +239,7 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
                     </div>
                     <div className="space-y-1">
                         <p className="text-muted-foreground">Due Date</p>
-                        <p className="font-medium">{task.dueDate}</p>
+                        <p className="font-medium">{format(task.dueDate, "PPPp")}</p>
                     </div>
                      <div className="space-y-1">
                         <p className="text-muted-foreground">Priority</p>
@@ -292,5 +293,3 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
     </div>
   );
 }
-
-    
