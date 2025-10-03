@@ -246,3 +246,4 @@ export function SidebarTrigger({ className }: { className?: string }) {
 
 // Re-export AppSidebar to avoid circular dependency
 import { AppSidebar } from "@/components/app-sidebar";
+
