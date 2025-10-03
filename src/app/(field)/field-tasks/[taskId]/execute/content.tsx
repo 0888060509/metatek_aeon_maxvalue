@@ -17,6 +17,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 // Client Component for task execution UI and logic
 export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
@@ -193,6 +194,33 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
     const renderCriterion = (criterion: any) => {
         const images = capturedImages[criterion.id] || [];
 
+        const imageGrid = (criterionId: string) => (
+             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-2">
+                {images.map((imgSrc, index) => (
+                    <Dialog key={index}>
+                        <DialogTrigger asChild>
+                            <div className="relative group aspect-square cursor-pointer">
+                                <Image src={imgSrc} alt={`Captured image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw" className="rounded-md object-cover"/>
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full z-10" onClick={(e) => { e.stopPropagation(); handleRemoveImage(criterionId, index); }}>
+                                        <X className="h-4 w-4"/>
+                                    </Button>
+                                </div>
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl">
+                             <Image src={imgSrc} alt={`Captured image ${index + 1}`} width={1920} height={1080} className="rounded-md object-contain"/>
+                        </DialogContent>
+                    </Dialog>
+                ))}
+                <Button variant="outline" className="flex flex-col items-center justify-center aspect-square border-dashed" onClick={() => handleCaptureImage(criterion.id)}>
+                    <Camera className="h-8 w-8 text-muted-foreground"/>
+                    <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
+                </Button>
+            </div>
+        );
+
+
         switch (criterion.type) {
             case 'visual-compliance-ai':
                 const planogramImage = PlaceHolderImages.find(p => p.id === criterion.planogramImageId);
@@ -214,22 +242,7 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                             )}
                             <div>
                                <Label className="font-semibold">Ảnh chụp thực tế</Label>
-                               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-2">
-                                   {images.map((imgSrc, index) => (
-                                       <div key={index} className="relative group aspect-square">
-                                           <Image src={imgSrc} alt={`Captured image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw" className="rounded-md object-cover"/>
-                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleRemoveImage(criterion.id, index)}>
-                                                    <X className="h-4 w-4"/>
-                                                </Button>
-                                            </div>
-                                       </div>
-                                   ))}
-                                    <Button variant="outline" className="flex flex-col items-center justify-center aspect-square border-dashed" onClick={() => handleCaptureImage(criterion.id)}>
-                                        <Camera className="h-8 w-8 text-muted-foreground"/>
-                                        <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
-                                    </Button>
-                               </div>
+                               {imageGrid(criterion.id)}
                             </div>
                         </CardContent>
                     </Card>
@@ -307,22 +320,7 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                         <CardContent className="pt-6 space-y-4">
                             <div>
                                <Label className="font-semibold">Ảnh đã chụp ({images.length}/{criterion.minPhotos})</Label>
-                               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-2">
-                                   {images.map((imgSrc, index) => (
-                                       <div key={index} className="relative group aspect-square">
-                                           <Image src={imgSrc} alt={`Captured image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw" className="rounded-md object-cover"/>
-                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleRemoveImage(criterion.id, index)}>
-                                                    <X className="h-4 w-4"/>
-                                                </Button>
-                                            </div>
-                                       </div>
-                                   ))}
-                                    <Button variant="outline" className="flex flex-col items-center justify-center aspect-square border-dashed" onClick={() => handleCaptureImage(criterion.id)}>
-                                        <Camera className="h-8 w-8 text-muted-foreground"/>
-                                        <span className="text-xs mt-2 text-muted-foreground">Chụp ảnh</span>
-                                    </Button>
-                               </div>
+                               {imageGrid(criterion.id)}
                                {images.length < criterion.minPhotos && (
                                    <p className="text-xs text-destructive mt-2">Cần chụp thêm {criterion.minPhotos - images.length} ảnh.</p>
                                )}
