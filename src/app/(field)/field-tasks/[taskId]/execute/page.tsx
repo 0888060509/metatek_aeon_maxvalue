@@ -1,9 +1,4 @@
 
-'use client';
-
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,79 +6,86 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ChevronLeft, Camera, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import React, { useState } from 'react';
+import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 
-
-// Mock data for a single task's execution criteria
-const taskExecutionData = {
-    id: 'TSK-003',
-    title: 'Holiday Promo Setup',
-    description: 'Set up the main promotional display for the holiday season according to the provided planogram.',
-    store: 'Eastside',
-    dueDate: '2023-10-18',
-    isRework: false,
-    rejectionReason: '',
-    criteria: [
-        {
-          id: 'crit-1',
-          requirement: 'Chụp ảnh toàn cảnh khu vực trưng bày và đối chiếu với guideline',
-          type: 'visual-compliance-ai',
-          planogramImageId: 'task-image-2' 
-        },
-        {
-          id: 'crit-2',
-          requirement: 'Hoàn thành checklist vệ sinh khu vực trưng bày',
-          type: 'checklist',
-          checklistItems: [
-            { id: 'c2-1', label: 'Lau sạch bụi trên kệ', checked: false },
-            { id: 'c2-2', label: 'Sắp xếp sản phẩm gọn gàng, đúng hàng lối', checked: false },
-            { id: 'c2-3', label: 'Kiểm tra và thay thế bảng giá bị hỏng', checked: false },
-            { id: 'c2-4', label: 'Dọn dẹp rác xung quanh khu vực', checked: false },
-          ]
-        },
-        {
-            id: 'crit-3',
-            requirement: 'Bảng hiệu khuyến mãi đã được đặt ở đúng vị trí chưa?',
-            type: 'multiple-choice',
-            options: [
-                { label: 'Đúng vị trí' },
-                { label: 'Sai vị trí' },
-                { label: 'Chưa có bảng hiệu' },
-            ],
-            selectedOption: ''
-        },
-    ],
-};
-
-const reworkTaskData = {
-    ...taskExecutionData,
-    isRework: true,
-    rejectionReason: 'Sản phẩm "Festive Soda" đặt sai vị trí so với planogram. Planogram yêu cầu đặt ở kệ thứ 2, ảnh chụp cho thấy sản phẩm ở kệ thứ 3.',
-    criteria: [
-        { ...taskExecutionData.criteria[0] }, // visual compliance
-        { // checklist with some items checked
-          ...taskExecutionData.criteria[1],
-          checklistItems: [
-            { id: 'c2-1', label: 'Lau sạch bụi trên kệ', checked: true },
-            { id: 'c2-2', label: 'Sắp xếp sản phẩm gọn gàng, đúng hàng lối', checked: true },
-            { id: 'c2-3', label: 'Kiểm tra và thay thế bảng giá bị hỏng', checked: false },
-            { id: 'c2-4', label: 'Dọn dẹp rác xung quanh khu vực', checked: true },
-          ]
-        },
-        { // multiple choice with an option selected
-            ...taskExecutionData.criteria[2],
-            selectedOption: 'Đúng vị trí'
-        }
-    ]
-};
-
+// Client Component for task execution UI and logic
 function TaskExecutionPageContent({ taskId }: { taskId: string }) {
+    'use client';
+
+    const { useRouter, useSearchParams } = require('next/navigation');
+    const { useToast } = require('@/hooks/use-toast');
+    const [useState] = React.useState;
+
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
+    
+    // Mock data for a single task's execution criteria
+    const taskExecutionData = {
+        id: 'TSK-003',
+        title: 'Holiday Promo Setup',
+        description: 'Set up the main promotional display for the holiday season according to the provided planogram.',
+        store: 'Eastside',
+        dueDate: '2023-10-18',
+        isRework: false,
+        rejectionReason: '',
+        criteria: [
+            {
+              id: 'crit-1',
+              requirement: 'Chụp ảnh toàn cảnh khu vực trưng bày và đối chiếu với guideline',
+              type: 'visual-compliance-ai',
+              planogramImageId: 'task-image-2' 
+            },
+            {
+              id: 'crit-2',
+              requirement: 'Hoàn thành checklist vệ sinh khu vực trưng bày',
+              type: 'checklist',
+              checklistItems: [
+                { id: 'c2-1', label: 'Lau sạch bụi trên kệ', checked: false },
+                { id: 'c2-2', label: 'Sắp xếp sản phẩm gọn gàng, đúng hàng lối', checked: false },
+                { id: 'c2-3', label: 'Kiểm tra và thay thế bảng giá bị hỏng', checked: false },
+                { id: 'c2-4', label: 'Dọn dẹp rác xung quanh khu vực', checked: false },
+              ]
+            },
+            {
+                id: 'crit-3',
+                requirement: 'Bảng hiệu khuyến mãi đã được đặt ở đúng vị trí chưa?',
+                type: 'multiple-choice',
+                options: [
+                    { label: 'Đúng vị trí' },
+                    { label: 'Sai vị trí' },
+                    { label: 'Chưa có bảng hiệu' },
+                ],
+                selectedOption: ''
+            },
+        ],
+    };
+
+    const reworkTaskData = {
+        ...taskExecutionData,
+        isRework: true,
+        rejectionReason: 'Sản phẩm "Festive Soda" đặt sai vị trí so với planogram. Planogram yêu cầu đặt ở kệ thứ 2, ảnh chụp cho thấy sản phẩm ở kệ thứ 3.',
+        criteria: [
+            { ...taskExecutionData.criteria[0] }, // visual compliance
+            { // checklist with some items checked
+              ...taskExecutionData.criteria[1],
+              checklistItems: [
+                { id: 'c2-1', label: 'Lau sạch bụi trên kệ', checked: true },
+                { id: 'c2-2', label: 'Sắp xếp sản phẩm gọn gàng, đúng hàng lối', checked: true },
+                { id: 'c2-3', label: 'Kiểm tra và thay thế bảng giá bị hỏng', checked: false },
+                { id: 'c2-4', label: 'Dọn dẹp rác xung quanh khu vực', checked: true },
+              ]
+            },
+            { // multiple choice with an option selected
+                ...taskExecutionData.criteria[2],
+                selectedOption: 'Đúng vị trí'
+            }
+        ]
+    };
     
     const isRework = searchParams.get('rework') === 'true';
 
@@ -277,6 +279,7 @@ function TaskExecutionPageContent({ taskId }: { taskId: string }) {
         </div>
     );
 }
+
 
 // This is now a Server Component that passes the taskId to the Client Component.
 export default function TaskExecutionPage({ params }: { params: { taskId: string } }) {
