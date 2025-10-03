@@ -201,9 +201,9 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                         <DialogTrigger asChild>
                             <div className="relative group aspect-square cursor-pointer">
                                 <Image src={imgSrc} alt={`Captured image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw" className="rounded-md object-cover"/>
-                                <button className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <X className="h-4 w-4"/>
-                                </button>
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                                    <span className="text-white text-xs font-semibold">Xem ảnh</span>
+                                </div>
                             </div>
                         </DialogTrigger>
                         <DialogContent className="max-w-3xl">
@@ -350,7 +350,7 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
 
 
     return (
-        <div className="space-y-4 pb-16 2xl:pb-4">
+        <div className="space-y-4 pb-24 2xl:pb-4">
              <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                     <Link href={`/field-tasks/${taskId}`}>
@@ -378,14 +378,9 @@ export function TaskExecutionPageContent({ taskId }: { taskId: string }) {
                 </div>
             ))}
             
-            <div className="fixed bottom-0 left-0 right-0 z-10 p-4 border-t bg-background/95 backdrop-blur-sm 2xl:hidden">
-                 <Button size="lg" className="w-full" onClick={handleSubmit}>
+            <div className="pt-4">
+                <Button size="lg" className="w-full" onClick={handleSubmit}>
                     {isRework ? 'Nộp lại Báo cáo' : 'Nộp Báo cáo'}
-                </Button>
-            </div>
-             <div className="hidden 2xl:flex justify-end pt-4">
-                 <Button size="lg" onClick={handleSubmit}>
-                     {isRework ? 'Nộp lại Báo cáo' : 'Nộp Báo cáo'}
                 </Button>
             </div>
         </div>
