@@ -20,9 +20,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useUpdateTaskItem, useGetTaskItemDetail, useGetAccounts, useSubmitTaskItem } from '@/api/app/hooks';
-import { CreateTaskItemRequest, TaskGoal } from '@/api/types';
+import { useUpdateTaskItem, useGetTaskItemDetail, useGetAccounts, usePublishTaskItem } from '@/api/app/hooks';
+import { CreateTaskItemRequest, TaskGoal } from '@/api/app/types';
 import { canEditTask } from '@/api/app/task-utils';
+import { getPriorityValue, getPriorityKey } from '@/lib/task-display-utils';
 
 // Form validation schema
 const executionCriterionSchema = z.object({
@@ -56,7 +57,7 @@ function EditTaskPageContent() {
   // API hooks
   const { data: taskDetail, loading: loadingTask, execute: fetchTaskDetail } = useGetTaskItemDetail();
   const { execute: updateTask, loading: updating, error: updateError } = useUpdateTaskItem();
-  const { execute: submitTask, loading: submitting, error: submitError } = useSubmitTaskItem();
+  const { execute: publishTask, loading: publishing, error: publishError } = usePublishTaskItem();
   const { data: accounts, loading: loadingAccounts, execute: fetchAccounts } = useGetAccounts();
 
   // Form setup
@@ -105,9 +106,9 @@ function EditTaskPageContent() {
       form.reset({
         taskName: taskDetail.name || "",
         taskDescription: taskDetail.description || "",
-        priority: taskDetail.priority === 3 ? 'high' : taskDetail.priority === 2 ? 'medium' : 'low',
-        startDate: taskDetail.startAt ? new Date(taskDetail.startAt * 1000) : new Date(),
-        dueDate: taskDetail.endAt ? new Date(taskDetail.endAt * 1000) : new Date(),
+        priority: getPriorityKey(taskDetail.priority),
+        startDate: taskDetail.startAt ? new Date(taskDetail.startAt) : new Date(),
+        dueDate: taskDetail.endAt ? new Date(taskDetail.endAt) : new Date(),
         assigneeId: taskDetail.assigneeId || "",
         criteria: taskDetail.listGoal && taskDetail.listGoal.length > 0 
           ? taskDetail.listGoal.map(goal => ({
@@ -134,9 +135,9 @@ function EditTaskPageContent() {
         name: values.taskName,
         description: values.taskDescription || null,
         assigneeId: values.assigneeId,
-        priority: values.priority === 'high' ? 3 : values.priority === 'medium' ? 2 : 1,
-        startAt: Math.floor(values.startDate.getTime() / 1000),
-        endAt: Math.floor(values.dueDate.getTime() / 1000),
+        priority: getPriorityValue(values.priority),
+        startAt: values.startDate.getTime(),
+        endAt: values.dueDate.getTime(),
         listGoal: taskGoals.length > 0 ? taskGoals : null,
       };
 
@@ -172,9 +173,9 @@ function EditTaskPageContent() {
         name: values.taskName,
         description: values.taskDescription || null,
         assigneeId: values.assigneeId,
-        priority: values.priority === 'high' ? 3 : values.priority === 'medium' ? 2 : 1,
-        startAt: Math.floor(values.startDate.getTime() / 1000),
-        endAt: Math.floor(values.dueDate.getTime() / 1000),
+        priority: getPriorityValue(values.priority),
+        startAt: values.startDate.getTime(),
+        endAt: values.dueDate.getTime(),
         listGoal: taskGoals.length > 0 ? taskGoals : null,
       };
 
@@ -182,10 +183,10 @@ function EditTaskPageContent() {
       const updateResult = await updateTask({ id: taskId, data: taskData });
       
       if (updateResult) {
-        // Step 2: Submit task
-        const submitResult = await submitTask(taskId);
+        // Step 2: Publish task
+        const publishResult = await publishTask(taskId);
         
-        if (submitResult) {
+        if (publishResult) {
           toast({
             title: "Thành công!",
             description: "Task đã được cập nhật và giao việc thành công.",
@@ -260,8 +261,8 @@ function EditTaskPageContent() {
               {taskDetail?.state === 0 && (
                 <Button size="sm" type="button" 
                   onClick={form.handleSubmit(updateAndSubmit)} 
-                  disabled={updating || submitting}>
-                  {(updating || submitting) ? "Đang giao việc..." : "Cập nhật & Giao việc"}
+                  disabled={updating || publishing}>
+                  {(updating || publishing) ? "Đang giao việc..." : "Cập nhật & Giao việc"}
                 </Button>
               )}
             </div>
@@ -588,8 +589,8 @@ function EditTaskPageContent() {
               {taskDetail?.state === 0 && (
                 <Button size="sm" type="button" 
                   onClick={form.handleSubmit(updateAndSubmit)} 
-                  disabled={updating || submitting}>
-                  {(updating || submitting) ? "Đang giao việc..." : "Cập nhật & Giao việc"}
+                  disabled={updating || publishing}>
+                  {(updating || publishing) ? "Đang giao việc..." : "Cập nhật & Giao việc"}
                 </Button>
               )}
           </div>

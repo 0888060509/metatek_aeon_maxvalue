@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { useCreateTaskItem, useGetAccounts, useSubmitTaskItem } from '@/api/app/hooks';
-import { CreateTaskItemRequest, TaskGoal } from '@/api/types';
+import { useCreateTaskItem, useGetAccounts, usePublishTaskItem } from '@/api/app/hooks';
+import { CreateTaskItemRequest, TaskGoal } from '@/api/app/types';
+import { getPriorityValue } from '@/lib/task-display-utils';
 import { toast } from '@/hooks/use-toast';
 import {
   ChevronLeft,
@@ -111,7 +112,7 @@ function CreateTaskPageContent() {
 
   const { toast } = useToast();
   const { execute: createTask, loading: creating, error: createError } = useCreateTaskItem();
-  const { execute: submitTask, loading: submitting, error: submitError } = useSubmitTaskItem();
+  const { execute: publishTask, loading: publishing, error: publishError } = usePublishTaskItem();
   const { data: accounts, loading: loadingAccounts, execute: fetchAccounts } = useGetAccounts();
 
   // Load accounts on mount (only Store accounts for task assignment)
@@ -167,9 +168,9 @@ function CreateTaskPageContent() {
         name: values.taskName,
         description: values.taskDescription || null,
         assigneeId: values.assigneeId,
-        priority: values.priority === 'high' ? 3 : values.priority === 'medium' ? 2 : 1,
-        startAt: Math.floor(values.startDate.getTime() / 1000),
-        endAt: Math.floor(values.dueDate.getTime() / 1000),
+        priority: getPriorityValue(values.priority),
+        startAt: values.startDate.getTime(),
+        endAt: values.dueDate.getTime(),
         listGoal: taskGoals.length > 0 ? taskGoals : null,
       };
 
@@ -205,9 +206,9 @@ function CreateTaskPageContent() {
         name: values.taskName,
         description: values.taskDescription || null,
         assigneeId: values.assigneeId,
-        priority: values.priority === 'high' ? 3 : values.priority === 'medium' ? 2 : 1,
-        startAt: Math.floor(values.startDate.getTime() / 1000),
-        endAt: Math.floor(values.dueDate.getTime() / 1000),
+        priority: getPriorityValue(values.priority),
+        startAt: values.startDate.getTime(),
+        endAt: values.dueDate.getTime(),
         listGoal: taskGoals.length > 0 ? taskGoals : null,
       };
 
@@ -215,10 +216,10 @@ function CreateTaskPageContent() {
       const taskId = await createTask(taskData);
       
       if (taskId) {
-        // Step 2: Submit task
-        const submitResult = await submitTask(taskId);
+        // Step 2: Publish task
+        const publishResult = await publishTask(taskId);
         
-        if (submitResult) {
+        if (publishResult) {
           toast({
             title: "Thành công!",
             description: "Task đã được tạo và giao việc thành công.",
@@ -433,8 +434,8 @@ function CreateTaskPageContent() {
               </Button>
               <Button size="sm" type="button" 
                 onClick={form.handleSubmit(assignTask)} 
-                disabled={creating || submitting}>
-                {(creating || submitting) ? "Đang giao việc..." : "Giao việc"}
+                disabled={creating || publishing}>
+                {(creating || publishing) ? "Đang giao việc..." : "Giao việc"}
               </Button>
             </div>
           </div>
@@ -937,8 +938,8 @@ function CreateTaskPageContent() {
               </Button>
               <Button size="sm" type="button" 
                 onClick={form.handleSubmit(assignTask)} 
-                disabled={creating || submitting}>
-                {(creating || submitting) ? "Đang giao việc..." : "Giao việc"}
+                disabled={creating || publishing}>
+                {(creating || publishing) ? "Đang giao việc..." : "Giao việc"}
               </Button>
           </div>
         </form>

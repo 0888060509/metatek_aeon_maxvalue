@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useGetTaskItemDetail, useDeleteTaskItem, useUpdateTaskItem, useSubmitTaskItem } from '@/api/app/hooks';
+import { useGetTaskItemDetail, useDeleteTaskItem, useUpdateTaskItem, useSubmitTaskItem, useGetTaskNotes, useCreateTaskNote } from '@/api/app/hooks';
 import { getTaskStatus, getPriorityText, formatDate, generateTaskCode } from '@/lib/task-display-utils';
 import { TASK_STATES } from '@/api/app/task-utils';
 import { useFileUpload } from '@/api/file/hooks';
@@ -141,6 +141,11 @@ export default function TaskDetailPage() {
   const { execute: deleteTask, loading: deleting } = useDeleteTaskItem();
   const { execute: updateTask, loading: updating } = useUpdateTaskItem();
   const { execute: submitTask, loading: submitting } = useSubmitTaskItem();
+  
+  // Task Notes hooks - moved to top to follow Rules of Hooks
+  const { data: taskNotes, loading: notesLoading, error: notesError, execute: fetchNotes } = useGetTaskNotes();
+  const { execute: createNote, loading: creatingNote } = useCreateTaskNote();
+  
   const fileClient = React.useMemo(() => {
     const tokenManager = {
       getToken: () => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1M2RjNGQ0LWNhMDUtNDVhYy04M2NkLWU5OGZhOTFiODkwZiIsIm5hbWUiOiJSb290Iiwic2NvcGUiOiJhZG1pbiIsImV4cCI6NjE3NTk1ODUxMTYsImlzcyI6IkRFTU8ifQ.IzybC-hdennp_t0ulF2-271NOZ9cIIh8GQwD5ScdOAU',
@@ -158,6 +163,9 @@ export default function TaskDetailPage() {
   
   // State for image popup
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
+  
+  // State for message input
+  const [messageContent, setMessageContent] = React.useState('');
 
   // Handle delete task
   const handleDeleteTask = async () => {
@@ -224,8 +232,8 @@ export default function TaskDetailPage() {
           description: taskDetail.description || null,
           assigneeId: taskDetail.assigneeId || '',
           priority: taskDetail.priority || 1,
-          startAt: taskDetail.startAt || Math.floor(Date.now() / 1000),
-          endAt: taskDetail.endAt || Math.floor(Date.now() / 1000) + 86400,
+          startAt: taskDetail.startAt || Date.now(),
+          endAt: taskDetail.endAt || Date.now() + 86400000, // 24 hours in milliseconds
           listGoal: updatedGoals
         }
       });
@@ -264,8 +272,8 @@ export default function TaskDetailPage() {
           description: taskDetail.description || null,
           assigneeId: taskDetail.assigneeId || '',
           priority: taskDetail.priority || 1,
-          startAt: taskDetail.startAt || Math.floor(Date.now() / 1000),
-          endAt: taskDetail.endAt || Math.floor(Date.now() / 1000) + 86400,
+          startAt: taskDetail.startAt || Date.now(),
+          endAt: taskDetail.endAt || Date.now() + 86400000, // 24 hours in milliseconds
           listGoal: updatedGoals
         }
       });
@@ -295,12 +303,47 @@ export default function TaskDetailPage() {
     taskDetail.state !== undefined &&
     [TASK_STATES.IN_PROGRESS, TASK_STATES.OVERDUE, TASK_STATES.DENY].includes(taskDetail.state as any);
 
+  // Handle send message
+  const handleSendMessage = async () => {
+    if (!messageContent.trim() || !taskId) return;
+
+    try {
+      await createNote({
+        content: messageContent.trim(),
+        taskItemId: taskId,
+        type: 1 // General note
+      });
+      
+      toast({
+        title: "Gửi tin nhắn thành công",
+        description: "Tin nhắn đã được gửi.",
+      });
+
+      // Clear input and refresh notes
+      setMessageContent('');
+      fetchNotes({ taskItemId: taskId });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể gửi tin nhắn. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Execute the API call when taskId is available
   React.useEffect(() => {
     if (taskId) {
       execute(taskId);
     }
   }, [taskId]);
+
+  // Fetch task notes when taskId is available
+  React.useEffect(() => {
+    if (taskId) {
+      fetchNotes({ taskItemId: taskId });
+    }
+  }, [taskId]); // Remove fetchNotes from dependency to prevent infinite loop
 
   // Load existing progress images when taskDetail is loaded
   React.useEffect(() => {
@@ -407,6 +450,64 @@ export default function TaskDetailPage() {
   const task = taskDetail;
   const taskStatus = getTaskStatus(task.state);
 
+    // --- Task Notes render function ---
+    const renderTaskNotes = () => {
+      if (notesLoading) {
+        return (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            <span>Đang tải tin nhắn...</span>
+          </div>
+        );
+      }
+
+      if (notesError) {
+        return (
+          <div className="text-center py-8 text-red-500">
+            Không thể tải tin nhắn: {notesError}
+          </div>
+        );
+      }
+
+      if (!taskNotes || taskNotes.length === 0) {
+        return (
+          <div className="text-center py-8 text-muted-foreground">
+            Chưa có tin nhắn nào
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex flex-col space-y-3 p-4 max-h-96 overflow-y-auto">
+          {taskNotes.map((note) => (
+            <div key={note.id} className="flex items-start gap-3">
+              {/* Avatar */}
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-primary">
+                    {note.authorName ? note.authorName.charAt(0).toUpperCase() : 'U'}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Message bubble */}
+              <div className="flex-1 max-w-[80%]">
+                <div className="bg-muted rounded-lg px-3 py-2">
+                  <div className="mb-1">
+                    <span className="text-sm font-medium">{note.authorName}</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {formatDate(note.createAt)}
+                    </span>
+                  </div>
+                  <p className="text-sm">{note.content}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
   return (
     <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -454,220 +555,277 @@ export default function TaskDetailPage() {
             </div>
         </div>
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Tóm tắt nhiệm vụ</CardTitle>
-                <CardDescription>
-                    Tổng quan về chi tiết và yêu cầu của nhiệm vụ.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  {task.description || 'Không có mô tả'}
-                </p>
-                <Separator />
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="space-y-1">
-                        <p className="text-muted-foreground">Trạng thái</p>
-                        <div>{getTaskStatusBadge(taskStatus)}</div>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-muted-foreground">Ngày bắt đầu</p>
-                        <p className="font-medium">{formatDate(task.startAt) || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-muted-foreground">Hạn hoàn thành</p>
-                        <p className="font-medium">{formatDate(task.endAt) || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-muted-foreground">Ưu tiên</p>
-                        <p className="font-medium">{getPriorityText(task.priority)}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-muted-foreground">Người thực hiện</p>
-                        <p className="font-medium">{task.assigneeName || 'Chưa phân công'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-muted-foreground">Người tạo</p>
-                        <p className="font-medium">{task.creatorName || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-muted-foreground">Ngày tạo</p>
-                        <p className="font-medium">{formatDate(task.createAt) || '-'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-muted-foreground">Ngày nộp</p>
-                        <p className="font-medium">{formatDate(task.submitAt) || '-'}</p>
-                    </div>
-                    {task.approveAt && (
-                      <div className="space-y-1">
-                          <p className="text-muted-foreground">Ngày duyệt</p>
-                          <p className="font-medium">{formatDate(task.approveAt)}</p>
-                      </div>
-                    )}
+        <Separator className="my-6" />
+        
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Task Details */}
+          <div className="lg:col-span-2 space-y-6">
 
-                </div>
-
-            </CardContent>
-        </Card>
-
-        {/* Task Goals Section */}
-        {task.listGoal && task.listGoal.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Mục tiêu nhiệm vụ</CardTitle>
-              <CardDescription>
-                Danh sách các mục tiêu cần hoàn thành cho nhiệm vụ này.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {task.listGoal.map((goal, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm font-medium">Mục tiêu {index + 1}</span>
-                          <Badge variant="outline">
-                            {goal.type === 1 ? 'Tải ảnh lên' : `Loại ${goal.type}`}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {goal.point} điểm
-                          </Badge>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Tóm tắt nhiệm vụ</CardTitle>
+                    <CardDescription>
+                        Tổng quan về chi tiết và yêu cầu của nhiệm vụ.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      {task.description || 'Không có mô tả'}
+                    </p>
+                    <Separator />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground">Trạng thái</p>
+                            <div>{getTaskStatusBadge(taskStatus)}</div>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {goal.detail}
-                        </p>
-                        {goal.templateData && (
-                          <div className="mt-2">
-                            <p className="text-xs text-muted-foreground">Dữ liệu mẫu:</p>
-                            <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
-                              {goal.templateData}
-                            </pre>
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground">Ngày bắt đầu</p>
+                            <p className="font-medium">{formatDate(task.startAt) || '-'}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground">Hạn hoàn thành</p>
+                            <p className="font-medium">{formatDate(task.endAt) || '-'}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground">Ưu tiên</p>
+                            <p className="font-medium">{getPriorityText(task.priority)}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground">Người thực hiện</p>
+                            <p className="font-medium">{task.assigneeName || 'Chưa phân công'}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground">Người tạo</p>
+                            <p className="font-medium">{task.creatorName || '-'}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground">Ngày tạo</p>
+                            <p className="font-medium">{formatDate(task.createAt) || '-'}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground">Ngày nộp</p>
+                            <p className="font-medium">{formatDate(task.submitAt) || '-'}</p>
+                        </div>
+                        {task.approveAt && (
+                          <div className="space-y-1">
+                              <p className="text-muted-foreground">Ngày duyệt</p>
+                              <p className="font-medium">{formatDate(task.approveAt)}</p>
                           </div>
                         )}
+                    </div>
+                </CardContent>
+            </Card>
 
-                        {/* Image Section for ImageUpload type - Show for all task states */}
-                        {goal.type === 1 && (
-                          <div className="mt-4 space-y-3">
-                            {/* Upload section - only show for editable task states */}
-                            {taskDetail && [TASK_STATES.IN_PROGRESS, TASK_STATES.OVERDUE, TASK_STATES.DENY].includes(taskDetail.state as any) && (
-                              <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium">Tải ảnh lên:</label>
-                                <Input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      handleImageUpload(index, file);
-                                      e.target.value = ''; // Reset input
-                                    }
-                                  }}
-                                  disabled={isUploading}
-                                  className="max-w-xs"
-                                />
-                                {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
+            {/* Task Goals Section */}
+            {task.listGoal && task.listGoal.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mục tiêu nhiệm vụ</CardTitle>
+                  <CardDescription>
+                    Danh sách các mục tiêu cần hoàn thành cho nhiệm vụ này.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {task.listGoal.map((goal, index) => (
+                      <div key={index} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-sm font-medium">Mục tiêu {index + 1}</span>
+                              <Badge variant="outline">
+                                {goal.type === 1 ? 'Tải ảnh lên' : `Loại ${goal.type}`}
+                              </Badge>
+                              <Badge variant="secondary">
+                                {goal.point} điểm
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {goal.detail}
+                            </p>
+                            {goal.templateData && (
+                              <div className="mt-2">
+                                <p className="text-xs text-muted-foreground">Dữ liệu mẫu:</p>
+                                <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
+                                  {goal.templateData}
+                                </pre>
                               </div>
                             )}
 
-                            {/* Display uploaded images from goalImages state */}
-                            {goalImages[index] && goalImages[index].length > 0 && (
-                              <div className="space-y-2">
-                                <p className="text-sm font-medium">Ảnh đã tải lên:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {goalImages[index].map((imageUrl, imgIndex) => (
-                                    <div key={imgIndex} className="relative group">
-                                      <img
-                                        src={imageUrl}
-                                        alt={`Uploaded image ${imgIndex + 1}`}
-                                        className="w-20 h-20 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
-                                        onClick={() => setSelectedImage(imageUrl)}
-                                      />
-                                      {taskDetail && [TASK_STATES.IN_PROGRESS, TASK_STATES.OVERDUE, TASK_STATES.DENY].includes(taskDetail.state as any) && (
-                                        <button
-                                          onClick={() => handleRemoveImage(index, imageUrl)}
-                                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </button>
-                                      )}
+                            {/* Image Section for ImageUpload type - Show for all task states */}
+                            {goal.type === 1 && (
+                              <div className="mt-4 space-y-3">
+                                {/* Upload section - only show for editable task states */}
+                                {taskDetail && [TASK_STATES.IN_PROGRESS, TASK_STATES.OVERDUE, TASK_STATES.DENY].includes(taskDetail.state as any) && (
+                                  <div className="flex items-center gap-2">
+                                    <label className="text-sm font-medium">Tải ảnh lên:</label>
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          handleImageUpload(index, file);
+                                          e.target.value = ''; // Reset input
+                                        }
+                                      }}
+                                      disabled={isUploading}
+                                      className="max-w-xs"
+                                    />
+                                    {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
+                                  </div>
+                                )}
+
+                                {/* Display uploaded images from goalImages state */}
+                                {goalImages[index] && goalImages[index].length > 0 && (
+                                  <div className="space-y-2">
+                                    <p className="text-sm font-medium">Ảnh đã tải lên:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {goalImages[index].map((imageUrl, imgIndex) => (
+                                        <div key={imgIndex} className="relative group">
+                                          <img
+                                            src={imageUrl}
+                                            alt={`Uploaded image ${imgIndex + 1}`}
+                                            className="w-20 h-20 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                                            onClick={() => setSelectedImage(imageUrl)}
+                                          />
+                                          {taskDetail && [TASK_STATES.IN_PROGRESS, TASK_STATES.OVERDUE, TASK_STATES.DENY].includes(taskDetail.state as any) && (
+                                            <button
+                                              onClick={() => handleRemoveImage(index, imageUrl)}
+                                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
-                                </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Display progress value for other types */}
+                            {goal.type !== 1 && goal.progressValue && (
+                              <div className="mt-2">
+                                <p className="text-xs text-muted-foreground">Tiến độ hoàn thành:</p>
+                                <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
+                                  {goal.progressValue}
+                                </pre>
                               </div>
                             )}
                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Task Action Buttons */}
+                  {(canCompleteTask || (taskDetail && taskDetail.state === TASK_STATES.IN_PROGRESS)) && (
+                    <div className="mt-6 pt-4 border-t">
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        {/* Show Save Progress Button - same logic as Complete Task Button */}
+                        {taskDetail && taskDetail.state !== null && taskDetail.state !== undefined &&
+                          [TASK_STATES.IN_PROGRESS, TASK_STATES.OVERDUE, TASK_STATES.DENY].includes(taskDetail.state as any) && (
+                          <Button 
+                            onClick={handleSaveProgress}
+                            disabled={updating}
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                          >
+                            {updating ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Đang lưu...
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="h-4 w-4 mr-2" />
+                                Lưu tiến độ
+                              </>
+                            )}
+                          </Button>
                         )}
 
-                        {/* Display progress value for other types */}
-                        {goal.type !== 1 && goal.progressValue && (
-                          <div className="mt-2">
-                            <p className="text-xs text-muted-foreground">Tiến độ hoàn thành:</p>
-                            <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
-                              {goal.progressValue}
-                            </pre>
-                          </div>
+                        {/* Show Complete Task Button when can complete */}
+                        {canCompleteTask && (
+                          <Button 
+                            onClick={handleCompleteTask}
+                            disabled={updating || submitting}
+                            className="w-full sm:w-auto"
+                          >
+                            {updating || submitting ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Đang xử lý...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Hoàn thành tác vụ
+                              </>
+                            )}
+                          </Button>
                         )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
 
-              {/* Task Action Buttons */}
-              {(canCompleteTask || (taskDetail && taskDetail.state === TASK_STATES.IN_PROGRESS)) && (
-                <div className="mt-6 pt-4 border-t">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    {/* Show Save Progress Button - same logic as Complete Task Button */}
-                    {taskDetail && taskDetail.state !== null && taskDetail.state !== undefined &&
-                      [TASK_STATES.IN_PROGRESS, TASK_STATES.OVERDUE, TASK_STATES.DENY].includes(taskDetail.state as any) && (
-                      <Button 
-                        onClick={handleSaveProgress}
-                        disabled={updating}
-                        variant="outline"
-                        className="w-full sm:w-auto"
-                      >
-                        {updating ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Đang lưu...
-                          </>
-                        ) : (
-                          <>
-                            <FileText className="h-4 w-4 mr-2" />
-                            Lưu tiến độ
-                          </>
-                        )}
-                      </Button>
-                    )}
-
-                    {/* Show Complete Task Button when can complete */}
-                    {canCompleteTask && (
-                      <Button 
-                        onClick={handleCompleteTask}
-                        disabled={updating || submitting}
-                        className="w-full sm:w-auto"
-                      >
-                        {updating || submitting ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Đang xử lý...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Hoàn thành tác vụ
-                          </>
-                        )}
-                      </Button>
-                    )}
+          {/* Right Column - Task Notes (Chat interface) */}
+          <div className="lg:col-span-1">
+            <Card className="h-fit">
+              <CardHeader>
+                <CardTitle className="text-lg">Tin nhắn</CardTitle>
+                <CardDescription>
+                  Cuộc trò chuyện về nhiệm vụ này
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="border-b">
+                  {renderTaskNotes()}
+                </div>
+                
+                {/* Message Input */}
+                <div className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      placeholder="Nhập tin nhắn..." 
+                      className="flex-1"
+                      value={messageContent}
+                      onChange={(e) => setMessageContent(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      disabled={creatingNote}
+                    />
+                    <Button 
+                      size="sm"
+                      onClick={handleSendMessage}
+                      disabled={!messageContent.trim() || creatingNote}
+                    >
+                      {creatingNote ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          Gửi
+                        </>
+                      ) : (
+                        'Gửi'
+                      )}
+                    </Button>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Image Preview Dialog */}
         <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>

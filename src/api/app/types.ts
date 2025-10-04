@@ -149,6 +149,40 @@ export interface GetTaskItemsParams {
 }
 
 // Dashboard Types
+// Task Note Types
+export interface TaskNote {
+  id: string;
+  createAt?: number | null;
+  updateAt?: number | null;
+  deleteAt?: number | null;
+  content?: string | null;
+  taskItemId: string;
+  taskItemName?: string | null;
+  authorId: string;
+  authorName?: string | null;
+  authorAvatarLink?: string | null;
+  type: number;
+  typeDisplay?: string | null;
+  isSystemNote: boolean;
+}
+
+export interface CreateTaskNoteRequest {
+  content: string;
+  taskItemId: string;
+  type?: number; // 1 = General, 2 = Progress, 3 = System, 4 = Reminder, 5 = Issue (default: 1)
+}
+
+export interface GetTaskNotesParams {
+  taskItemId: string;
+  authorId?: string;
+  type?: string;
+  isSystemNote?: boolean;
+  fromDate?: number;
+  toDate?: number;
+  status?: string;
+  page?: number;
+  size?: number;
+}
 export interface DashboardStatistics {
   taskStatistics?: TaskStatistics | null;
   monthlyPerformance?: MonthlyPerformanceItem[] | null;

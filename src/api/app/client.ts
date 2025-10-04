@@ -1,3 +1,4 @@
+
 import { 
   ApiResponse, 
   CreateAccountRequest,
@@ -19,7 +20,10 @@ import {
   TaskStatistics,
   MonthlyPerformanceItem,
   RecentTask,
-  GetDashboardParams
+  GetDashboardParams,
+  TaskNote,
+  GetTaskNotesParams,
+  CreateTaskNoteRequest
 } from './types';
 
 export class ApiClient {
@@ -328,6 +332,30 @@ export class ApiClient {
     
     const query = queryParams.toString();
     return this.requestWithRetry<RecentTask[]>(`/Admin/Dashboard/RecentTasks${query ? `?${query}` : ''}`);
+  }
+
+  // Task Note APIs
+  async getTaskNotes(params: GetTaskNotesParams): Promise<ApiResponse<TaskNote[]>> {
+    const searchParams = new URLSearchParams();
+    if (params.taskItemId) searchParams.append('taskItemId', params.taskItemId);
+    if (params.authorId) searchParams.append('authorId', params.authorId);
+    if (params.type) searchParams.append('type', params.type);
+    if (params.isSystemNote !== undefined) searchParams.append('isSystemNote', params.isSystemNote ? 'true' : 'false');
+    if (params.fromDate) searchParams.append('fromDate', params.fromDate.toString());
+    if (params.toDate) searchParams.append('toDate', params.toDate.toString());
+    if (params.status) searchParams.append('status', params.status);
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.size) searchParams.append('size', params.size.toString());
+    const query = searchParams.toString();
+    const endpoint = query ? `/Admin/TaskNote?${query}` : '/Admin/TaskNote';
+    return this.requestWithRetry<TaskNote[]>(endpoint);
+  }
+
+  async createTaskNote(data: CreateTaskNoteRequest): Promise<ApiResponse<TaskNote>> {
+    return this.requestWithRetry<TaskNote>('/Admin/TaskNote', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
   }
 }
 

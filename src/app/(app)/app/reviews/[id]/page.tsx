@@ -1,34 +1,41 @@
-
 'use client';
 
-import Link from "next/link";
-import Image from "next/image";
-import { 
-    ChevronLeft, 
+import * as React from 'react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { useGetTaskItemDetail, useApproveTaskItem, useDenyTaskItem, useGetTaskNotes, useCreateTaskNote } from '@/api/app/hooks';
+import { getTaskStatus, getPriorityText, formatDate, generateTaskCode } from '@/lib/task-display-utils';
+import { TASK_STATES } from '@/api/app/task-utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
     CheckCircle2,
     XCircle,
-    Send,
-    ThumbsUp,
-    RefreshCw,
-    MessageSquarePlus,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogDescription, 
-    DialogHeader, 
-    DialogTitle, 
-    DialogTrigger 
-} from "@/components/ui/dialog";
-import { useCurrentUser } from '@/hooks/use-current-user';
+    ChevronLeft,
+    MoreHorizontal,
+    Loader2,
+} from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,124 +46,279 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/alert-dialog';
 
-const initialReviewData = {
-  id: 'REV-002',
-  taskId: 'TSK-003',
-  taskTitle: 'Holiday Promo Setup',
-  store: 'Eastside',
-  submittedBy: 'Clara Garcia',
-  submittedAt: '2023-10-18 02:30 PM',
-  status: 'Pending Approval',
-  aiStatus: 'Không Đạt',
-  userAvatar: 'user-avatar-3',
-  managerAvatar: 'user-avatar-1',
-  criteria: [
-    {
-      id: 'crit-1',
-      requirement: 'Chụp ảnh toàn cảnh khu vực trưng bày và đối chiếu với guideline',
-      type: 'visual-compliance-ai',
-      submittedImageId: 'task-image-2',
-      aiResult: 'Không Đạt',
-      aiReason: 'Sản phẩm "Festive Soda" đặt sai vị trí so với planogram. Planogram yêu cầu đặt ở kệ thứ 2, ảnh chụp cho thấy sản phẩm ở kệ thứ 3.',
-      score: 0,
-      maxScore: 100,
-    },
-    {
-      id: 'crit-2',
-      requirement: 'Hoàn thành checklist vệ sinh khu vực trưng bày',
-      type: 'checklist',
-      score: 50,
-      maxScore: 50,
-      checklistItems: [
-        { label: 'Lau sạch bụi trên kệ', checked: true },
-        { label: 'Sắp xếp sản phẩm gọn gàng, đúng hàng lối', checked: true },
-        { label: 'Kiểm tra và thay thế bảng giá bị hỏng', checked: false },
-        { label: 'Dọn dẹp rác xung quanh khu vực', checked: true },
-      ]
-    },
-    {
-        id: 'crit-3',
-        requirement: 'Bảng hiệu khuyến mãi đã được đặt ở đúng vị trí chưa?',
-        type: 'multiple-choice',
-        score: 25,
-        maxScore: 25,
-        options: [
-            { label: 'Đúng vị trí' },
-            { label: 'Sai vị trí' },
-            { label: 'Chưa có bảng hiệu' },
-        ],
-        selectedOption: 'Đúng vị trí'
-    },
-  ],
-  comments: [
-      {
-          author: 'Ana Miller',
-          avatarId: 'user-avatar-1',
-          text: 'AI đã phát hiện sản phẩm đặt sai vị trí. Em kiểm tra lại giúp chị nhé.',
-          timestamp: '15 phút trước',
-          type: 'rework_request'
-      },
-      {
-          author: 'Clara Garcia',
-          avatarId: 'user-avatar-3',
-          text: 'Dạ em đã nhận được yêu cầu. Em sẽ kiểm tra và nộp lại ngay ạ.',
-          timestamp: '10 phút trước',
-          type: 'comment'
-      },
-      {
-          author: 'Ana Miller',
-          avatarId: 'user-avatar-1',
-          text: 'Cảm ơn em. Chị sẽ chờ báo cáo mới.',
-          timestamp: '8 phút trước',
-          type: 'comment'
-      },
-      {
-          author: 'Clara Garcia',
-          avatarId: 'user-avatar-3',
-          text: 'Chị ơi, em đã cập nhật lại trưng bày và gửi lại báo cáo mới rồi ạ. Chị kiểm tra giúp em nhé.',
-          timestamp: '2 phút trước',
-          type: 'comment'
-      },
-      {
-          author: 'Ana Miller',
-          avatarId: 'user-avatar-1',
-          text: 'Ok em, để chị xem.',
-          timestamp: '1 phút trước',
-          type: 'comment'
-      }
-  ]
+// Get task status badge
+const getTaskStatusBadge = (state: number) => {
+  switch (state) {
+    case TASK_STATES.WAIT_REVIEW:
+      return <Badge className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-200">Chờ duyệt</Badge>;
+    case TASK_STATES.COMPLETE:
+      return <Badge className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200">Đã duyệt</Badge>;
+    case TASK_STATES.DENY:
+      return <Badge variant="destructive">Từ chối</Badge>;
+    default:
+      return <Badge variant="outline">Không xác định</Badge>;
+  }
 };
 
-export default function ReviewDetailPage({ params }: { params: { id: string } }) {
+export default function ReviewDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const taskId = params?.id as string;
   const { userRole } = useCurrentUser();
+  const { toast } = useToast();
+
+  // State for chat
+  const [messageContent, setMessageContent] = React.useState('');
+  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
+
+  // API hooks
+  const { data: taskDetail, loading, error, execute } = useGetTaskItemDetail();
+  const { execute: approveTask, loading: approving } = useApproveTaskItem();
+  const { execute: denyTask, loading: denying } = useDenyTaskItem();
   
-  // Only admin users can access reviews
+  // Task notes hooks
+  const {
+    data: taskNotes,
+    loading: notesLoading,
+    error: notesError,
+    execute: fetchNotes
+  } = useGetTaskNotes();
+  
+  const { execute: createNote, loading: creatingNote } = useCreateTaskNote();
+
+  // Fetch task detail and notes on mount
+  React.useEffect(() => {
+    if (taskId) {
+      execute(taskId);
+    }
+  }, [taskId]);
+
+  React.useEffect(() => {
+    if (taskId) {
+      fetchNotes({ taskItemId: taskId });
+    }
+  }, [taskId]);
+
+  // Handle send message
+  const handleSendMessage = async () => {
+    if (!messageContent.trim() || !taskId) return;
+
+    try {
+      await createNote({
+        taskItemId: taskId,
+        content: messageContent.trim()
+      });
+
+      // Clear input and refresh notes
+      setMessageContent('');
+      fetchNotes({ taskItemId: taskId });
+
+      toast({
+        title: "Gửi tin nhắn thành công",
+        description: "Tin nhắn đã được gửi.",
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi gửi tin nhắn",
+        description: "Không thể gửi tin nhắn. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle approve task
+  const handleApprove = async () => {
+    try {
+      await approveTask(taskId);
+      
+      toast({
+        title: "Phê duyệt thành công",
+        description: "Nhiệm vụ đã được phê duyệt.",
+      });
+      
+      // Refresh task detail
+      execute(taskId);
+      
+      // Navigate back to reviews page
+      router.push('/app/reviews');
+    } catch (error) {
+      toast({
+        title: "Lỗi phê duyệt",
+        description: "Không thể phê duyệt nhiệm vụ. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle deny task
+  const handleDeny = async () => {
+    try {
+      await denyTask(taskId);
+      
+      toast({
+        title: "Từ chối thành công",
+        description: "Nhiệm vụ đã được từ chối.",
+      });
+      
+      // Refresh task detail
+      execute(taskId);
+      
+      // Navigate back to reviews page
+      router.push('/app/reviews');
+    } catch (error) {
+      toast({
+        title: "Lỗi từ chối",
+        description: "Không thể từ chối nhiệm vụ. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Render task notes (chat interface)
+  const renderTaskNotes = () => {
+    if (notesLoading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          <span>Đang tải tin nhắn...</span>
+        </div>
+      );
+    }
+
+    if (notesError) {
+      return (
+        <div className="text-center py-8 text-red-500">
+          Không thể tải tin nhắn: {notesError}
+        </div>
+      );
+    }
+
+    if (!taskNotes || taskNotes.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          Chưa có tin nhắn nào
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col space-y-3 p-4 max-h-96 overflow-y-auto">
+        {taskNotes.map((note) => (
+          <div key={note.id} className="flex items-start gap-3">
+            {/* Avatar */}
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-primary">
+                  {note.authorName ? note.authorName.charAt(0).toUpperCase() : 'U'}
+                </span>
+              </div>
+            </div>
+            
+            {/* Message bubble */}
+            <div className="flex-1 max-w-[80%]">
+              <div className="bg-muted rounded-lg px-3 py-2">
+                <div className="mb-1">
+                  <span className="text-sm font-medium">{note.authorName}</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {formatDate(note.createAt)}
+                  </span>
+                </div>
+                <p className="text-sm">{note.content}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (userRole === 'store') {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Không có quyền truy cập</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription>
+              Bạn không có quyền truy cập trang này.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-            <Link href="/app/tasks">
+            <Link href="/app/reviews">
               <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Quay lại</span>
+              <span className="sr-only">Quay lại danh sách review</span>
             </Link>
           </Button>
-          <h1 className="text-xl font-semibold">Không có quyền truy cập</h1>
+          <Skeleton className="h-8 w-64" />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-48" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Skeleton className="h-16 w-full" />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-6 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-32 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+            <Link href="/app/reviews">
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Quay lại danh sách review</span>
+            </Link>
+          </Button>
+          <h1 className="text-xl font-semibold">Chi tiết review</h1>
         </div>
         
         <Card>
           <CardContent className="pt-6">
             <Alert variant="destructive">
               <AlertDescription>
-                Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên nếu cần hỗ trợ.
+                Không thể tải thông tin nhiệm vụ: {error}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -165,370 +327,344 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     );
   }
 
-  const [reviewData, setReviewData] = useState(initialReviewData);
-  const [newComment, setNewComment] = useState("");
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [showRejectionInput, setShowRejectionInput] = useState(false);
-
-  const handleAddComment = () => {
-    if (newComment.trim() === "") return;
-
-    const commentToAdd = {
-      author: 'Ana Miller', // Assuming the manager is commenting
-      avatarId: 'user-avatar-1',
-      text: newComment,
-      timestamp: 'Vừa xong',
-      type: 'comment' as const,
-    };
-
-    setReviewData(prevData => ({
-      ...prevData,
-      comments: [...prevData.comments, commentToAdd],
-    }));
-    setNewComment("");
-  };
-
-  const handleRequestRework = () => {
-    if (rejectionReason.trim() === "") return;
-
-     const commentToAdd = {
-      author: 'Ana Miller',
-      avatarId: 'user-avatar-1',
-      text: rejectionReason,
-      timestamp: 'Vừa xong',
-      type: 'rework_request' as const,
-    };
-
-    setReviewData(prevData => ({
-      ...prevData,
-      comments: [...prevData.comments, commentToAdd],
-      status: 'Rework Requested'
-    }));
-    setRejectionReason("");
-    setShowRejectionInput(false);
-  }
-
-  const getAiStatusBadge = (status: string) => {
-    switch (status) {
-      case 'Đạt':
-        return <Badge className="bg-success hover:bg-success/90 text-success-foreground"><CheckCircle2 className="mr-2 h-4 w-4" />AI: Đạt</Badge>;
-      case 'Không Đạt':
-        return <Badge variant="destructive"><XCircle className="mr-2 h-4 w-4" />AI: Không Đạt</Badge>;
-      default:
-        return <Badge variant="secondary">Lỗi phân tích</Badge>;
-    }
-  };
-
-  const ApproveButton = () => {
-    const button = (
-        <Button className="w-full sm:w-auto">
-            <ThumbsUp className="mr-2 h-4 w-4" /> Duyệt
-        </Button>
-    );
-
-    if (reviewData.aiStatus === 'Không Đạt') {
-        return (
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    {button}
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Xác nhận ghi đè và phê duyệt?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            AI gợi ý tác vụ này "Không Đạt". Bạn có chắc chắn muốn ghi đè quyết định và phê duyệt báo cáo này không?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <AlertDialogAction>Xác nhận Phê duyệt</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        );
-    }
-    return button;
-  };
-  
-  const managerAvatar = PlaceHolderImages.find(p => p.id === reviewData.managerAvatar);
-  
-  const renderCriterion = (criterion: any) => {
-    switch (criterion.type) {
-      case 'visual-compliance-ai':
-        const reviewImage = PlaceHolderImages.find(p => p.id === criterion.submittedImageId);
-        if (!reviewImage) return null;
-
-        return (
-          <Dialog>
-            <DialogTrigger asChild>
-              <div className="relative cursor-pointer group">
-                <Image
-                  src={reviewImage.imageUrl}
-                  alt="Submitted task evidence"
-                  width={600}
-                  height={400}
-                  className="rounded-lg object-cover"
-                  data-ai-hint={reviewImage.imageHint}
-                />
-                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                  <span className="text-white font-semibold">Xem chi tiết & Phân tích AI</span>
-                </div>
-                <div className="absolute top-2 right-2">
-                  {getAiStatusBadge(criterion.aiResult)}
-                </div>
-              </div>
-            </DialogTrigger>
-            <DialogContent className="max-w-6xl">
-              <DialogHeader>
-                <DialogTitle>Chi tiết hình ảnh và phân tích của AI</DialogTitle>
-                <DialogDescription>
-                  Tiêu chuẩn: "{criterion.requirement}"
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid md:grid-cols-2 gap-6 items-start">
-                <Image
-                  src={reviewImage.imageUrl}
-                  alt="Submitted task evidence"
-                  width={1200}
-                  height={800}
-                  className="rounded-lg object-contain"
-                />
-                <div>
-                  <Alert variant={criterion.aiResult === 'Đạt' ? 'default' : 'destructive'} className={cn(criterion.aiResult === 'Đạt' ? 'bg-success/10 border-success/50' : '')}>
-                    <div className="flex items-center">
-                      {criterion.aiResult === 'Đạt' ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                      <AlertTitle className="ml-2 font-semibold">Kết quả phân tích của AI: {criterion.aiResult}</AlertTitle>
-                    </div>
-                    <AlertDescription className="mt-2">
-                      {criterion.aiReason}
-                    </AlertDescription>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">Xem chi tiết phân tích của AI</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Tính năng đang phát triển</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tính năng xem chi tiết phân tích của AI đang được phát triển và sẽ sớm ra mắt.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogAction>Đã hiểu</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </Alert>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        );
-      
-      case 'checklist':
-        return (
-            <Card className="bg-secondary/50">
-                <CardContent className="pt-6 space-y-3">
-                    {criterion.checklistItems.map((item: any, index: number) => (
-                        <div key={index} className="flex items-center gap-3">
-                            <Checkbox id={`checklist-${criterion.id}-${index}`} checked={item.checked} disabled />
-                            <Label htmlFor={`checklist-${criterion.id}-${index}`} className={cn("text-sm", item.checked ? "" : "text-muted-foreground")}>
-                                {item.label}
-                            </Label>
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-        );
-
-      case 'multiple-choice':
-        return (
-            <Card className="bg-secondary/50">
-                <CardContent className="pt-6">
-                    <RadioGroup value={criterion.selectedOption} disabled>
-                        <div className="space-y-2">
-                        {criterion.options.map((option: any, index: number) => (
-                            <div key={index} className="flex items-center space-x-2">
-                                <RadioGroupItem value={option.label} id={`option-${criterion.id}-${index}`} />
-                                <Label htmlFor={`option-${criterion.id}-${index}`}>{option.label}</Label>
-                            </div>
-                        ))}
-                        </div>
-                    </RadioGroup>
-                </CardContent>
-            </Card>
-        );
-        
-      default:
-        return null;
-    }
-  };
-
-
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 space-y-4 mb-32">
+  if (!taskDetail) {
+    return (
+      <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" className="h-7 w-7" asChild>
             <Link href="/app/reviews">
               <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Back to reviews</span>
+              <span className="sr-only">Quay lại danh sách review</span>
             </Link>
           </Button>
-          <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-            Review: {reviewData.taskTitle}
-          </h1>
+          <h1 className="text-xl font-semibold">Nhiệm vụ không tồn tại</h1>
         </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold">Kết quả thực hiện</h2>
-                <p className="text-sm text-muted-foreground mt-1">Báo cáo do <strong>{reviewData.submittedBy}</strong> gửi lúc {reviewData.submittedAt}.</p>
-              </div>
-              <div className="mt-4 space-y-6">
-                {reviewData.criteria.map(criterion => (
-                  <div key={criterion.id}>
-                      <h3 className="font-semibold mb-2 text-base">{criterion.requirement}</h3>
-                      <div className="grid gap-4 items-start">
-                          {renderCriterion(criterion)}
-                      </div>
-                  </div>
-                ))}
-              </div>
-          </div>
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                  <CardTitle>Trao đổi & Lịch sử</CardTitle>
-              </CardHeader>
-              <CardContent>
-                  <ScrollArea className="h-96 pr-4">
-                      <div className="space-y-4">
-                      {reviewData.comments.map((comment, index) => {
-                          const authorAvatar = PlaceHolderImages.find(p => p.id === comment.avatarId);
-                          return (
-                              <div key={index} className="flex gap-3">
-                              {authorAvatar && <Avatar>
-                                      <AvatarImage src={authorAvatar.imageUrl} alt={comment.author} data-ai-hint={authorAvatar.imageHint}/>
-                                      <AvatarFallback>{comment.author.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                                  </Avatar>}
-                                  <div className="flex-1">
-                                      <div className="flex items-center justify-between">
-                                          <p className="font-semibold text-sm">{comment.author}</p>
-                                          <p className="text-xs text-muted-foreground">{comment.timestamp}</p>
-                                      </div>
-                                      <div className={cn(
-                                          "p-3 rounded-lg mt-1 text-sm",
-                                          comment.type === 'rework_request' ? "border bg-transparent" : "bg-secondary"
-                                      )}>
-                                          {comment.type === 'rework_request' && 
-                                              <p className="font-semibold text-foreground flex items-center mb-2">
-                                                  <RefreshCw className="h-4 w-4 mr-2" />
-                                                  Yêu cầu làm lại
-                                              </p>
-                                          }
-                                          <p>{comment.text}</p>
-                                      </div>
-                                  </div>
-                              </div>
-                          );
-                      })}
-                      </div>
-                  </ScrollArea>
-              </CardContent>
-              <CardFooter className="flex-col items-start gap-2 border-t pt-4">
-                  <Label htmlFor="new-comment">Thêm bình luận</Label>
-                   <div className="relative w-full">
-                        <Textarea 
-                            id="new-comment"
-                            placeholder="Nhập bình luận của bạn..." 
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleAddComment();
-                            }
-                            }}
-                            className="pr-10"
-                        />
-                        <Button 
-                            type="submit" 
-                            size="icon" 
-                            className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7" 
-                            disabled={!newComment.trim()}
-                            onClick={handleAddComment}
-                        >
-                            <Send className="h-4 w-4" />
-                        </Button>
-                    </div>
-              </CardFooter>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Thông tin chung</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cửa hàng:</span>
-                  <span>{reviewData.store}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Người nộp:</span>
-                  <span>{reviewData.submittedBy}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Thời gian:</span>
-                  <span>{reviewData.submittedAt}</span>
-                </div>
-                <Separator className="my-2"/>
-                <div className="flex justify-between font-semibold">
-                  <span>Trạng thái hiện tại:</span>
-                  <Badge variant={reviewData.status === 'Rework Requested' ? 'destructive' : 'secondary'}>{reviewData.status}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground text-center py-8">
+              Nhiệm vụ với ID {taskId} không được tìm thấy.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const task = taskDetail;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+          <Link href="/app/reviews">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="sr-only">Quay lại danh sách review</span>
+          </Link>
+        </Button>
+        <div className="flex-1 flex items-center gap-3">
+          <h1 className="shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight">
+            {task.name || 'Nhiệm vụ không có tên'}
+          </h1>
+          <Badge variant="secondary" className="text-sm">
+            {generateTaskCode(task.id)}
+          </Badge>
+        </div>
+        <div className="hidden items-center gap-2 md:ml-auto md:flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Thao tác review</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link href={`/app/tasks/${taskId}`}>
+                  Xem chi tiết task
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 backdrop-blur-sm">
-        <div className={cn("flex flex-col sm:flex-row items-center gap-4 p-4", "md:ml-56")}>
-            {showRejectionInput ? (
-                <div className="w-full flex-1 space-y-2">
-                    <Label htmlFor="rejection-reason">Lý do từ chối</Label>
-                    <div className="relative">
-                        <Textarea
-                            id="rejection-reason"
-                            placeholder="Nhập lý do yêu cầu làm lại..."
-                            value={rejectionReason}
-                            onChange={(e) => setRejectionReason(e.target.value)}
-                            className="pr-20"
-                        />
-                         <Button 
-                            variant="secondary"
-                            size="sm" 
-                            className="absolute right-2 top-1/2 -translate-y-1/2" 
-                            disabled={!rejectionReason.trim()}
-                            onClick={handleRequestRework}
-                        >
-                            <Send className="mr-2 h-4 w-4" /> Gửi
-                        </Button>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setShowRejectionInput(false)}>Hủy</Button>
+      {/* Main Content - 2 Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Task Details */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Task Summary */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl">{task.name}</CardTitle>
+                  <CardDescription>
+                    {task.description || 'Không có mô tả'}
+                  </CardDescription>
                 </div>
-            ) : (
-                <>
-                    <Button variant="destructive" className="w-full sm:w-auto flex-1 sm:flex-initial" onClick={() => setShowRejectionInput(true)}>
-                        <XCircle className="mr-2 h-4 w-4" /> Từ chối
-                    </Button>
-                    <div className="w-full sm:w-auto flex-1 sm:flex-initial">
-                        <ApproveButton />
+                <div className="flex items-center gap-2">
+                  {getTaskStatusBadge(task.state || 0)}
+                  <Badge variant="outline">
+                    {getPriorityText(task.priority)}
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Người giao việc</p>
+                  <p className="font-medium">{task.creatorName || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Người thực hiện</p>
+                  <p className="font-medium">{task.assigneeName || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Ngày tạo</p>
+                  <p className="font-medium">{formatDate(task.createAt) || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Ngày nộp</p>
+                  <p className="font-medium">{formatDate(task.submitAt) || '-'}</p>
+                </div>
+                {task.approveAt && (
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground">Ngày duyệt</p>
+                    <p className="font-medium">{formatDate(task.approveAt)}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Task Goals Section */}
+          {task.listGoal && task.listGoal.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Mục tiêu nhiệm vụ</CardTitle>
+                <CardDescription>
+                  Danh sách các mục tiêu đã hoàn thành cho nhiệm vụ này.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {task.listGoal.map((goal, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-medium">Mục tiêu {index + 1}</span>
+                            <Badge variant="outline">
+                              {goal.type === 1 ? 'Tải ảnh lên' : `Loại ${goal.type}`}
+                            </Badge>
+                            <Badge variant="secondary">
+                              {goal.point} điểm
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {goal.detail}
+                          </p>
+                          {goal.templateData && (
+                            <div className="mt-2">
+                              <p className="text-xs text-muted-foreground">Dữ liệu mẫu:</p>
+                              <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
+                                {goal.templateData}
+                              </pre>
+                            </div>
+                          )}
+
+                          {/* Display submitted images */}
+                          {goal.type === 1 && goal.progressValue && (
+                            <div className="mt-4 space-y-3">
+                              <div className="space-y-2">
+                                <p className="text-sm font-medium">Ảnh đã nộp:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {goal.progressValue.split(',').map((imageUrl, imgIndex) => {
+                                    const cleanUrl = imageUrl.trim();
+                                    if (!cleanUrl) return null;
+                                    return (
+                                      <div key={imgIndex} className="relative group">
+                                        <img
+                                          src={cleanUrl}
+                                          alt={`Submitted image ${imgIndex + 1}`}
+                                          className="w-20 h-20 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                                          onClick={() => setSelectedImage(cleanUrl)}
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                </>
-            )}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Review Actions */}
+          {task.state === TASK_STATES.WAIT_REVIEW && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Hành động duyệt</CardTitle>
+                <CardDescription>
+                  Phê duyệt hoặc từ chối nhiệm vụ này.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        disabled={approving || denying}
+                      >
+                        {approving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Đang duyệt...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Phê duyệt
+                          </>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận phê duyệt</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Bạn có chắc chắn muốn phê duyệt nhiệm vụ này không? Hành động này không thể hoàn tác.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleApprove}>
+                          Phê duyệt
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="destructive"
+                        disabled={approving || denying}
+                      >
+                        {denying ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Đang từ chối...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Từ chối
+                          </>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận từ chối</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Bạn có chắc chắn muốn từ chối nhiệm vụ này không? Nhiệm vụ sẽ được gửi lại cho người thực hiện để sửa đổi.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeny} className="bg-red-600 hover:bg-red-700">
+                          Từ chối
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Right Column - Task Notes (Chat interface) */}
+        <div className="lg:col-span-1">
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle className="text-lg">Tin nhắn</CardTitle>
+              <CardDescription>
+                Cuộc trò chuyện về nhiệm vụ này
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="border-b">
+                {renderTaskNotes()}
+              </div>
+              
+              {/* Message Input */}
+              <div className="p-4">
+                <div className="flex items-center gap-2">
+                  <Input 
+                    placeholder="Nhập tin nhắn..." 
+                    className="flex-1"
+                    value={messageContent}
+                    onChange={(e) => setMessageContent(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    disabled={creatingNote}
+                  />
+                  <Button 
+                    size="sm"
+                    onClick={handleSendMessage}
+                    disabled={!messageContent.trim() || creatingNote}
+                  >
+                    {creatingNote ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        Gửi
+                      </>
+                    ) : (
+                      'Gửi'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle>Xem ảnh</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            {selectedImage && (
+              <div className="flex justify-center">
+                <img
+                  src={selectedImage}
+                  alt="Full size image"
+                  className="max-w-full max-h-[70vh] object-contain rounded"
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

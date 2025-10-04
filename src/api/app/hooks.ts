@@ -1,4 +1,10 @@
-import { useState, useCallback } from 'react';
+// Task Note hooks
+export function useGetTaskNotes() {
+  return useApiCall<TaskNote[], GetTaskNotesParams>(
+    (params) => apiClient.getTaskNotes(params)
+  );
+}
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { apiClient } from './config';
 import { ApiError } from './client';
 import type { 
@@ -22,7 +28,10 @@ import type {
   TaskStatistics,
   MonthlyPerformanceItem,
   RecentTask,
-  GetDashboardParams
+  GetDashboardParams,
+  TaskNote,
+  GetTaskNotesParams,
+  CreateTaskNoteRequest
 } from './types';
 
 // Generic hook for API calls
@@ -33,11 +42,19 @@ export function useApiCall<TData, TParams = void>(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Use ref to store the latest apiFunction without causing re-renders
+  const apiFunctionRef = useRef(apiFunction);
+  
+  // Update ref when apiFunction changes
+  useEffect(() => {
+    apiFunctionRef.current = apiFunction;
+  }, [apiFunction]);
+
   const execute = useCallback(async (params: TParams) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiFunction(params);
+      const response = await apiFunctionRef.current(params);
       
       // If we get here, the response is successful
       setData(response.data || null);
@@ -56,7 +73,7 @@ export function useApiCall<TData, TParams = void>(
     } finally {
       setLoading(false);
     }
-  }, [apiFunction]);
+  }, []); // Empty dependency array - execute function is stable
 
   return { data, loading, error, execute };
 }
@@ -207,5 +224,11 @@ export function useGetMonthlyPerformance() {
 export function useGetRecentTasks() {
   return useApiCall<RecentTask[], GetDashboardParams | undefined>(
     (params) => apiClient.getRecentTasks(params)
+  );
+}
+
+export function useCreateTaskNote() {
+  return useApiCall<TaskNote, CreateTaskNoteRequest>(
+    (data) => apiClient.createTaskNote(data)
   );
 }

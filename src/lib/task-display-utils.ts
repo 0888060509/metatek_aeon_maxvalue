@@ -1,4 +1,4 @@
-import { TaskItemListItem } from '@/api/types';
+import { TaskItemListItem } from '@/api/app/types';
 
 // Map task state from API to display status
 export function getTaskStatus(state?: number | null): string {
@@ -20,30 +20,58 @@ export function getTaskStatus(state?: number | null): string {
   }
 }
 
-// Map priority from API to display text
+// Map priority from API to display text (Vietnamese)
 export function getPriorityText(priority?: number | null): string {
   switch (priority) {
     case 1:
-      return 'Low';
+      return 'Thấp';
     case 2:
-      return 'Medium';
+      return 'Trung bình';
     case 3:
-      return 'High';
+      return 'Cao';
     default:
-      return 'Normal';
+      return 'Bình thường';
   }
 }
 
-// Convert Unix timestamp to readable date
-export function formatDate(timestamp?: number | null): string {
-  if (!timestamp) return '-';
-  return new Date(timestamp * 1000).toLocaleDateString('vi-VN');
+// Map priority from form string to API number
+export function getPriorityValue(priority: string): number {
+  switch (priority) {
+    case 'high':
+      return 3;
+    case 'medium':
+      return 2;
+    case 'low':
+      return 1;
+    default:
+      return 2; // default to medium
+  }
 }
 
-// Convert Unix timestamp to ISO date string for input fields
+// Map priority from API number to form string
+export function getPriorityKey(priority?: number | null): 'high' | 'medium' | 'low' {
+  switch (priority) {
+    case 3:
+      return 'high';
+    case 2:
+      return 'medium';
+    case 1:
+      return 'low';
+    default:
+      return 'medium';
+  }
+}
+
+// Convert timestamp to readable date (server returns milliseconds)
+export function formatDate(timestamp?: number | null): string {
+  if (!timestamp) return '-';
+  return new Date(timestamp).toLocaleDateString('vi-VN');
+}
+
+// Convert timestamp to ISO date string for input fields (server returns milliseconds)
 export function formatDateForInput(timestamp?: number | null): string {
   if (!timestamp) return '';
-  return new Date(timestamp * 1000).toISOString().split('T')[0];
+  return new Date(timestamp).toISOString().split('T')[0];
 }
 
 // Generate task code from ID
@@ -112,14 +140,14 @@ export function getStatusVariant(status: TaskDisplayItem['status']) {
   }
 }
 
-// Get priority color class
+// Get priority color class (Vietnamese)
 export function getPriorityColor(priority: string): string {
   switch (priority) {
-    case 'High':
+    case 'Cao':
       return 'text-red-600 font-semibold';
-    case 'Medium':
+    case 'Trung bình':
       return 'text-yellow-600 font-medium';
-    case 'Low':
+    case 'Thấp':
       return 'text-green-600';
     default:
       return 'text-gray-600';
