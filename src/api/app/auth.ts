@@ -1,5 +1,5 @@
 import { apiClient, setApiToken, clearApiToken } from "./config";
-import { decodeJWT, UserInfo } from "./app/jwt-utils";
+import { decodeJWT, UserInfo } from "./jwt-utils";
 
 // Token management
 class TokenManager {

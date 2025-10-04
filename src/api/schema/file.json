@@ -1,0 +1,117 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Eggstech Storage",
+    "version": ""
+  },
+  "paths": {
+    "/App/File/Upload": {
+      "post": {
+        "tags": [
+          "AppFile"
+        ],
+        "summary": "Upload file",
+        "description": "Upload file via From Data",
+        "operationId": "AppFileUploadFile",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "<span class='sc-laZMeE dmLkmF'>Validators:</span> `Not Empty`<br/>File Cần Upload",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string",
+                          "description": "Trace Id",
+                          "nullable": true
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "description": "Phiên Xử Lý Thành Công Hay Thất Bại?"
+                        }
+                      },
+                      "description": "Metadata",
+                      "nullable": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "description": "Link File",
+                          "nullable": true
+                        },
+                        "mineType": {
+                          "type": "string",
+                          "description": "Mine Type",
+                          "nullable": true
+                        }
+                      },
+                      "description": "Dữ Liệu",
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AccessToken": [ ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "AccessToken": {
+        "type": "apiKey",
+        "description": "Nhập `Access Token` vào header để truy cập",
+        "name": "Authorization",
+        "in": "header"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "AppFile",
+      "description": "File",
+      "x-displayName": "File"
+    }
+  ],
+  "x-tagGroups": [
+    {
+      "name": "App",
+      "tags": [
+        "AppFile"
+      ]
+    }
+  ]
+}

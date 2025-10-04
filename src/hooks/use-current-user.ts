@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserInfo, getCurrentUser, getUserRole } from '@/api/jwt-utils';
+import { UserInfo, getCurrentUser, getUserRole } from '@/api/app/jwt-utils';
 
 // Hook đơn giản để lấy user info mà không cần UserProvider
 export function useCurrentUser() {

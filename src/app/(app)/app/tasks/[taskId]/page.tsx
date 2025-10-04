@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useGetTaskItemDetail } from '@/api/hooks';
+import { useGetTaskItemDetail } from '@/api/app/hooks';
 import { getTaskStatus, getPriorityText, formatDate, generateTaskCode } from '@/lib/task-display-utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCurrentUser } from '@/hooks/use-current-user';

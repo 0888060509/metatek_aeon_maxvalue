@@ -145,7 +145,7 @@ export interface GetTaskItemsParams {
 }
 
 // API Error Types
-export interface ApiError {
+export interface ApiErrorResponse {
   message: string;
   status: number;
   traceId?: string;

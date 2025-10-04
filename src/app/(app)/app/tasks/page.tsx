@@ -40,7 +40,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { useGetTaskItems } from '@/api/hooks';
+import { useGetTaskItems } from '@/api/app/hooks';
 import { 
   TaskDisplayItem, 
   convertTaskItemToDisplayItem, 

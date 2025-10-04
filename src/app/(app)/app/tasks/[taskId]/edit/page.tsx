@@ -20,7 +20,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useUpdateTaskItem, useGetTaskItemDetail, useGetAccounts, useSubmitTaskItem } from '@/api/hooks';
+import { useUpdateTaskItem, useGetTaskItemDetail, useGetAccounts, useSubmitTaskItem } from '@/api/app/hooks';
 import { CreateTaskItemRequest, TaskGoal } from '@/api/types';
 
 // Form validation schema

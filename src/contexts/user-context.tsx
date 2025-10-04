@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { UserInfo, getCurrentUser, decodeJWT, getUserRole } from '@/api/jwt-utils';
+import { UserInfo, getCurrentUser, decodeJWT, getUserRole } from '@/api/app/jwt-utils';
 import { tokenManager } from '@/api';
 
 interface UserContextType {
