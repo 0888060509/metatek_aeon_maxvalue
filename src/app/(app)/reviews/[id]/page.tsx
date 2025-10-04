@@ -28,6 +28,7 @@ import {
     DialogTitle, 
     DialogTrigger 
 } from "@/components/ui/dialog";
+import { useCurrentUser } from '@/hooks/use-current-user';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -136,6 +137,35 @@ const initialReviewData = {
 };
 
 export default function ReviewDetailPage({ params }: { params: { id: string } }) {
+  const { userRole } = useCurrentUser();
+  
+  // Only admin users can access reviews
+  if (userRole === 'store') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+            <Link href="/app/tasks">
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Quay lại</span>
+            </Link>
+          </Button>
+          <h1 className="text-xl font-semibold">Không có quyền truy cập</h1>
+        </div>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <Alert variant="destructive">
+              <AlertDescription>
+                Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên nếu cần hỗ trợ.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const [reviewData, setReviewData] = useState<typeof initialReviewData | null>(null);
   const [newComment, setNewComment] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");

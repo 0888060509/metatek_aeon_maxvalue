@@ -605,6 +605,745 @@
         ]
       }
     },
+    "/Admin/Dashboard/Statistics": {
+      "get": {
+        "tags": [
+          "AdminDashboard"
+        ],
+        "summary": "Lấy thống kê tổng quan dashboard",
+        "operationId": "AdminDashboardGetStatistics",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Từ Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Đến Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "assigneeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Người Được Giao",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "approverId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Người Duyệt",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "recentTasksLimit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Số Tác Vụ Gần Đây",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "performanceMonthsLimit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Số Tháng Hiển Thị Biểu Đồ",
+              "format": "int32",
+              "default": 6
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string",
+                          "description": "Trace Id",
+                          "nullable": true
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "description": "Phiên Xử Lý Thành Công Hay Thất Bại?"
+                        }
+                      },
+                      "description": "Metadata",
+                      "nullable": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "taskStatistics": {
+                          "type": "object",
+                          "properties": {
+                            "totalTasks": {
+                              "type": "integer",
+                              "description": "",
+                              "format": "int32"
+                            },
+                            "totalTasksChangePercentage": {
+                              "type": "number",
+                              "description": "",
+                              "format": "double"
+                            },
+                            "totalTasksChangeDescription": {
+                              "type": "string",
+                              "description": "",
+                              "nullable": true
+                            },
+                            "completedTasks": {
+                              "type": "integer",
+                              "description": "",
+                              "format": "int32"
+                            },
+                            "completionRate": {
+                              "type": "number",
+                              "description": "",
+                              "format": "double"
+                            },
+                            "completionRateDescription": {
+                              "type": "string",
+                              "description": "",
+                              "nullable": true
+                            },
+                            "issuesReported": {
+                              "type": "integer",
+                              "description": "",
+                              "format": "int32"
+                            },
+                            "issuesChangeFromLastWeek": {
+                              "type": "integer",
+                              "description": "",
+                              "format": "int32"
+                            },
+                            "issuesChangeDescription": {
+                              "type": "string",
+                              "description": "",
+                              "nullable": true
+                            },
+                            "overdueTasks": {
+                              "type": "integer",
+                              "description": "",
+                              "format": "int32"
+                            },
+                            "newOverdueThisWeek": {
+                              "type": "integer",
+                              "description": "",
+                              "format": "int32"
+                            },
+                            "overdueTasksDescription": {
+                              "type": "string",
+                              "description": "",
+                              "nullable": true
+                            }
+                          },
+                          "description": "",
+                          "nullable": true
+                        },
+                        "monthlyPerformance": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "month": {
+                                "type": "string",
+                                "description": "",
+                                "nullable": true
+                              },
+                              "completedTasks": {
+                                "type": "integer",
+                                "description": "",
+                                "format": "int32"
+                              },
+                              "pendingTasks": {
+                                "type": "integer",
+                                "description": "",
+                                "format": "int32"
+                              }
+                            },
+                            "nullable": true
+                          },
+                          "description": "",
+                          "nullable": true
+                        },
+                        "recentTasks": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "",
+                                "format": "uuid"
+                              },
+                              "assigneeName": {
+                                "type": "string",
+                                "description": "",
+                                "nullable": true
+                              },
+                              "assigneeAvatarLink": {
+                                "type": "string",
+                                "description": "",
+                                "nullable": true
+                              },
+                              "taskName": {
+                                "type": "string",
+                                "description": "",
+                                "nullable": true
+                              },
+                              "state": {
+                                "type": "integer",
+                                "description": "<br/><br/><span>0 = Draft </span><br/><span>1 = InProgress </span><br/><span>2 = Complete </span><br/><span>3 = Overdue </span><br/><span>4 = WaitReview </span><br/><span>-2 = Deny </span>",
+                                "format": "int32"
+                              },
+                              "stateDisplay": {
+                                "type": "string",
+                                "description": "",
+                                "nullable": true
+                              },
+                              "updateAt": {
+                                "type": "integer",
+                                "description": "",
+                                "format": "int64",
+                                "nullable": true
+                              }
+                            },
+                            "nullable": true
+                          },
+                          "description": "",
+                          "nullable": true
+                        }
+                      },
+                      "description": "Dữ Liệu",
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AccessToken": [
+              "admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/Admin/Dashboard/TaskStatistics": {
+      "get": {
+        "tags": [
+          "AdminDashboard"
+        ],
+        "summary": "Lấy thống kê tác vụ",
+        "operationId": "AdminDashboardGetTaskStatistics",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Từ Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Đến Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "assigneeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Người Được Giao",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "approverId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Người Duyệt",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "recentTasksLimit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Số Tác Vụ Gần Đây",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "performanceMonthsLimit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Số Tháng Hiển Thị Biểu Đồ",
+              "format": "int32",
+              "default": 6
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string",
+                          "description": "Trace Id",
+                          "nullable": true
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "description": "Phiên Xử Lý Thành Công Hay Thất Bại?"
+                        }
+                      },
+                      "description": "Metadata",
+                      "nullable": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "totalTasks": {
+                          "type": "integer",
+                          "description": "",
+                          "format": "int32"
+                        },
+                        "totalTasksChangePercentage": {
+                          "type": "number",
+                          "description": "",
+                          "format": "double"
+                        },
+                        "totalTasksChangeDescription": {
+                          "type": "string",
+                          "description": "",
+                          "nullable": true
+                        },
+                        "completedTasks": {
+                          "type": "integer",
+                          "description": "",
+                          "format": "int32"
+                        },
+                        "completionRate": {
+                          "type": "number",
+                          "description": "",
+                          "format": "double"
+                        },
+                        "completionRateDescription": {
+                          "type": "string",
+                          "description": "",
+                          "nullable": true
+                        },
+                        "issuesReported": {
+                          "type": "integer",
+                          "description": "",
+                          "format": "int32"
+                        },
+                        "issuesChangeFromLastWeek": {
+                          "type": "integer",
+                          "description": "",
+                          "format": "int32"
+                        },
+                        "issuesChangeDescription": {
+                          "type": "string",
+                          "description": "",
+                          "nullable": true
+                        },
+                        "overdueTasks": {
+                          "type": "integer",
+                          "description": "",
+                          "format": "int32"
+                        },
+                        "newOverdueThisWeek": {
+                          "type": "integer",
+                          "description": "",
+                          "format": "int32"
+                        },
+                        "overdueTasksDescription": {
+                          "type": "string",
+                          "description": "",
+                          "nullable": true
+                        }
+                      },
+                      "description": "Dữ Liệu",
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AccessToken": [
+              "admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/Admin/Dashboard/MonthlyPerformance": {
+      "get": {
+        "tags": [
+          "AdminDashboard"
+        ],
+        "summary": "Lấy biểu đồ hiệu suất theo tháng",
+        "operationId": "AdminDashboardGetMonthlyPerformance",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Từ Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Đến Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "assigneeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Người Được Giao",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "approverId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Người Duyệt",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "recentTasksLimit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Số Tác Vụ Gần Đây",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "performanceMonthsLimit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Số Tháng Hiển Thị Biểu Đồ",
+              "format": "int32",
+              "default": 6
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string",
+                          "description": "Trace Id",
+                          "nullable": true
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "description": "Phiên Xử Lý Thành Công Hay Thất Bại?"
+                        }
+                      },
+                      "description": "Metadata",
+                      "nullable": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "month": {
+                            "type": "string",
+                            "description": "",
+                            "nullable": true
+                          },
+                          "completedTasks": {
+                            "type": "integer",
+                            "description": "",
+                            "format": "int32"
+                          },
+                          "pendingTasks": {
+                            "type": "integer",
+                            "description": "",
+                            "format": "int32"
+                          }
+                        },
+                        "nullable": true
+                      },
+                      "description": "Dữ Liệu",
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AccessToken": [
+              "admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/Admin/Dashboard/RecentTasks": {
+      "get": {
+        "tags": [
+          "AdminDashboard"
+        ],
+        "summary": "Lấy danh sách tác vụ gần đây",
+        "operationId": "AdminDashboardGetRecentTasks",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Từ Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Đến Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "assigneeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Người Được Giao",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "approverId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Người Duyệt",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "recentTasksLimit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Số Tác Vụ Gần Đây",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "performanceMonthsLimit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Số Tháng Hiển Thị Biểu Đồ",
+              "format": "int32",
+              "default": 6
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string",
+                          "description": "Trace Id",
+                          "nullable": true
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "description": "Phiên Xử Lý Thành Công Hay Thất Bại?"
+                        }
+                      },
+                      "description": "Metadata",
+                      "nullable": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "",
+                            "format": "uuid"
+                          },
+                          "assigneeName": {
+                            "type": "string",
+                            "description": "",
+                            "nullable": true
+                          },
+                          "assigneeAvatarLink": {
+                            "type": "string",
+                            "description": "",
+                            "nullable": true
+                          },
+                          "taskName": {
+                            "type": "string",
+                            "description": "",
+                            "nullable": true
+                          },
+                          "state": {
+                            "type": "integer",
+                            "description": "<br/><br/><span>0 = Draft </span><br/><span>1 = InProgress </span><br/><span>2 = Complete </span><br/><span>3 = Overdue </span><br/><span>4 = WaitReview </span><br/><span>-2 = Deny </span>",
+                            "format": "int32"
+                          },
+                          "stateDisplay": {
+                            "type": "string",
+                            "description": "",
+                            "nullable": true
+                          },
+                          "updateAt": {
+                            "type": "integer",
+                            "description": "",
+                            "format": "int64",
+                            "nullable": true
+                          }
+                        },
+                        "nullable": true
+                      },
+                      "description": "Dữ Liệu",
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AccessToken": [
+              "admin"
+            ]
+          }
+        ]
+      }
+    },
     "/Identity/Login/Password": {
       "post": {
         "tags": [
@@ -930,12 +1669,75 @@
         ]
       }
     },
-    "/Admin/TaskItem/{id}/Submit": {
+    "/Admin/TaskItem/{id}/Publish": {
       "put": {
         "tags": [
           "AdminTaskItem"
         ],
         "summary": "Đăng Tác Vụ",
+        "operationId": "AdminTaskItemPublish",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Id Định Danh",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string",
+                          "description": "Trace Id",
+                          "nullable": true
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "description": "Phiên Xử Lý Thành Công Hay Thất Bại?"
+                        }
+                      },
+                      "description": "Metadata",
+                      "nullable": true
+                    },
+                    "data": {
+                      "type": "boolean",
+                      "description": "Dữ Liệu"
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AccessToken": [
+              "admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/Admin/TaskItem/{id}/Submit": {
+      "put": {
+        "tags": [
+          "AdminTaskItem"
+        ],
+        "summary": "Báo cáo công việc Tác Vụ",
         "operationId": "AdminTaskItemSubmit",
         "parameters": [
           {
@@ -1295,7 +2097,7 @@
               "type": "array",
               "items": {
                 "type": "integer",
-                "description": "<br/><br/><span>0 = Draft </span><br/><span>1 = InProgress </span><br/><span>2 = Complete </span><br/><span>3 = Overdue </span><br/><span>-2 = Deny </span>",
+                "description": "<br/><br/><span>0 = Draft </span><br/><span>1 = InProgress </span><br/><span>2 = Complete </span><br/><span>3 = Overdue </span><br/><span>4 = WaitReview </span><br/><span>-2 = Deny </span>",
                 "format": "int32",
                 "default": null
               },
@@ -1421,7 +2223,7 @@
                           },
                           "state": {
                             "type": "integer",
-                            "description": "Trạng thái<br/><br/><span>0 = Draft </span><br/><span>1 = InProgress </span><br/><span>2 = Complete </span><br/><span>3 = Overdue </span><br/><span>-2 = Deny </span>",
+                            "description": "Trạng thái<br/><br/><span>0 = Draft </span><br/><span>1 = InProgress </span><br/><span>2 = Complete </span><br/><span>3 = Overdue </span><br/><span>4 = WaitReview </span><br/><span>-2 = Deny </span>",
                             "format": "int32"
                           },
                           "name": {
@@ -1569,7 +2371,7 @@
                         },
                         "state": {
                           "type": "integer",
-                          "description": "Trạng thái<br/><br/><span>0 = Draft </span><br/><span>1 = InProgress </span><br/><span>2 = Complete </span><br/><span>3 = Overdue </span><br/><span>-2 = Deny </span>",
+                          "description": "Trạng thái<br/><br/><span>0 = Draft </span><br/><span>1 = InProgress </span><br/><span>2 = Complete </span><br/><span>3 = Overdue </span><br/><span>4 = WaitReview </span><br/><span>-2 = Deny </span>",
                           "format": "int32"
                         },
                         "name": {
@@ -1854,6 +2656,12 @@
                           "default": null,
                           "nullable": true
                         },
+                        "progressValue": {
+                          "type": "string",
+                          "description": "",
+                          "default": null,
+                          "nullable": true
+                        },
                         "point": {
                           "type": "integer",
                           "description": "<span class='sc-laZMeE dmLkmF'>Validators:</span> `Not Empty`<br/>",
@@ -1978,6 +2786,470 @@
           }
         ]
       }
+    },
+    "/Admin/TaskNote": {
+      "post": {
+        "tags": [
+          "AdminTaskNote"
+        ],
+        "summary": "Tạo Ghi Chú Tác Vụ",
+        "operationId": "AdminTaskNoteCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "content",
+                  "taskItemId"
+                ],
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "maxLength": 2000,
+                    "type": "string",
+                    "description": "<span class='sc-laZMeE dmLkmF'>Validators:</span> `Not Empty`<br/>Nội Dung Ghi Chú",
+                    "nullable": true
+                  },
+                  "taskItemId": {
+                    "type": "string",
+                    "description": "<span class='sc-laZMeE dmLkmF'>Validators:</span> `Not Empty`<br/>Id Tác Vụ",
+                    "format": "uuid"
+                  },
+                  "type": {
+                    "type": "integer",
+                    "description": "Loại Ghi Chú<br/><br/><span>1 = General </span><br/><span>2 = Progress </span><br/><span>3 = System </span><br/><span>4 = Reminder </span><br/><span>5 = Issue </span>",
+                    "format": "int32",
+                    "default": 1
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string",
+                          "description": "Trace Id",
+                          "nullable": true
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "description": "Phiên Xử Lý Thành Công Hay Thất Bại?"
+                        }
+                      },
+                      "description": "Metadata",
+                      "nullable": true
+                    },
+                    "data": {
+                      "type": "string",
+                      "description": "Dữ Liệu",
+                      "format": "uuid"
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AccessToken": [
+              "admin"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "AdminTaskNote"
+        ],
+        "summary": "Lấy danh sách Ghi Chú Tác Vụ",
+        "operationId": "AdminTaskNoteGetPage",
+        "parameters": [
+          {
+            "name": "taskItemId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Tác Vụ",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "authorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Người Tạo",
+              "format": "uuid",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Loại Ghi Chú",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "isSystemNote",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "description": "Lọc Theo Ghi Chú Hệ Thống",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Từ Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Đến Ngày",
+              "format": "int64",
+              "default": null,
+              "nullable": true
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Lọc Theo Tình Trạng Hoạt Động",
+              "default": 0,
+              "nullable": true
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Số Trang",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "description": "Kích Thước Trang",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string",
+                          "description": "Trace Id",
+                          "nullable": true
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "description": "Phiên Xử Lý Thành Công Hay Thất Bại?"
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Tổng Số Item",
+                          "format": "int64"
+                        },
+                        "page": {
+                          "type": "integer",
+                          "description": "Vị Trí Trang Hiện Tại",
+                          "format": "int64"
+                        },
+                        "size": {
+                          "type": "integer",
+                          "description": "Kích Thước Trang Dữ Liệu",
+                          "format": "int32"
+                        },
+                        "pageCount": {
+                          "type": "integer",
+                          "description": "Tổng Số Trang",
+                          "format": "int64"
+                        },
+                        "canNext": {
+                          "type": "boolean",
+                          "description": "Còn Trang Kế Tiếp?"
+                        },
+                        "canPrev": {
+                          "type": "boolean",
+                          "description": "Có Trang Trước?"
+                        }
+                      },
+                      "description": "Metadata",
+                      "nullable": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Id Định Danh",
+                            "format": "uuid"
+                          },
+                          "createAt": {
+                            "type": "integer",
+                            "description": "Thời Gian Khởi Tạo",
+                            "format": "int64",
+                            "nullable": true
+                          },
+                          "updateAt": {
+                            "type": "integer",
+                            "description": "Thời Gian Chỉnh Sửa Cuối",
+                            "format": "int64",
+                            "nullable": true
+                          },
+                          "deleteAt": {
+                            "type": "integer",
+                            "description": "Thời Gian Xóa",
+                            "format": "int64",
+                            "nullable": true
+                          },
+                          "content": {
+                            "type": "string",
+                            "description": "Nội Dung Ghi Chú",
+                            "nullable": true
+                          },
+                          "taskItemId": {
+                            "type": "string",
+                            "description": "Id Tác Vụ",
+                            "format": "uuid"
+                          },
+                          "taskItemName": {
+                            "type": "string",
+                            "description": "Tên Tác Vụ",
+                            "nullable": true
+                          },
+                          "authorId": {
+                            "type": "string",
+                            "description": "Id Người Tạo",
+                            "format": "uuid"
+                          },
+                          "authorName": {
+                            "type": "string",
+                            "description": "Tên Người Tạo",
+                            "nullable": true
+                          },
+                          "authorAvatarLink": {
+                            "type": "string",
+                            "description": "Avatar Người Tạo",
+                            "nullable": true
+                          },
+                          "type": {
+                            "type": "integer",
+                            "description": "Loại Ghi Chú<br/><br/><span>1 = General </span><br/><span>2 = Progress </span><br/><span>3 = System </span><br/><span>4 = Reminder </span><br/><span>5 = Issue </span>",
+                            "format": "int32"
+                          },
+                          "typeDisplay": {
+                            "type": "string",
+                            "description": "Tên Loại Ghi Chú",
+                            "nullable": true
+                          },
+                          "isSystemNote": {
+                            "type": "boolean",
+                            "description": "Có Phải Ghi Chú Hệ Thống"
+                          }
+                        },
+                        "nullable": true
+                      },
+                      "description": "Dữ Liệu"
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AccessToken": [
+              "admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/Admin/TaskNote/{id}": {
+      "get": {
+        "tags": [
+          "AdminTaskNote"
+        ],
+        "summary": "Lấy chi tiết Ghi Chú Tác Vụ",
+        "operationId": "AdminTaskNoteGetDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Id Định Danh",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string",
+                          "description": "Trace Id",
+                          "nullable": true
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "description": "Phiên Xử Lý Thành Công Hay Thất Bại?"
+                        }
+                      },
+                      "description": "Metadata",
+                      "nullable": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Id Định Danh",
+                          "format": "uuid"
+                        },
+                        "createAt": {
+                          "type": "integer",
+                          "description": "Thời Gian Khởi Tạo",
+                          "format": "int64",
+                          "nullable": true
+                        },
+                        "updateAt": {
+                          "type": "integer",
+                          "description": "Thời Gian Chỉnh Sửa Cuối",
+                          "format": "int64",
+                          "nullable": true
+                        },
+                        "deleteAt": {
+                          "type": "integer",
+                          "description": "Thời Gian Xóa",
+                          "format": "int64",
+                          "nullable": true
+                        },
+                        "content": {
+                          "type": "string",
+                          "description": "Nội Dung Ghi Chú",
+                          "nullable": true
+                        },
+                        "taskItemId": {
+                          "type": "string",
+                          "description": "Id Tác Vụ",
+                          "format": "uuid"
+                        },
+                        "taskItemName": {
+                          "type": "string",
+                          "description": "Tên Tác Vụ",
+                          "nullable": true
+                        },
+                        "authorId": {
+                          "type": "string",
+                          "description": "Id Người Tạo",
+                          "format": "uuid"
+                        },
+                        "authorName": {
+                          "type": "string",
+                          "description": "Tên Người Tạo",
+                          "nullable": true
+                        },
+                        "authorAvatarLink": {
+                          "type": "string",
+                          "description": "Avatar Người Tạo",
+                          "nullable": true
+                        },
+                        "type": {
+                          "type": "integer",
+                          "description": "Loại Ghi Chú<br/><br/><span>1 = General </span><br/><span>2 = Progress </span><br/><span>3 = System </span><br/><span>4 = Reminder </span><br/><span>5 = Issue </span>",
+                          "format": "int32"
+                        },
+                        "typeDisplay": {
+                          "type": "string",
+                          "description": "Tên Loại Ghi Chú",
+                          "nullable": true
+                        },
+                        "isSystemNote": {
+                          "type": "boolean",
+                          "description": "Có Phải Ghi Chú Hệ Thống"
+                        }
+                      },
+                      "description": "Dữ Liệu",
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AccessToken": [
+              "admin"
+            ]
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1997,6 +3269,11 @@
       "x-displayName": "Tài khoản"
     },
     {
+      "name": "AdminDashboard",
+      "description": "Dashboard",
+      "x-displayName": "Dashboard"
+    },
+    {
       "name": "AdminSetting",
       "description": "Thiết Lập",
       "x-displayName": "Thiết lập"
@@ -2005,6 +3282,11 @@
       "name": "AdminTaskItem",
       "description": "Tác Vụ",
       "x-displayName": "Tác vụ"
+    },
+    {
+      "name": "AdminTaskNote",
+      "description": "Ghi Chú Tác Vụ",
+      "x-displayName": "Ghi chú tác vụ"
     },
     {
       "name": "GeneralIdentity",
@@ -2023,8 +3305,10 @@
       "name": "Admin",
       "tags": [
         "AdminAccount",
+        "AdminDashboard",
         "AdminSetting",
-        "AdminTaskItem"
+        "AdminTaskItem",
+        "AdminTaskNote"
       ]
     }
   ]

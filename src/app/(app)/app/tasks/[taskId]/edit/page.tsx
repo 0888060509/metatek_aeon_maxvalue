@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUpdateTaskItem, useGetTaskItemDetail, useGetAccounts, useSubmitTaskItem } from '@/api/app/hooks';
 import { CreateTaskItemRequest, TaskGoal } from '@/api/types';
+import { canEditTask } from '@/api/app/task-utils';
 
 // Form validation schema
 const executionCriterionSchema = z.object({
@@ -84,12 +85,23 @@ function EditTaskPageContent() {
     if (taskId) {
       fetchTaskDetail(taskId);
     }
-    fetchAccounts({});
+    fetchAccounts({ type: "0" }); // Only Store accounts (type = 0) for task assignment
   }, [taskId]);
 
   // Populate form when task data is loaded
   React.useEffect(() => {
     if (taskDetail) {
+      // Check if task can be edited
+      if (!canEditTask(taskDetail.state)) {
+        toast({
+          title: "Không thể chỉnh sửa",
+          description: "Chỉ có thể chỉnh sửa các tác vụ ở trạng thái nháp.",
+          variant: "destructive",
+        });
+        router.push(`/app/tasks/${taskId}`);
+        return;
+      }
+
       form.reset({
         taskName: taskDetail.name || "",
         taskDescription: taskDetail.description || "",
@@ -106,7 +118,7 @@ function EditTaskPageContent() {
           : [{ type: 1, detail: "", point: 10 }],
       });
     }
-  }, [taskDetail, form]);
+  }, [taskDetail, form, router, toast, taskId]);
 
   async function saveChanges(values: z.infer<typeof taskFormSchema>) {
     try {

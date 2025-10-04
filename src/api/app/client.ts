@@ -14,7 +14,12 @@ import {
   UpdateTaskItemRequest,
   TaskItemListItem,
   TaskItemDetail,
-  GetTaskItemsParams
+  GetTaskItemsParams,
+  DashboardStatistics,
+  TaskStatistics,
+  MonthlyPerformanceItem,
+  RecentTask,
+  GetDashboardParams
 } from './types';
 
 export class ApiClient {
@@ -134,6 +139,7 @@ export class ApiClient {
     const searchParams = new URLSearchParams();
     
     if (params) {
+      if (params.type) searchParams.append('type', params.type);
       if (params.name) searchParams.append('name', params.name);
       if (params.appCode) searchParams.append('appCode', params.appCode);
       if (params.status) searchParams.append('status', params.status);
@@ -217,6 +223,7 @@ export class ApiClient {
       if (params.priority) {
         params.priority.forEach(p => searchParams.append('priority', p.toString()));
       }
+      if (params.status) searchParams.append('status', params.status);
       if (params.page) searchParams.append('page', params.page.toString());
       if (params.size) searchParams.append('size', params.size.toString());
     }
@@ -250,6 +257,12 @@ export class ApiClient {
     });
   }
 
+  async publishTaskItem(id: string): Promise<ApiResponse<boolean>> {
+    return this.requestWithRetry<boolean>(`/Admin/TaskItem/${id}/Publish`, {
+      method: 'PUT'
+    });
+  }
+
   async submitTaskItem(id: string): Promise<ApiResponse<boolean>> {
     return this.requestWithRetry<boolean>(`/Admin/TaskItem/${id}/Submit`, {
       method: 'PUT'
@@ -266,6 +279,55 @@ export class ApiClient {
     return this.requestWithRetry<boolean>(`/Admin/TaskItem/${id}/Deny`, {
       method: 'PUT'
     });
+  }
+
+  // Dashboard APIs
+  async getDashboardStatistics(params?: GetDashboardParams): Promise<ApiResponse<DashboardStatistics>> {
+    const queryParams = new URLSearchParams();
+    if (params?.fromDate) queryParams.append('fromDate', params.fromDate.toString());
+    if (params?.toDate) queryParams.append('toDate', params.toDate.toString());
+    if (params?.assigneeId) queryParams.append('assigneeId', params.assigneeId);
+    if (params?.approverId) queryParams.append('approverId', params.approverId);
+    if (params?.recentTasksLimit) queryParams.append('recentTasksLimit', params.recentTasksLimit.toString());
+    if (params?.performanceMonthsLimit) queryParams.append('performanceMonthsLimit', params.performanceMonthsLimit.toString());
+    
+    const query = queryParams.toString();
+    return this.requestWithRetry<DashboardStatistics>(`/Admin/Dashboard/Statistics${query ? `?${query}` : ''}`);
+  }
+
+  async getTaskStatistics(params?: GetDashboardParams): Promise<ApiResponse<TaskStatistics>> {
+    const queryParams = new URLSearchParams();
+    if (params?.fromDate) queryParams.append('fromDate', params.fromDate.toString());
+    if (params?.toDate) queryParams.append('toDate', params.toDate.toString());
+    if (params?.assigneeId) queryParams.append('assigneeId', params.assigneeId);
+    if (params?.approverId) queryParams.append('approverId', params.approverId);
+    
+    const query = queryParams.toString();
+    return this.requestWithRetry<TaskStatistics>(`/Admin/Dashboard/TaskStatistics${query ? `?${query}` : ''}`);
+  }
+
+  async getMonthlyPerformance(params?: GetDashboardParams): Promise<ApiResponse<MonthlyPerformanceItem[]>> {
+    const queryParams = new URLSearchParams();
+    if (params?.fromDate) queryParams.append('fromDate', params.fromDate.toString());
+    if (params?.toDate) queryParams.append('toDate', params.toDate.toString());
+    if (params?.assigneeId) queryParams.append('assigneeId', params.assigneeId);
+    if (params?.approverId) queryParams.append('approverId', params.approverId);
+    if (params?.performanceMonthsLimit) queryParams.append('performanceMonthsLimit', params.performanceMonthsLimit.toString());
+    
+    const query = queryParams.toString();
+    return this.requestWithRetry<MonthlyPerformanceItem[]>(`/Admin/Dashboard/MonthlyPerformance${query ? `?${query}` : ''}`);
+  }
+
+  async getRecentTasks(params?: GetDashboardParams): Promise<ApiResponse<RecentTask[]>> {
+    const queryParams = new URLSearchParams();
+    if (params?.fromDate) queryParams.append('fromDate', params.fromDate.toString());
+    if (params?.toDate) queryParams.append('toDate', params.toDate.toString());
+    if (params?.assigneeId) queryParams.append('assigneeId', params.assigneeId);
+    if (params?.approverId) queryParams.append('approverId', params.approverId);
+    if (params?.recentTasksLimit) queryParams.append('recentTasksLimit', params.recentTasksLimit.toString());
+    
+    const query = queryParams.toString();
+    return this.requestWithRetry<RecentTask[]>(`/Admin/Dashboard/RecentTasks${query ? `?${query}` : ''}`);
   }
 }
 

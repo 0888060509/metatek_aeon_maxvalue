@@ -17,7 +17,12 @@ import type {
   UpdateTaskItemRequest,
   GetTaskItemsParams,
   TaskItemListItem,
-  TaskItemDetail
+  TaskItemDetail,
+  DashboardStatistics,
+  TaskStatistics,
+  MonthlyPerformanceItem,
+  RecentTask,
+  GetDashboardParams
 } from './types';
 
 // Generic hook for API calls
@@ -156,6 +161,12 @@ export function useRestoreTaskItem() {
   );
 }
 
+export function usePublishTaskItem() {
+  return useApiCall<boolean, string>(
+    (id) => apiClient.publishTaskItem(id)
+  );
+}
+
 export function useSubmitTaskItem() {
   return useApiCall<boolean, string>(
     (id) => apiClient.submitTaskItem(id)
@@ -171,5 +182,30 @@ export function useApproveTaskItem() {
 export function useDenyTaskItem() {
   return useApiCall<boolean, string>(
     (id) => apiClient.denyTaskItem(id)
+  );
+}
+
+// Dashboard Hooks
+export function useGetDashboardStatistics() {
+  return useApiCall<DashboardStatistics, GetDashboardParams | undefined>(
+    (params) => apiClient.getDashboardStatistics(params)
+  );
+}
+
+export function useGetTaskStatistics() {
+  return useApiCall<TaskStatistics, GetDashboardParams | undefined>(
+    (params) => apiClient.getTaskStatistics(params)
+  );
+}
+
+export function useGetMonthlyPerformance() {
+  return useApiCall<MonthlyPerformanceItem[], GetDashboardParams | undefined>(
+    (params) => apiClient.getMonthlyPerformance(params)
+  );
+}
+
+export function useGetRecentTasks() {
+  return useApiCall<RecentTask[], GetDashboardParams | undefined>(
+    (params) => apiClient.getRecentTasks(params)
   );
 }

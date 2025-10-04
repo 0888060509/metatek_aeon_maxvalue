@@ -5,7 +5,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCreateTaskItem, useGetAccounts, useSubmitTaskItem } from '@/api/app/hooks';
 import { CreateTaskItemRequest, TaskGoal } from '@/api/types';
 import { toast } from '@/hooks/use-toast';
@@ -108,15 +108,15 @@ const sampleTask = {
 
 function CreateTaskPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+
   const { toast } = useToast();
   const { execute: createTask, loading: creating, error: createError } = useCreateTaskItem();
   const { execute: submitTask, loading: submitting, error: submitError } = useSubmitTaskItem();
   const { data: accounts, loading: loadingAccounts, execute: fetchAccounts } = useGetAccounts();
 
-  // Load accounts on mount
+  // Load accounts on mount (only Store accounts for task assignment)
   React.useEffect(() => {
-    fetchAccounts({});
+    fetchAccounts({ type: "0" }); // Only Store accounts (type = 0)
   }, []);
   
   // const [dialogState, setDialogState] = React.useState<{ open: boolean; index: number | null; newType: string | null }>({ open: false, index: null, newType: null });
@@ -134,8 +134,6 @@ function CreateTaskPageContent() {
   };
 
 
-  const isClone = searchParams.get('clone') === 'true';
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -146,20 +144,6 @@ function CreateTaskPageContent() {
       criteria: [{ type: 1, detail: "", point: 10 }],
     },
   });
-
-  React.useEffect(() => {
-    if (isClone) {
-        form.reset({
-            ...sampleTask,
-            startDate: undefined,
-            dueDate: undefined,
-        });
-         toast({
-            title: "Nhiệm vụ đã được sao chép",
-            description: "Vui lòng điền Ngày bắt đầu và Ngày hết hạn mới.",
-        });
-    }
-  }, [isClone, form, toast]);
 
 
   const { fields, append, remove, update } = useFieldArray({
@@ -421,7 +405,7 @@ function CreateTaskPageContent() {
               </Link>
             </Button>
             <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-              {isClone ? "Sao chép Tác vụ" : "Tạo Tác vụ Mới"}
+              Tạo Tác vụ Mới
             </h1>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
                  <Button variant="outline" size="sm" type="button" onClick={handleCreateFromTemplate}><Wand2 className="mr-2 h-4 w-4" /> Tạo từ mẫu</Button>

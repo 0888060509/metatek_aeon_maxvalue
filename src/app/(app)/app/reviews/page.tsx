@@ -32,6 +32,8 @@ import {
     XCircle,
     BadgeCheck,
 } from 'lucide-react';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type Review = {
   id: string;
@@ -130,6 +132,26 @@ const columns: ColumnDef<Review>[] = [
 
 
 export default function ReviewsPage() {
+  const { userRole } = useCurrentUser();
+  
+  // Only admin users can access reviews
+  if (userRole === 'store') {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Không có quyền truy cập</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription>
+              Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên nếu cần hỗ trợ.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const [data] = React.useState(() => [...initialReviews]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);

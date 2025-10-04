@@ -19,6 +19,7 @@ export const TASK_STATES = {
   IN_PROGRESS: 1,
   COMPLETE: 2,
   OVERDUE: 3,
+  WAIT_REVIEW: 4,
   DENY: -2
 } as const;
 
@@ -27,6 +28,7 @@ export const STATE_LABELS = {
   [TASK_STATES.IN_PROGRESS]: 'Đang thực hiện',
   [TASK_STATES.COMPLETE]: 'Hoàn thành',
   [TASK_STATES.OVERDUE]: 'Quá hạn',
+  [TASK_STATES.WAIT_REVIEW]: 'Chờ duyệt',
   [TASK_STATES.DENY]: 'Từ chối'
 } as const;
 
@@ -35,6 +37,7 @@ export const STATE_COLORS = {
   [TASK_STATES.IN_PROGRESS]: 'blue',
   [TASK_STATES.COMPLETE]: 'green',
   [TASK_STATES.OVERDUE]: 'red',
+  [TASK_STATES.WAIT_REVIEW]: 'yellow',
   [TASK_STATES.DENY]: 'orange'
 } as const;
 
@@ -79,7 +82,7 @@ export function formatDateTime(timestamp?: number | null): string {
 }
 
 export function isTaskOverdue(endAt?: number | null, state?: number | null): boolean {
-  if (!endAt || state === TASK_STATES.COMPLETE) return false;
+  if (!endAt || state === TASK_STATES.COMPLETE || state === TASK_STATES.WAIT_REVIEW) return false;
   return Date.now() > endAt * 1000;
 }
 
@@ -93,6 +96,8 @@ export function getTaskProgress(state?: number | null): number {
       return 100;
     case TASK_STATES.OVERDUE:
       return 75; // Partially done but overdue
+    case TASK_STATES.WAIT_REVIEW:
+      return 90; // Task completed, waiting for review
     case TASK_STATES.DENY:
       return 0;
     default:
@@ -105,14 +110,15 @@ export function canSubmitTask(state?: number | null): boolean {
 }
 
 export function canApproveTask(state?: number | null): boolean {
-  return state === TASK_STATES.COMPLETE;
+  return state === TASK_STATES.WAIT_REVIEW;
 }
 
 export function canDenyTask(state?: number | null): boolean {
-  return state === TASK_STATES.COMPLETE;
+  return state === TASK_STATES.WAIT_REVIEW;
 }
 
 export function canEditTask(state?: number | null): boolean {
+  // Can only edit Draft tasks, not completed tasks
   return state === TASK_STATES.DRAFT;
 }
 

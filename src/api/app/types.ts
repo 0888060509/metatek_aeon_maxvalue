@@ -20,6 +20,7 @@ export interface ApiResponse<T = any> {
 export interface CreateAccountRequest {
   id?: string | null;
   name: string;
+  type: number; // 0 = Store (Cửa hàng), 1 = Admin
   avatarLink?: string | null;
   username?: string | null;
   password?: string | null;
@@ -44,6 +45,7 @@ export interface AccountDetail extends AccountListItem {
 }
 
 export interface GetAccountsParams {
+  type?: string | null;
   name?: string | null;
   appCode?: string | null;
   status?: string | null;
@@ -88,6 +90,7 @@ export interface TaskGoal {
   type: number; // 1 = ImageUpload
   detail: string;
   templateData?: string | null;
+  progressValue?: string | null; // Progress data - uploaded image URLs for ImageUpload type
   point: number;
 }
 
@@ -121,7 +124,7 @@ export interface TaskItemListItem {
   assigneeId?: string | null;
   assigneeName?: string | null;
   priority?: number | null;
-  state?: number | null; // 0=Draft, 1=InProgress, 2=Complete, 3=Overdue, -2=Deny
+  state?: number | null; // 0=Draft, 1=InProgress, 2=Complete, 3=Overdue, 4=WaitReview, -2=Deny
   startAt?: number | null;
   endAt?: number | null;
   submitAt?: number | null;
@@ -140,8 +143,56 @@ export interface GetTaskItemsParams {
   assigneeId?: string | null;
   state?: number[] | null; // Array of state values
   priority?: number[] | null; // Array of priority values
+  status?: string | null; // Activity status: "1" = active, "-1" = deleted
   page?: number;
   size?: number;
+}
+
+// Dashboard Types
+export interface DashboardStatistics {
+  taskStatistics?: TaskStatistics | null;
+  monthlyPerformance?: MonthlyPerformanceItem[] | null;
+  recentTasks?: RecentTask[] | null;
+}
+
+export interface TaskStatistics {
+  totalTasks: number;
+  totalTasksChangePercentage: number;
+  totalTasksChangeDescription?: string | null;
+  completedTasks: number;
+  completionRate: number;
+  completionRateDescription?: string | null;
+  issuesReported: number;
+  issuesChangeFromLastWeek: number;
+  issuesChangeDescription?: string | null;
+  overdueTasks: number;
+  newOverdueThisWeek: number;
+  overdueTasksDescription?: string | null;
+}
+
+export interface MonthlyPerformanceItem {
+  month?: string | null;
+  completedTasks: number;
+  pendingTasks: number;
+}
+
+export interface RecentTask {
+  id: string;
+  assigneeName?: string | null;
+  assigneeAvatarLink?: string | null;
+  taskName?: string | null;
+  state: number;
+  stateDisplay?: string | null;
+  updateAt?: number | null;
+}
+
+export interface GetDashboardParams {
+  fromDate?: number | null;
+  toDate?: number | null;
+  assigneeId?: string | null;
+  approverId?: string | null;
+  recentTasksLimit?: number;
+  performanceMonthsLimit?: number;
 }
 
 // API Error Types

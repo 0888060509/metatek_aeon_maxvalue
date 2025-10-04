@@ -75,6 +75,15 @@ export function AppSidebar() {
     logout();
   };
 
+  // Filter menu items based on user role
+  const filteredMenuItems = menuItems.filter(item => {
+    // Hide reviews for store accounts
+    if (item.href === "/app/reviews" && userRole === 'store') {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <>
       <SidebarHeader>
@@ -82,7 +91,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild

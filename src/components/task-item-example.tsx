@@ -33,6 +33,7 @@ export function TaskItemExample() {
 
   useEffect(() => {
     fetchTasks({
+      status: "1", // Only show active (non-deleted) tasks
       page: 1,
       size: 10
     });

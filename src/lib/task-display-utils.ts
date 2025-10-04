@@ -11,6 +11,8 @@ export function getTaskStatus(state?: number | null): string {
       return 'Completed';
     case 3:
       return 'Overdue';
+    case 4:
+      return 'Wait Review';
     case -2:
       return 'Issue';
     default:
@@ -59,13 +61,14 @@ export interface TaskDisplayItem {
   description?: string;
   assignedTo: string;
   assigneeId?: string;
-  status: 'Completed' | 'Pending Approval' | 'Issue' | 'Overdue' | 'In Progress' | 'Draft';
+  status: 'Completed' | 'Pending Approval' | 'Issue' | 'Overdue' | 'In Progress' | 'Draft' | 'Wait Review';
   priority: string;
   dueDate: string;
   startDate: string;
   createDate: string;
   submitDate: string;
   approveDate: string;
+  state?: number | null; // Add state for canEditTask check
 }
 
 export function convertTaskItemToDisplayItem(task: TaskItemListItem): TaskDisplayItem {
@@ -83,6 +86,7 @@ export function convertTaskItemToDisplayItem(task: TaskItemListItem): TaskDispla
     createDate: formatDate(task.createAt),
     submitDate: formatDate(task.submitAt),
     approveDate: formatDate(task.approveAt),
+    state: task.state, // Include state for canEditTask check
   };
 }
 
@@ -101,6 +105,8 @@ export function getStatusVariant(status: TaskDisplayItem['status']) {
       return 'secondary';
     case 'Draft':
       return 'outline';
+    case 'Wait Review':
+      return 'warning';
     default:
       return 'outline';
   }

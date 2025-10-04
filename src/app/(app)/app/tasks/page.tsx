@@ -26,7 +26,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Copy,
   MoreHorizontal,
   PlusCircle,
   RefreshCw,
@@ -48,6 +47,7 @@ import {
   getPriorityColor,
   generateTaskCode
 } from '@/lib/task-display-utils';
+import { canEditTask, TASK_STATES } from '@/api/app/task-utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -60,6 +60,8 @@ const getStatusBadge = (status: TaskDisplayItem['status']) => {
       return <Badge className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200">Hoàn thành</Badge>;
     case 'Pending Approval':
       return <Badge className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-200">Chờ duyệt</Badge>;
+    case 'Wait Review':
+      return <Badge className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-200">Chờ xem xét</Badge>;
     case 'Issue':
       return <Badge variant="destructive">Có vấn đề</Badge>;
     case 'Overdue':
@@ -163,16 +165,11 @@ const columns: ColumnDef<TaskDisplayItem>[] = [
             <DropdownMenuItem asChild>
               <Link href={`/app/tasks/${task.id}`}>Xem chi tiết</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Chỉnh sửa</DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/app/tasks/create?clone=${task.id}`}>
-                <Copy className="mr-2 h-4 w-4" />
-                Sao chép
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
-              Xóa
-            </DropdownMenuItem>
+            {canEditTask(task.state) && (
+              <DropdownMenuItem asChild>
+                <Link href={`/app/tasks/${task.id}/edit`}>Chỉnh sửa</Link>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -182,7 +179,7 @@ const columns: ColumnDef<TaskDisplayItem>[] = [
 
 
 export default function TasksPage() {
-  const { userRole } = useCurrentUser();
+  const { user, userRole } = useCurrentUser();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -210,15 +207,29 @@ export default function TasksPage() {
 
   // Execute the API call when filters change
   React.useEffect(() => {
-    const params = {
+    const params: any = {
       search: debouncedSearch,
-      state: statusFilter.length > 0 ? statusFilter : undefined,
       priority: priorityFilter.length > 0 ? priorityFilter : undefined,
+      status: "1", // Only show active (non-deleted) tasks
       page: pagination.pageIndex + 1,
       size: pagination.pageSize,
     };
+
+    // Filter based on user role
+    if (userRole === 'store' && user?.id) {
+      // Store accounts only see tasks assigned to them, and exclude Draft tasks
+      params.assigneeId = user.id;
+      // Exclude Draft tasks for store accounts
+      params.state = statusFilter.length > 0 
+        ? statusFilter.filter(s => s !== TASK_STATES.DRAFT) 
+        : [TASK_STATES.IN_PROGRESS, TASK_STATES.COMPLETE, TASK_STATES.OVERDUE, TASK_STATES.WAIT_REVIEW];
+    } else {
+      // Admin accounts see all tasks
+      params.state = statusFilter.length > 0 ? statusFilter : undefined;
+    }
+
     execute(params);
-  }, [debouncedSearch, statusFilter, priorityFilter, pagination.pageIndex, pagination.pageSize]);
+  }, [debouncedSearch, statusFilter, priorityFilter, pagination.pageIndex, pagination.pageSize, userRole, user?.id]);
 
   // Convert API data to display format
   const displayData = React.useMemo(() => {
@@ -255,15 +266,29 @@ export default function TasksPage() {
   }, []);
 
   const handleRefresh = React.useCallback(() => {
-    const params = {
+    const params: any = {
       search: debouncedSearch,
-      state: statusFilter.length > 0 ? statusFilter : undefined,
       priority: priorityFilter.length > 0 ? priorityFilter : undefined,
+      status: "1", // Only show active (non-deleted) tasks
       page: pagination.pageIndex + 1,
       size: pagination.pageSize,
     };
+
+    // Filter based on user role
+    if (userRole === 'store' && user?.id) {
+      // Store accounts only see tasks assigned to them, and exclude Draft tasks
+      params.assigneeId = user.id;
+      // Exclude Draft tasks for store accounts
+      params.state = statusFilter.length > 0 
+        ? statusFilter.filter(s => s !== TASK_STATES.DRAFT) 
+        : [TASK_STATES.IN_PROGRESS, TASK_STATES.COMPLETE, TASK_STATES.OVERDUE, TASK_STATES.WAIT_REVIEW];
+    } else {
+      // Admin accounts see all tasks
+      params.state = statusFilter.length > 0 ? statusFilter : undefined;
+    }
+
     execute(params);
-  }, [debouncedSearch, statusFilter, priorityFilter, pagination.pageIndex, pagination.pageSize]);
+  }, [debouncedSearch, statusFilter, priorityFilter, pagination.pageIndex, pagination.pageSize, userRole, user?.id]);
 
   if (error) {
     return (
@@ -332,7 +357,7 @@ export default function TasksPage() {
           />
         )}
         
-        {!loading && displayData.length === 0 && (
+        {!loading && displayData.length === 0 && userRole === 'admin' && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">Không có nhiệm vụ nào được tìm thấy.</p>
             <Button asChild className="mt-4">

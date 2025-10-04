@@ -7,28 +7,34 @@ import {
   ChartTooltipContent,
   ChartConfig,
 } from "@/components/ui/chart";
+import type { MonthlyPerformanceItem } from "@/api/app/types";
 
-const chartData = [
-  { month: "January", completed: 186, pending: 80 },
-  { month: "February", completed: 305, pending: 200 },
-  { month: "March", completed: 237, pending: 120 },
-  { month: "April", completed: 273, pending: 190 },
-  { month: "May", completed: 209, pending: 130 },
-  { month: "June", completed: 214, pending: 140 },
+interface PerformanceChartProps {
+  data?: MonthlyPerformanceItem[] | null;
+}
+
+const defaultChartData = [
+  { month: "January", completedTasks: 186, pendingTasks: 80 },
+  { month: "February", completedTasks: 305, pendingTasks: 200 },
+  { month: "March", completedTasks: 237, pendingTasks: 120 },
+  { month: "April", completedTasks: 273, pendingTasks: 190 },
+  { month: "May", completedTasks: 209, pendingTasks: 130 },
+  { month: "June", completedTasks: 214, pendingTasks: 140 },
 ];
 
 const chartConfig = {
-  completed: {
-    label: "Completed",
+  completedTasks: {
+    label: "Hoàn thành",
     color: "hsl(var(--primary))",
   },
-  pending: {
-    label: "Pending",
+  pendingTasks: {
+    label: "Đang chờ",
     color: "hsl(var(--muted-foreground))",
   },
 } satisfies ChartConfig;
 
-export function PerformanceChart() {
+export function PerformanceChart({ data }: PerformanceChartProps) {
+  const chartData = data && data.length > 0 ? data : defaultChartData;
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <ResponsiveContainer width="100%" height={300}>
@@ -53,8 +59,8 @@ export function PerformanceChart() {
             cursor={false}
             content={<ChartTooltipContent indicator="dot" />}
           />
-          <Bar dataKey="completed" fill="var(--color-completed)" radius={4} />
-          <Bar dataKey="pending" fill="var(--color-pending)" radius={4} />
+          <Bar dataKey="completedTasks" fill="var(--color-completedTasks)" radius={4} />
+          <Bar dataKey="pendingTasks" fill="var(--color-pendingTasks)" radius={4} />
         </BarChart>
       </ResponsiveContainer>
     </ChartContainer>
