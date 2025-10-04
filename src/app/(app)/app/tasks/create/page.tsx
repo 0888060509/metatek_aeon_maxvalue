@@ -6,6 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCreateTaskItem, useGetAccounts, useSubmitTaskItem } from '@/api/hooks';
+import { CreateTaskItemRequest, TaskGoal } from '@/api/types';
+import { toast } from '@/hooks/use-toast';
 import {
   ChevronLeft,
   GripVertical,
@@ -73,41 +76,20 @@ const multipleChoiceOptionSchema = z.object({
 });
 
 const executionCriterionSchema = z.object({
-  type: z.string().min(1, "Criterion type is required."),
-  requirement: z.string().min(1, "Requirement cannot be empty."),
-  weight: z.number().min(0, "Weight must be positive."),
-  autoEvaluate: z.boolean().optional(),
-  checklistItems: z.array(checklistItemSchema).optional(),
-  multipleChoiceOptions: z.array(multipleChoiceOptionSchema).optional(),
-  minPhotos: z.number().optional(),
+  type: z.number().min(1, "Goal type is required."), // 1 = ImageUpload
+  detail: z.string().min(1, "Goal detail cannot be empty."),
+  point: z.number().min(0, "Points must be positive."),
 });
 
 
 const formSchema = z.object({
-  taskName: z.string().min(1, "Tên tác vụ là bắt buộc."),
+  taskName: z.string().min(1, "Tên nhiệm vụ là bắt buộc."),
   taskDescription: z.string().optional(),
   priority: z.string().min(1, "Vui lòng chọn mức độ ưu tiên."),
   startDate: z.date({ required_error: "Ngày bắt đầu là bắt buộc." }),
   dueDate: z.date({ required_error: "Ngày hết hạn là bắt buộc." }),
-  assigneeRole: z.string().min(1, "Vui lòng chọn vai trò."),
-  store: z.string().min(1, "Vui lòng chọn cửa hàng hoặc khu vực."),
+  assigneeId: z.string().min(1, "Vui lòng chọn người thực hiện."),
   criteria: z.array(executionCriterionSchema).min(1, "Cần ít nhất một tiêu chuẩn thực thi."),
-  isRecurring: z.boolean().optional(),
-  recurringFrequencyType: z.enum(["weekly", "monthly", "custom"]).optional(),
-  recurringWeeklyDays: z.array(z.string()).optional(),
-  recurringMonthlyType: z.enum(["day_of_month", "day_of_week"]).optional(),
-  recurringMonthlyDay: z.number().optional(),
-  recurringCustomValue: z.number().optional(),
-  recurringCustomUnit: z.enum(["days", "weeks", "months"]).optional(),
-  recurringEndType: z.enum(["never", "on_date", "after_occurrences"]).optional(),
-  recurringEndDate: z.date().optional(),
-  recurringEndOccurrences: z.number().optional(),
-}).refine(data => !data.isRecurring || (data.isRecurring && data.recurringFrequencyType), {
-    message: "Frequency type is required for recurring tasks.",
-    path: ["recurringFrequencyType"],
-}).refine(data => !data.isRecurring || (data.isRecurring && data.recurringEndType), {
-    message: "End condition is required for recurring tasks.",
-    path: ["recurringEndType"],
 });
 
 
@@ -117,12 +99,10 @@ const sampleTask = {
     taskName: "Kiểm tra trưng bày khuyến mãi Q4",
     taskDescription: "Đảm bảo tất cả các sản phẩm trong chương trình khuyến mãi Q4 được trưng bày đúng theo guideline tại các vị trí nổi bật.",
     priority: 'high',
-    assigneeRole: 'store-manager',
-    store: 'region-west',
+    assigneeId: '00000000-0000-0000-0000-000000000000', // Default assignee ID
     criteria: [
-        { type: 'visual-compliance-ai', requirement: "Chụp ảnh toàn cảnh khu vực trưng bày và đối chiếu với guideline", weight: 100, checklistItems: [], multipleChoiceOptions: [] },
+        { type: 1, detail: "Chụp ảnh toàn cảnh khu vực trưng bày và đối chiếu với guideline", point: 100 },
     ],
-    isRecurring: false,
 };
 
 
@@ -130,8 +110,16 @@ function CreateTaskPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { execute: createTask, loading: creating, error: createError } = useCreateTaskItem();
+  const { execute: submitTask, loading: submitting, error: submitError } = useSubmitTaskItem();
+  const { data: accounts, loading: loadingAccounts, execute: fetchAccounts } = useGetAccounts();
+
+  // Load accounts on mount
+  React.useEffect(() => {
+    fetchAccounts({});
+  }, []);
   
-  const [dialogState, setDialogState] = React.useState<{ open: boolean; index: number | null; newType: string | null }>({ open: false, index: null, newType: null });
+  // const [dialogState, setDialogState] = React.useState<{ open: boolean; index: number | null; newType: string | null }>({ open: false, index: null, newType: null });
   const [uploadedFiles, setUploadedFiles] = React.useState<Record<number, File | null>>({});
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -154,10 +142,8 @@ function CreateTaskPageContent() {
       taskName: "",
       taskDescription: "",
       priority: "medium",
-      criteria: [{ type: 'visual-compliance-ai', requirement: "", weight: 100, checklistItems: [], multipleChoiceOptions: [] }],
-      isRecurring: false,
-      assigneeRole: "store-manager",
-      recurringEndType: "never",
+      assigneeId: "",
+      criteria: [{ type: 1, detail: "", point: 10 }],
     },
   });
 
@@ -165,13 +151,11 @@ function CreateTaskPageContent() {
     if (isClone) {
         form.reset({
             ...sampleTask,
-            // @ts-ignore
-            startDate: null,
-            // @ts-ignore
-            dueDate: null,
+            startDate: undefined,
+            dueDate: undefined,
         });
          toast({
-            title: "Tác vụ đã được sao chép",
+            title: "Nhiệm vụ đã được sao chép",
             description: "Vui lòng điền Ngày bắt đầu và Ngày hết hạn mới.",
         });
     }
@@ -185,37 +169,101 @@ function CreateTaskPageContent() {
   
   const watchCriteria = form.watch("criteria");
 
-  const watchIsRecurring = form.watch("isRecurring");
-  const watchRecurringFrequencyType = form.watch("recurringFrequencyType");
-  const watchRecurringEndType = form.watch("recurringEndType");
-  const watchWeeklyDays = form.watch("recurringWeeklyDays", []);
+  async function saveDraft(values: z.infer<typeof formSchema>) {
+    try {
+      // Convert form data to API format
+      const taskGoals: TaskGoal[] = values.criteria.map((criterion) => ({
+        type: criterion.type,
+        detail: criterion.detail,
+        templateData: null, // No template data for ImageUpload type
+        point: criterion.point,
+      }));
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Submitted values:", values, "Uploaded Files:", uploadedFiles);
-    toast({
-      title: "Giao việc thành công",
-      description: `Đã giao tác vụ "${values.taskName}" thành công.`,
-    });
-    router.push("/app/tasks");
+      const taskData: CreateTaskItemRequest = {
+        name: values.taskName,
+        description: values.taskDescription || null,
+        assigneeId: values.assigneeId,
+        priority: values.priority === 'high' ? 3 : values.priority === 'medium' ? 2 : 1,
+        startAt: Math.floor(values.startDate.getTime() / 1000),
+        endAt: Math.floor(values.dueDate.getTime() / 1000),
+        listGoal: taskGoals.length > 0 ? taskGoals : null,
+      };
+
+      const result = await createTask(taskData);
+      
+      if (result) {
+        toast({
+          title: "Lưu nháp thành công",
+          description: `Đã lưu nhiệm vụ "${values.taskName}" vào nháp.`,
+        });
+        router.push("/app/tasks");
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi tạo nhiệm vụ",
+        description: "Không thể tạo nhiệm vụ. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
   }
 
-  function onSaveDraft() {
-    const values = form.getValues();
-    console.log("Saving draft:", values);
-    toast({
-        title: "Lưu nháp thành công",
-        description: `Tác vụ "${values.taskName}" đã được lưu vào bản nháp.`,
-    });
-    router.push("/app/tasks");
+  async function assignTask(values: z.infer<typeof formSchema>) {
+    try {
+      // Convert form data to API format
+      const taskGoals: TaskGoal[] = values.criteria.map((criterion) => ({
+        type: criterion.type,
+        detail: criterion.detail,
+        templateData: null, // No template data for ImageUpload type
+        point: criterion.point,
+      }));
+
+      const taskData: CreateTaskItemRequest = {
+        name: values.taskName,
+        description: values.taskDescription || null,
+        assigneeId: values.assigneeId,
+        priority: values.priority === 'high' ? 3 : values.priority === 'medium' ? 2 : 1,
+        startAt: Math.floor(values.startDate.getTime() / 1000),
+        endAt: Math.floor(values.dueDate.getTime() / 1000),
+        listGoal: taskGoals.length > 0 ? taskGoals : null,
+      };
+
+      // Step 1: Create task
+      const taskId = await createTask(taskData);
+      
+      if (taskId) {
+        // Step 2: Submit task
+        const submitResult = await submitTask(taskId);
+        
+        if (submitResult) {
+          toast({
+            title: "Thành công!",
+            description: "Task đã được tạo và giao việc thành công.",
+          });
+          
+          router.push('/app/tasks');
+        } else {
+          toast({
+            title: "Lỗi giao việc",
+            description: "Task đã tạo nhưng không thể giao việc. Vui lòng thử lại.",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể tạo và giao task. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+      console.error('Error creating and assigning task:', error);
+    }
   }
 
   function handleCreateFromTemplate() {
     form.reset({
         ...sampleTask,
-        // @ts-ignore
-        startDate: null, 
-        // @ts-ignore
-        dueDate: null,
+        startDate: undefined, 
+        dueDate: undefined,
     });
     toast({
         title: "Đã tải mẫu tác vụ",
@@ -223,93 +271,92 @@ function CreateTaskPageContent() {
     });
   }
   
-  const proceedWithChange = (newType: string | null, index: number | null) => {
-    if (newType === null || index === null) return;
-    const currentCriterion = form.getValues(`criteria.${index}`);
-    update(index, {
-      ...currentCriterion,
-      type: newType,
-      checklistItems: newType === 'checklist' ? [{ label: '' }] : [],
-      multipleChoiceOptions: newType === 'multiple-choice' ? [{ label: '' }] : [],
-      minPhotos: newType === 'photo-capture' ? 1 : undefined,
-    });
-    setDialogState({ open: false, index: null, newType: null });
-  };
+  // const proceedWithChange = (newType: string | null, index: number | null) => {
+  //   if (newType === null || index === null) return;
+  //   const currentCriterion = form.getValues(`criteria.${index}`);
+  //   update(index, {
+  //     ...currentCriterion,
+  //     type: parseInt(newType),
+  //     checklistItems: newType === 'checklist' ? [{ label: '' }] : [],
+  //     multipleChoiceOptions: newType === 'multiple-choice' ? [{ label: '' }] : [],
+  //     minPhotos: newType === 'photo-capture' ? 1 : undefined,
+  //   });
+  //   setDialogState({ open: false, index: null, newType: null });
+  // };
   
-  const handleCriterionTypeChange = (newType: string, index: number) => {
-    const currentCriterion = form.getValues(`criteria.${index}`);
-    const hasChecklistData = (currentCriterion.checklistItems?.length ?? 0) > 0 && currentCriterion.checklistItems?.[0].label !== '';
-    const hasMultipleChoiceData = (currentCriterion.multipleChoiceOptions?.length ?? 0) > 0 && currentCriterion.multipleChoiceOptions?.[0].label !== '';
+  // const handleCriterionTypeChange = (newType: string, index: number) => {
+  //   const currentCriterion = form.getValues(`criteria.${index}`);
+  //   const hasChecklistData = (currentCriterion.checklistItems?.length ?? 0) > 0 && currentCriterion.checklistItems?.[0].label !== '';
+  //   const hasMultipleChoiceData = (currentCriterion.multipleChoiceOptions?.length ?? 0) > 0 && currentCriterion.multipleChoiceOptions?.[0].label !== '';
 
-    if ((currentCriterion.type === 'checklist' && hasChecklistData) || (currentCriterion.type === 'multiple-choice' && hasMultipleChoiceData)) {
-      setDialogState({ open: true, index: index, newType: newType });
-    } else {
-      proceedWithChange(newType, index);
-    }
-  };
+  //   if ((currentCriterion.type === 'checklist' && hasChecklistData) || (currentCriterion.type === 'multiple-choice' && hasMultipleChoiceData)) {
+  //     setDialogState({ open: true, index: index, newType: newType });
+  //   } else {
+  //     proceedWithChange(newType, index);
+  //   }
+  // };
 
-  const renderCriterionSpecificFields = (criterionIndex: number) => {
-    const criterionType = watchCriteria[criterionIndex]?.type;
-    const file = uploadedFiles[criterionIndex];
+  // const renderCriterionSpecificFields = (criterionIndex: number) => {
+  //   const criterionType = watchCriteria[criterionIndex]?.type;
+  //   const file = uploadedFiles[criterionIndex];
 
-
-    switch (criterionType) {
-        case 'checklist':
-            return <ChecklistFields criterionIndex={criterionIndex} control={form.control} />;
-        case 'multiple-choice':
-            return <MultipleChoiceFields criterionIndex={criterionIndex} control={form.control} />;
-        case 'visual-compliance-ai':
-             return (
-                <div className="space-y-2">
-                    <FormLabel>Tài liệu tham khảo (Planogram)</FormLabel>
-                     {file ? (
-                        <div className="flex items-center justify-between p-3 border rounded-lg bg-secondary/50">
-                            <div className="flex items-center gap-3">
-                                <FileText className="h-6 w-6 text-muted-foreground" />
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-foreground">{file.name}</span>
-                                    <span className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</span>
-                                </div>
-                            </div>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => removeFile(criterionIndex)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-center w-full">
-                             <label htmlFor={`dropzone-file-${criterionIndex}`} className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary/80">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <FileUp className="w-8 h-8 mb-4 text-muted-foreground" />
-                                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả</p>
-                                    <p className="text-xs text-muted-foreground">Vui lòng tải lên tệp PDF chứa hình ảnh mẫu và các chú thích yêu cầu</p>
-                                </div>
-                                <Input id={`dropzone-file-${criterionIndex}`} type="file" className="hidden" accept=".pdf" onChange={(e) => handleFileChange(e, criterionIndex)} />
-                            </label>
-                        </div>
-                    )}
-                </div>
-            );
-        case 'photo-capture':
-            return (
-                <FormField
-                    control={form.control}
-                    name={`criteria.${criterionIndex}.minPhotos`}
-                    defaultValue={1}
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Số lượng ảnh tối thiểu</FormLabel>
-                        <FormControl>
-                            <Input type="number" placeholder="ví dụ: 3" {...field} value={field.value ?? 1} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} min={1}/>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            );
-        default:
-            return null;
-    }
-  };
+  //   switch (criterionType) {
+  //       case 'checklist':
+  //           return <ChecklistFields criterionIndex={criterionIndex} control={form.control} />;
+  //       case 'multiple-choice':
+  //           return <MultipleChoiceFields criterionIndex={criterionIndex} control={form.control} />;
+  //       case 'visual-compliance-ai':
+  //            return (
+  //               <div className="space-y-2">
+  //                   <FormLabel>Tài liệu tham khảo (Planogram)</FormLabel>
+  //                    {file ? (
+  //                       <div className="flex items-center justify-between p-3 border rounded-lg bg-secondary/50">
+  //                           <div className="flex items-center gap-3">
+  //                               <FileText className="h-6 w-6 text-muted-foreground" />
+  //                               <div className="flex flex-col">
+  //                                   <span className="text-sm font-medium text-foreground">{file.name}</span>
+  //                                   <span className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</span>
+  //                               </div>
+  //                           </div>
+  //                           <Button type="button" variant="ghost" size="icon" onClick={() => removeFile(criterionIndex)}>
+  //                               <X className="h-4 w-4" />
+  //                           </Button>
+  //                       </div>
+  //                   ) : (
+  //                       <div className="flex items-center justify-center w-full">
+  //                            <label htmlFor={`dropzone-file-${criterionIndex}`} className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary/80">
+  //                               <div className="flex flex-col items-center justify-center pt-5 pb-6">
+  //                                   <FileUp className="w-8 h-8 mb-4 text-muted-foreground" />
+  //                                   <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả</p>
+  //                                   <p className="text-xs text-muted-foreground">Vui lòng tải lên tệp PDF chứa hình ảnh mẫu và các chú thích yêu cầu</p>
+  //                               </div>
+  //                               <Input id={`dropzone-file-${criterionIndex}`} type="file" className="hidden" accept=".pdf" onChange={(e) => handleFileChange(e, criterionIndex)} />
+  //                           </label>
+  //                       </div>
+  //                   )}
+  //               </div>
+  //           );
+  //       case 'photo-capture':
+  //           return (
+  //               <FormField
+  //                   control={form.control}
+  //                   name={`criteria.${criterionIndex}.minPhotos`}
+  //                   defaultValue={1}
+  //                   render={({ field }) => (
+  //                       <FormItem>
+  //                       <FormLabel>Số lượng ảnh tối thiểu</FormLabel>
+  //                       <FormControl>
+  //                           <Input type="number" placeholder="ví dụ: 3" {...field} value={field.value ?? 1} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} min={1}/>
+  //                       </FormControl>
+  //                       <FormMessage />
+  //                       </FormItem>
+  //                   )}
+  //               />
+  //           );
+  //       default:
+  //           return null;
+  //   }
+  // };
 
   const renderMobilePreview = () => {
     return (
@@ -340,20 +387,15 @@ function CreateTaskPageContent() {
                             <div className="flex justify-between items-center">
                                 <label className="flex items-center space-x-2">
                                     <Checkbox disabled />
-                                    <span className="text-sm">{form.getValues(`criteria.${index}.requirement`) || `Yêu cầu cho tiêu chuẩn ${index + 1}`}</span>
+                                    <span className="text-sm">{form.getValues(`criteria.${index}.detail`) || `Chi tiết cho mục tiêu ${index + 1}`}</span>
                                 </label>
-                                {form.getValues(`criteria.${index}.type`) === 'visual-compliance-ai' && <span className="text-xs font-semibold text-primary">AI</span>}
+                                {form.getValues(`criteria.${index}.type`) === 1 && <span className="text-xs font-semibold text-primary">IMG</span>}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1 pl-6">
                                 {
                                     {
-                                        'visual-compliance-ai': 'Kiểm tra Tuân thủ Trực quan (AI)',
-                                        'photo-capture': `Chụp tối thiểu ${form.getValues(`criteria.${index}.minPhotos`) || 1} ảnh`,
-                                        'checklist': 'Hoàn thành checklist',
-                                        'text-input': 'Nhập văn bản',
-                                        'number-input': 'Nhập số liệu',
-                                        'multiple-choice': 'Chọn một đáp án'
-                                    }[form.getValues(`criteria.${index}.type`)]
+                                        1: 'Tải ảnh lên (ImageUpload)'
+                                    }[form.getValues(`criteria.${index}.type`) as number] || 'Loại mục tiêu không xác định'
                                 }
                             </p>
                         </div>
@@ -368,25 +410,9 @@ function CreateTaskPageContent() {
 
   return (
     <div className="mx-auto grid max-w-5xl flex-1 auto-rows-max gap-4">
-      <AlertDialog
-        open={dialogState.open}
-        onOpenChange={(open) => !open && setDialogState({ open: false, index: null, newType: null })}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn thay đổi?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Thay đổi loại tiêu chuẩn sẽ xóa các mục con đã nhập. Hành động này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDialogState({ open: false, index: null, newType: null })}>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={() => proceedWithChange(dialogState.newType, dialogState.index)}>Tiếp tục</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* AlertDialog commented out - not needed for simplified form */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={(e) => e.preventDefault()}>
           <div className="flex items-center gap-4 mb-4">
             <Button variant="outline" size="icon" className="h-7 w-7" asChild>
               <Link href="/app/tasks">
@@ -416,11 +442,15 @@ function CreateTaskPageContent() {
               <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
                 Hủy
               </Button>
-               <Button variant="secondary" size="sm" type="button" onClick={onSaveDraft}>
-                Lưu nháp
+               <Button variant="secondary" size="sm" type="button" 
+                onClick={form.handleSubmit(saveDraft)} 
+                disabled={creating}>
+                {creating ? "Đang lưu..." : "Lưu nháp"}
               </Button>
-              <Button size="sm" type="submit">
-                Giao việc
+              <Button size="sm" type="button" 
+                onClick={form.handleSubmit(assignTask)} 
+                disabled={creating || submitting}>
+                {(creating || submitting) ? "Đang giao việc..." : "Giao việc"}
               </Button>
             </div>
           </div>
@@ -581,7 +611,7 @@ function CreateTaskPageContent() {
                                     <div className="flex items-center gap-2 flex-1">
                                         <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
                                         <h4 className="font-semibold flex-1 text-left">
-                                          Tiêu chuẩn {index + 1}: {watchCriteria[index].requirement || <span className="text-muted-foreground font-normal">Chưa có nội dung</span>}
+                                          Mục tiêu {index + 1}: {watchCriteria[index]?.detail || <span className="text-muted-foreground font-normal">Chưa có nội dung</span>}
                                         </h4>
                                     </div>
                                 </AccordionTrigger>
@@ -603,8 +633,8 @@ function CreateTaskPageContent() {
                                     <FormItem>
                                         <FormLabel>Loại tiêu chuẩn</FormLabel>
                                         <Select
-                                        onValueChange={(value) => handleCriterionTypeChange(value, index)}
-                                        value={field.value}
+                                        onValueChange={(value) => field.onChange(parseInt(value))}
+                                        value={field.value?.toString()}
                                         >
                                             <FormControl>
                                             <SelectTrigger>
@@ -612,40 +642,10 @@ function CreateTaskPageContent() {
                                             </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="visual-compliance-ai">
-                                                    <div className="flex items-center gap-2">
-                                                    <Wand2 className="h-4 w-4"/>
-                                                    <span>Kiểm tra Tuân thủ Trực quan (AI)</span>
-                                                    </div>
-                                                </SelectItem>
-                                                <SelectItem value="photo-capture">
+                                                <SelectItem value="1">
                                                     <div className="flex items-center gap-2">
                                                     <Camera className="h-4 w-4"/>
-                                                    <span>Chụp ảnh</span>
-                                                    </div>
-                                                </SelectItem>
-                                                <SelectItem value="checklist">
-                                                    <div className="flex items-center gap-2">
-                                                    <ListChecks className="h-4 w-4"/>
-                                                    <span>Checklist</span>
-                                                    </div>
-                                                </SelectItem>
-                                                <SelectItem value="text-input">
-                                                    <div className="flex items-center gap-2">
-                                                    <Type className="h-4 w-4"/>
-                                                    <span>Nhập liệu (văn bản)</span>
-                                                    </div>
-                                                </SelectItem>
-                                                <SelectItem value="number-input">
-                                                    <div className="flex items-center gap-2">
-                                                    <Type className="h-4 w-4"/>
-                                                    <span>Nhập liệu (số)</span>
-                                                    </div>
-                                                </SelectItem>
-                                                <SelectItem value="multiple-choice">
-                                                    <div className="flex items-center gap-2">
-                                                    <ListTodo className="h-4 w-4"/>
-                                                    <span>Câu hỏi Trắc nghiệm</span>
+                                                    <span>Tải ảnh lên (ImageUpload)</span>
                                                     </div>
                                                 </SelectItem>
                                             </SelectContent>
@@ -656,29 +656,29 @@ function CreateTaskPageContent() {
                                 />
                                 <FormField
                                     control={form.control}
-                                    name={`criteria.${index}.requirement`}
+                                    name={`criteria.${index}.detail`}
                                     render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Nội dung yêu cầu</FormLabel>
+                                        <FormLabel>Chi tiết mục tiêu</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Nhập nội dung yêu cầu/câu hỏi..." {...field} />
+                                            <Textarea placeholder="Nhập chi tiết mục tiêu..." {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                     )}
                                 />
                                 
-                                {renderCriterionSpecificFields(index)}
+                                {/* Additional fields for specific criterion types can be added here */}
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <FormField
                                     control={form.control}
-                                    name={`criteria.${index}.weight`}
+                                    name={`criteria.${index}.point`}
                                     render={({ field }) => (
                                         <FormItem>
-                                        <FormLabel>Trọng số/Điểm</FormLabel>
+                                        <FormLabel>Điểm</FormLabel>
                                         <FormControl>
-                                            <Input type="number" placeholder="ví dụ: 100" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
+                                            <Input type="number" placeholder="ví dụ: 10" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -695,7 +695,7 @@ function CreateTaskPageContent() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => append({ type: 'visual-compliance-ai', requirement: "", weight: 100, checklistItems: [], multipleChoiceOptions: [] })}
+                          onClick={() => append({ type: 1, detail: "", point: 10 })}
                           >
                           <PlusCircle className="h-4 w-4 mr-2" />
                           Thêm Tiêu chuẩn
@@ -709,50 +709,34 @@ function CreateTaskPageContent() {
                 <CardHeader>
                   <CardTitle>Phân công</CardTitle>
                   <CardDescription>
-                    Gán tác vụ này cho một cửa hàng hoặc khu vực cụ thể.
+                    Gán nhiệm vụ cho người thực hiện cụ thể.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="store"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cửa hàng / Khu vực</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Chọn cửa hàng hoặc khu vực" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="all-system">Toàn hệ thống</SelectItem>
-                            <SelectItem value="region-west">Khu vực: Miền Tây</SelectItem>
-                            <SelectItem value="region-east">Khu vực: Miền Đông</SelectItem>
-                            <SelectItem value="store-123">Cửa hàng #123 (Trung tâm)</SelectItem>
-                            <SelectItem value="store-456">Cửa hàng #456 (Ngoại ô)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                    <FormField
                     control={form.control}
-                    name="assigneeRole"
+                    name="assigneeId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Giao cho Vai trò</FormLabel>
+                        <FormLabel>Giao cho người thực hiện</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Chọn một vai trò" />
+                              <SelectValue placeholder="Chọn người thực hiện" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                             <SelectItem value="store-manager">Cửa hàng trưởng</SelectItem>
-                             <SelectItem value="shift-supervisor">Giám sát ca</SelectItem>
-                             <SelectItem value="field-staff">Nhân viên</SelectItem>
+                             {loadingAccounts ? (
+                               <div className="px-2 py-2 text-sm text-muted-foreground">Đang tải...</div>
+                             ) : accounts && accounts.length > 0 ? (
+                               accounts.map((account) => (
+                                 <SelectItem key={account.id} value={account.id}>
+                                   {account.name || 'Không có tên'}
+                                 </SelectItem>
+                               ))
+                             ) : (
+                               <div className="px-2 py-2 text-sm text-muted-foreground">Không có người dùng nào</div>
+                             )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -761,7 +745,8 @@ function CreateTaskPageContent() {
                   />
                 </CardContent>
               </Card>
-               <Card>
+               {/* Recurring task features - temporarily disabled for API compatibility */}
+               {/* <Card>
                     <CardHeader>
                     <CardTitle>Lên lịch</CardTitle>
                     <CardDescription>Cấu hình cài đặt tác vụ lặp lại.</CardDescription>
@@ -820,7 +805,7 @@ function CreateTaskPageContent() {
                                             <Button
                                                 key={day}
                                                 type="button"
-                                                variant={watchWeeklyDays.includes(day) ? 'secondary' : 'outline'}
+                                                variant={watchWeeklyDays?.includes(day) ? 'secondary' : 'outline'}
                                                 size="sm"
                                                 onClick={() => {
                                                     const currentDays = form.getValues('recurringWeeklyDays') || [];
@@ -954,18 +939,22 @@ function CreateTaskPageContent() {
                         </div>
                     )}
                     </CardContent>
-                </Card>
+                </Card> */}
             </div>
           </div>
           <div className="flex items-center justify-center gap-2 md:hidden mt-4">
              <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
                 Hủy
               </Button>
-               <Button variant="secondary" size="sm" type="button" onClick={onSaveDraft}>
-                Lưu nháp
+               <Button variant="secondary" size="sm" type="button" 
+                onClick={form.handleSubmit(saveDraft)} 
+                disabled={creating}>
+                {creating ? "Đang lưu..." : "Lưu nháp"}
               </Button>
-              <Button size="sm" type="submit">
-                Giao việc
+              <Button size="sm" type="button" 
+                onClick={form.handleSubmit(assignTask)} 
+                disabled={creating || submitting}>
+                {(creating || submitting) ? "Đang giao việc..." : "Giao việc"}
               </Button>
           </div>
         </form>

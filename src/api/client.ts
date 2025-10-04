@@ -20,6 +20,7 @@ import {
 export class ApiClient {
   private baseUrl: string;
   private accessToken?: string;
+  private refreshTokenCallback?: () => Promise<boolean>;
 
   constructor(baseUrl: string = '') {
     this.baseUrl = baseUrl;
@@ -27,6 +28,33 @@ export class ApiClient {
 
   setAccessToken(token: string) {
     this.accessToken = token;
+  }
+
+  setRefreshTokenCallback(callback: () => Promise<boolean>) {
+    this.refreshTokenCallback = callback;
+  }
+
+  private async requestWithRetry<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    try {
+      return await this.request<T>(endpoint, options);
+    } catch (error) {
+      // If it's a 401 error and we have a refresh callback, try to refresh token once
+      if (error instanceof ApiError && error.status === 401 && this.refreshTokenCallback) {
+        try {
+          const refreshSuccess = await this.refreshTokenCallback();
+          if (refreshSuccess) {
+            // Retry the original request with the new token
+            return await this.request<T>(endpoint, options);
+          }
+        } catch (refreshError) {
+          console.error('Failed to refresh token:', refreshError);
+        }
+      }
+      throw error;
+    }
   }
 
   private async request<T>(
@@ -96,7 +124,7 @@ export class ApiClient {
 
   // Admin Account APIs
   async createAccount(data: CreateAccountRequest): Promise<ApiResponse<string>> {
-    return this.request<string>('/Admin/Account', {
+    return this.requestWithRetry<string>('/Admin/Account', {
       method: 'POST',
       body: JSON.stringify(data)
     });
@@ -116,28 +144,28 @@ export class ApiClient {
     const query = searchParams.toString();
     const endpoint = query ? `/Admin/Account?${query}` : '/Admin/Account';
     
-    return this.request<AccountListItem[]>(endpoint);
+    return this.requestWithRetry<AccountListItem[]>(endpoint);
   }
 
   async getAccountDetail(id: string): Promise<ApiResponse<AccountDetail>> {
-    return this.request<AccountDetail>(`/Admin/Account/${id}`);
+    return this.requestWithRetry<AccountDetail>(`/Admin/Account/${id}`);
   }
 
   async updateAccount(id: string, data: UpdateAccountRequest): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>(`/Admin/Account/${id}`, {
+    return this.requestWithRetry<boolean>(`/Admin/Account/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     });
   }
 
   async deleteAccount(id: string): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>(`/Admin/Account/${id}`, {
+    return this.requestWithRetry<boolean>(`/Admin/Account/${id}`, {
       method: 'DELETE'
     });
   }
 
   async restoreAccount(id: string): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>(`/Admin/Account/${id}/Restore`, {
+    return this.requestWithRetry<boolean>(`/Admin/Account/${id}/Restore`, {
       method: 'PUT'
     });
   }
@@ -159,11 +187,11 @@ export class ApiClient {
 
   // Admin Settings APIs
   async getSettings(): Promise<ApiResponse<SettingItem[]>> {
-    return this.request<SettingItem[]>('/Admin/Setting');
+    return this.requestWithRetry<SettingItem[]>('/Admin/Setting');
   }
 
   async updateSettings(data: UpdateSettingsRequest): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>('/Admin/Setting', {
+    return this.requestWithRetry<boolean>('/Admin/Setting', {
       method: 'PUT',
       body: JSON.stringify(data)
     });
@@ -171,7 +199,7 @@ export class ApiClient {
 
   // Admin TaskItem APIs
   async createTaskItem(data: CreateTaskItemRequest): Promise<ApiResponse<string>> {
-    return this.request<string>('/Admin/TaskItem', {
+    return this.requestWithRetry<string>('/Admin/TaskItem', {
       method: 'POST',
       body: JSON.stringify(data)
     });
@@ -196,46 +224,46 @@ export class ApiClient {
     const query = searchParams.toString();
     const endpoint = query ? `/Admin/TaskItem?${query}` : '/Admin/TaskItem';
     
-    return this.request<TaskItemListItem[]>(endpoint);
+    return this.requestWithRetry<TaskItemListItem[]>(endpoint);
   }
 
   async getTaskItemDetail(id: string): Promise<ApiResponse<TaskItemDetail>> {
-    return this.request<TaskItemDetail>(`/Admin/TaskItem/${id}`);
+    return this.requestWithRetry<TaskItemDetail>(`/Admin/TaskItem/${id}`);
   }
 
   async updateTaskItem(id: string, data: UpdateTaskItemRequest): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>(`/Admin/TaskItem/${id}`, {
+    return this.requestWithRetry<boolean>(`/Admin/TaskItem/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     });
   }
 
   async deleteTaskItem(id: string): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>(`/Admin/TaskItem/${id}`, {
+    return this.requestWithRetry<boolean>(`/Admin/TaskItem/${id}`, {
       method: 'DELETE'
     });
   }
 
   async restoreTaskItem(id: string): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>(`/Admin/TaskItem/${id}/Restore`, {
+    return this.requestWithRetry<boolean>(`/Admin/TaskItem/${id}/Restore`, {
       method: 'PUT'
     });
   }
 
   async submitTaskItem(id: string): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>(`/Admin/TaskItem/${id}/Submit`, {
+    return this.requestWithRetry<boolean>(`/Admin/TaskItem/${id}/Submit`, {
       method: 'PUT'
     });
   }
 
   async approveTaskItem(id: string): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>(`/Admin/TaskItem/${id}/Approve`, {
+    return this.requestWithRetry<boolean>(`/Admin/TaskItem/${id}/Approve`, {
       method: 'PUT'
     });
   }
 
   async denyTaskItem(id: string): Promise<ApiResponse<boolean>> {
-    return this.request<boolean>(`/Admin/TaskItem/${id}/Deny`, {
+    return this.requestWithRetry<boolean>(`/Admin/TaskItem/${id}/Deny`, {
       method: 'PUT'
     });
   }

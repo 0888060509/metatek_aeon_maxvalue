@@ -1,4 +1,5 @@
 import { ApiClient } from './client';
+import { tokenManager } from './auth';
 
 // Environment configuration
 const getApiBaseUrl = (): string => {
@@ -13,6 +14,11 @@ const getApiBaseUrl = (): string => {
 
 // Create a default API client instance
 export const apiClient = new ApiClient(getApiBaseUrl());
+
+// Setup refresh token callback
+apiClient.setRefreshTokenCallback(async () => {
+  return await tokenManager.refreshAccessToken();
+});
 
 // Token management utilities
 export const setApiToken = (token: string) => {

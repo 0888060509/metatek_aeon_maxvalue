@@ -3,17 +3,12 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import {
-  ColumnDef,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  useReactTable,
-  ColumnFiltersState,
-  SortingState,
-  PaginationState,
-} from '@tanstack/react-table';
+import { useParams } from 'next/navigation';
+import { useGetTaskItemDetail } from '@/api/hooks';
+import { getTaskStatus, getPriorityText, formatDate, generateTaskCode } from '@/lib/task-display-utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Card,
   CardContent,
@@ -31,6 +26,7 @@ import {
     ChevronLeft,
     MoreHorizontal,
     FileText,
+    Loader2,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -118,92 +114,131 @@ const getTaskStatusBadge = (status: string) => {
 };
 
 
-// --- Table Columns Definition ---
 
-const columns: ColumnDef<Submission>[] = [
-  {
-    accessorKey: 'store',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Store" />,
-  },
-  {
-    accessorKey: 'submittedBy',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Submitted By" />,
-  },
-  {
-    accessorKey: 'submittedAt',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Submitted At" />,
-  },
-  {
-    accessorKey: 'aiStatus',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="AI Status" />,
-    cell: ({ row }) => getAiStatusBadge(row.getValue('aiStatus')),
-  },
-   {
-    accessorKey: 'reviewStatus',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Review Status" />,
-    cell: ({ row }) => getReviewStatusBadge(row.getValue('reviewStatus')),
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => {
-      return (
-        <Link href={`/app/reviews/${row.original.reviewId}`} className="text-sm font-medium text-primary hover:underline">
-          View Details
-        </Link>
-      );
-    },
-  },
-];
 
 
 // --- Main Component ---
 
-export default function TaskDetailPage({ params }: { params: { taskId: string } }) {
-  const [data] = React.useState<Submission[]>(() => [...initialSubmissions]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
+export default function TaskDetailPage() {
+  const params = useParams();
+  const taskId = params?.taskId as string;
+  const { userRole } = useCurrentUser();
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    autoResetPageIndex: false,
-    state: {
-      sorting,
-      columnFilters,
-      pagination,
-    },
-  });
+  const { data: taskDetail, loading, error, execute } = useGetTaskItemDetail();
 
-  // Find the task based on params.taskId - in a real app, this would be a fetch call.
-  const task = taskDetails; 
+  // Execute the API call when taskId is available
+  React.useEffect(() => {
+    if (taskId) {
+      execute(taskId);
+    }
+  }, [taskId]);
 
-  if (!task) {
-    return <div>Task not found</div>;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+            <Link href="/app/tasks">
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Quay lại danh sách</span>
+            </Link>
+          </Button>
+          <Skeleton className="h-8 w-64" />
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Skeleton className="h-16 w-full" />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-6 w-16" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+            <Link href="/app/tasks">
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Quay lại danh sách</span>
+            </Link>
+          </Button>
+          <h1 className="text-xl font-semibold">Chi tiết nhiệm vụ</h1>
+        </div>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <Alert variant="destructive">
+              <AlertDescription>
+                Không thể tải thông tin nhiệm vụ: {error}
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!taskDetail) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+            <Link href="/app/tasks">
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Quay lại danh sách</span>
+            </Link>
+          </Button>
+          <h1 className="text-xl font-semibold">Nhiệm vụ không tồn tại</h1>
+        </div>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground text-center py-8">
+              Nhiệm vụ với ID {taskId} không được tìm thấy.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const task = taskDetail;
+  const taskStatus = getTaskStatus(task.state);
 
   return (
     <div className="space-y-6">
         <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" className="h-7 w-7" asChild>
                 <Link href="/app/tasks">
-                <ChevronLeft className="h-4 w-4" />
-                <span className="sr-only">Back to tasks</span>
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="sr-only">Quay lại danh sách</span>
                 </Link>
             </Button>
-            <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-                {task.title}
-            </h1>
+            <div className="flex-1 flex items-center gap-3">
+                <h1 className="shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight">
+                    {task.name || 'Nhiệm vụ không có tên'}
+                </h1>
+                <Badge variant="secondary" className="text-sm">
+                    {generateTaskCode(task.id)}
+                </Badge>
+            </div>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -212,10 +247,16 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Task Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit Task</DropdownMenuItem>
-                        <DropdownMenuItem>Duplicate Task</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Archive Task</DropdownMenuItem>
+                        <DropdownMenuLabel>Thao tác nhiệm vụ</DropdownMenuLabel>
+                        {userRole === 'admin' && (
+                          <DropdownMenuItem asChild>
+                            <Link href={`/app/tasks/${taskId}/edit`}>
+                              Chỉnh sửa
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem>Sao chép</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive">Xóa nhiệm vụ</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
@@ -223,72 +264,104 @@ export default function TaskDetailPage({ params }: { params: { taskId: string } 
 
         <Card>
             <CardHeader>
-                <CardTitle>Task Summary</CardTitle>
+                <CardTitle>Tóm tắt nhiệm vụ</CardTitle>
                 <CardDescription>
-                    Overview of the task details and requirements.
+                    Tổng quan về chi tiết và yêu cầu của nhiệm vụ.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{task.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {task.description || 'Không có mô tả'}
+                </p>
                 <Separator />
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div className="space-y-1">
-                        <p className="text-muted-foreground">Status</p>
-                        <div>{getTaskStatusBadge(task.status)}</div>
+                        <p className="text-muted-foreground">Trạng thái</p>
+                        <div>{getTaskStatusBadge(taskStatus)}</div>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-muted-foreground">Due Date</p>
-                        <p className="font-medium">{task.dueDate}</p>
-                    </div>
-                     <div className="space-y-1">
-                        <p className="text-muted-foreground">Priority</p>
-                        <p className="font-medium">{task.priority}</p>
+                        <p className="text-muted-foreground">Ngày bắt đầu</p>
+                        <p className="font-medium">{formatDate(task.startAt) || '-'}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-muted-foreground">Assigned To</p>
-                        <p className="font-medium">{task.assignedTo}</p>
+                        <p className="text-muted-foreground">Hạn hoàn thành</p>
+                        <p className="font-medium">{formatDate(task.endAt) || '-'}</p>
                     </div>
-                     <div className="space-y-1 col-span-2 md:col-span-4">
-                        <p className="text-muted-foreground">Guidelines & Attachments</p>
-                         <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="outline" size="sm" className="mt-1">
-                                    <FileText className="mr-2 h-4 w-4" />
-                                    View Planogram.pdf
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl h-[90vh]">
-                                <DialogHeader>
-                                    <DialogTitle>Planogram.pdf</DialogTitle>
-                                    <DialogDescription>Tài liệu hướng dẫn trưng bày sản phẩm.</DialogDescription>
-                                </DialogHeader>
-                                <div className="h-full w-full">
-                                    <iframe src="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" className="h-full w-full" />
-                                </div>
-                            </DialogContent>
-                        </Dialog>
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground">Ưu tiên</p>
+                        <p className="font-medium">{getPriorityText(task.priority)}</p>
                     </div>
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground">Người thực hiện</p>
+                        <p className="font-medium">{task.assigneeName || 'Chưa phân công'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground">Người tạo</p>
+                        <p className="font-medium">{task.creatorName || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground">Ngày tạo</p>
+                        <p className="font-medium">{formatDate(task.createAt) || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground">Ngày nộp</p>
+                        <p className="font-medium">{formatDate(task.submitAt) || '-'}</p>
+                    </div>
+                    {task.approveAt && (
+                      <div className="space-y-1">
+                          <p className="text-muted-foreground">Ngày duyệt</p>
+                          <p className="font-medium">{formatDate(task.approveAt)}</p>
+                      </div>
+                    )}
+
                 </div>
 
             </CardContent>
         </Card>
 
-        <Card>
+        {/* Task Goals Section */}
+        {task.listGoal && task.listGoal.length > 0 && (
+          <Card>
             <CardHeader>
-                <CardTitle>Submissions</CardTitle>
-                <CardDescription>
-                    List of all reports submitted for this task from different stores.
-                </CardDescription>
+              <CardTitle>Mục tiêu nhiệm vụ</CardTitle>
+              <CardDescription>
+                Danh sách các mục tiêu cần hoàn thành cho nhiệm vụ này.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-                <DataTable 
-                    table={table} 
-                    columns={columns} 
-                    filterColumnId="store"
-                    filterPlaceholder="Filter by store..."
-                />
+              <div className="space-y-4">
+                {task.listGoal.map((goal, index) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm font-medium">Mục tiêu {index + 1}</span>
+                          <Badge variant="outline">
+                            {goal.type === 1 ? 'Tải ảnh lên' : `Loại ${goal.type}`}
+                          </Badge>
+                          <Badge variant="secondary">
+                            {goal.point} điểm
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {goal.detail}
+                        </p>
+                        {goal.templateData && (
+                          <div className="mt-2">
+                            <p className="text-xs text-muted-foreground">Dữ liệu mẫu:</p>
+                            <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
+                              {goal.templateData}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
-        </Card>
+          </Card>
+        )}
     </div>
   );
 }
